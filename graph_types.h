@@ -4,13 +4,12 @@
 #include <vector>
 #include <unordered_map>
 #include <cstdint>
-#include <imgui.h>
 
-#pragma message("start_server_controller.cpp REV: Graph nodes v0.2")
+#pragma message("graph_types.h REV: UpDown v0.C")
 
 using NodeId = uint64_t;
 
-enum class NodeKind : uint8_t
+enum class NodeKind
 {
    Unknown,
    DSSession,
@@ -22,7 +21,7 @@ enum class NodeKind : uint8_t
    MMSession,
    StandaloneServer,
    HydraSample,
-   // add as needed
+   // extendable as needed
 };
 
 enum class GraphPort : uint8_t {
@@ -32,6 +31,19 @@ enum class GraphPort : uint8_t {
    Bottom,
 };
 
+struct ImVec2;
+struct Vec2f {
+   float x;
+   float y;
+
+   Vec2f() : x(0), y(0) {}
+   Vec2f(float x_, float y_) : x(x_), y(y_) {}
+   Vec2f(const ImVec2& v);
+
+   // Conversion to ImVec2
+   ImVec2 AsIm() const;
+};
+
 struct GraphNode
 {
    NodeId      id = 0;
@@ -39,16 +51,18 @@ struct GraphNode
 
    std::string title;      // e.g. "ServUser0050"
    std::string subtitle;   // e.g. "User" or short id
-   ImVec2      pos;        // in "graph space" coordinates (not screen)
-   ImVec2      size;       // node box size in graph space
+   Vec2f       pos;        // in "graph space" coordinates (not screen)
+   Vec2f       size;       // node box size in graph space
 
    // Visual/style tags (optional but handy)
    uint32_t    colorBorder = 0;  // IM_COL32(...)
    uint32_t    colorFill   = 0;
    uint32_t    colorText   = 0;
 
-   // Inspector payload key (points to some domain entity id)
-   std::string entityKey;  // e.g. userId/sessionId etc.
+   // Inspector payload key (userId/sessionId etc.)
+   std::string entityKey;
+   // facts, context pairs, etc.
+   std::vector<std::pair<std::string, std::string>> kv;
 };
 
 enum class LinkStyle : uint8_t
@@ -59,6 +73,9 @@ enum class LinkStyle : uint8_t
 
 struct GraphLink
 {
+   GraphLink();
+   GraphLink(NodeId _from, NodeId _to);
+
    NodeId   from = 0;
    NodeId   to   = 0;
 
@@ -70,12 +87,12 @@ struct GraphLink
    // Optional visuals
    bool     arrow = true;
    bool     dotted = false;
-   uint32_t color = IM_COL32(180, 180, 180, 255);
+   uint32_t color;
 
-   ImVec2 AnchorFrom(const ImVec2& p, const ImVec2& s) const;
-   ImVec2 AnchorTo  (const ImVec2& p, const ImVec2& s) const;
+   Vec2f AnchorFrom(const Vec2f& p, const Vec2f& s) const;
+   Vec2f AnchorTo  (const Vec2f& p, const Vec2f& s) const;
 private:
-   ImVec2 AnchorForPort(GraphPort port, const ImVec2& p, const ImVec2& s) const;
+   Vec2f AnchorForPort(GraphPort port, const Vec2f& p, const Vec2f& s) const;
 };
 
 struct GraphModel
@@ -94,11 +111,14 @@ struct GraphModel
          indexById[nodes[i].id] = i;
    }
 
-   GraphNode* Find(NodeId id)
+   const GraphNode* Find(NodeId id) const
    {
       auto it = indexById.find(id);
       return (it == indexById.end()) ? nullptr : &nodes[it->second];
    }
+
+   // projection counter increments after every ProjectToGraph()
+   uint64_t projectionGeneration = 0; 
 };
 
 // Shared selection spine across panels (Inventory, Graph, Inspector).
@@ -106,10 +126,16 @@ struct SelectionState {
    NodeId node = 0; // 0 = nothing selected
 };
 
-// Minimal view state for a canvas: pan now, zoom later.
+// View state for a canvas: with pan, zoom
 struct GraphViewState {
-   ImVec2 pan = ImVec2(0.0f, 0.0f); // pixels
+   Vec2f  pan{};                 // pixels
    float  zoom = 1.0f;
-   SelectionState  selected{};      // selection spine
-};
+   SelectionState  selected{};   // selection spine
 
+   // Intent for move selected item up/down in its visual order.
+   // -1 = up, +1 = down, 0 = none (no-op clicks are fine).
+   int pendingUpDownDelta = 0;
+
+   // Spider mode: when a node is selected, dim unrelated links.
+   bool dimUnrelatedLinks = true;
+};

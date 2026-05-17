@@ -1,61 +1,21 @@
 #pragma once
 
 #include <memory>
-#include <vector>
-#include <mutex>
-#include <deque>
-#include <string>
-#include <optional>
-#include <thread>
-#include <atomic>
 
-#include "httplib.h"
-#include "json.hpp"
-
-#include "ui/models/start_server_model.h"
 #include "connectors/backend_connector.h"
 #include "start_server_controller_interface.h"
-#include "ui/views/window_interface.h"
-
-#pragma message("start_server_controller.h REV: Graph nodes v0.2")
+#include "live_state.h"
 
 namespace Sample::UI::Controllers {
 
-struct CoordinatorUpdate {
-   nlohmann::json payload;
-   std::string printable; // for logs/debug display
-   double recv_time_s = 0.0;
-};
+class CoordinatorHttpServer;
+struct SdkPacket;
 
-class CoordinatorHttpServer {
-public:
-   CoordinatorHttpServer(Models::MainModel* model);
-   ~CoordinatorHttpServer() { Stop(); }
-
-   void Start(const char* host = "127.0.0.1", int port = 30001);
-   void Stop();
-
-   // Called from UI thread (TickIngestion) to drain events
-   bool TryPop(CoordinatorUpdate& out);
-
-private:
-   void ServerThreadMain(std::string host, int port);
-
-private:
-   std::mutex mtx_;
-   std::deque<CoordinatorUpdate> queue_;
-
-   std::thread thr_;
-   std::atomic<bool> running_{ false };
-
-   // Owned by server thread
-   httplib::Server* svr_ = nullptr;
-   Models::MainModel* mainModel = nullptr;
-};
-
-class StartServerController : public StartServerControllerInterface {
+class StartServerController : public StartServerControllerInterface 
+{
 public:
    StartServerController(Models::MainModel* model, Sample::Connector::BackendConnectorInterface* connector);
+   ~StartServerController();
    bool StartServer(const Models::ServerType serverType) override;
    void TickIngestion() override;
    void StopServer() override;
@@ -67,8 +27,43 @@ private:
    Models::StartServerModel startServerModel;
    Models::MainModel* mainModel = nullptr;
 
-   CoordinatorHttpServer  server;
-};
+   std::unique_ptr<CoordinatorHttpServer> server;
+   LiveState st;
+   StandaloneCorrelationState standaloneCorr;
 
+   // packets ingestion -- expands TickIngestion()
+   void SwitchGraphToIngestion();
+   bool ApplyAllReducers(SdkPacket& u);
+   bool ApplyServerReducers(SdkPacket& u);
+   bool HandleSignIn(SdkPacket& u);
+   bool HandleSignOut(SdkPacket& u);
+   bool HandlePartyUpdate(SdkPacket& u);
+   bool HandlePartyInviteAcceptRequest(SdkPacket& u);
+   bool HandlePartyDisbandRequest(SdkPacket& u);
+   bool HandleMMSessionUpdate(SdkPacket& u);
+   bool HandleMMSessionMembers(SdkPacket& u, SessionState& sess);
+   bool HandleFactsWriteBinaryPackUser(SdkPacket& u);
+   bool HandleMatchmakeSessionLeaveRequest(SdkPacket& u);
+   bool HandleDedicatedServerHandshake(SdkPacket& u);
+   bool HandleDedicatedServerSessionInfo(SdkPacket& u);
+   bool HandleGetStandaloneSignInCodeRequest(SdkPacket& u);
+   bool HandleGetStandaloneSignInCodeResponse(SdkPacket& u);
+   bool HandleSignInStandaloneCodeRequest(SdkPacket& u);
+   bool HandleSignInStandaloneCodeResponse(SdkPacket& u);
+   bool HandleCreateStandaloneServerRequest(SdkPacket& u);
+   bool HandleCreateStandaloneServerResponse(SdkPacket& u);
+   bool HandleStandaloneHeartbeatServerRequest(SdkPacket& u);
+   bool HandleStandaloneServerGetChallengesRequest(SdkPacket& u);
+   bool ApplyReorderCommands();
+
+   // projection LiveState -> GraphModel
+   void ProjectToGraph();
+   void ProjectHydraUsers();
+   void ProjectMMSessions();
+   void ProjectParties();
+   void ProjectServers();
+   void UpdateColumnsInLayout();
+   void ReduceLinksPartyOwnsSession();
+};
 
 } // namespace Sample::UI::Controllers
