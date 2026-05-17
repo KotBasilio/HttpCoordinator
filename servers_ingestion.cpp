@@ -4,7 +4,7 @@
 
 #include <utility>
 
-#pragma message("servers_ingestion.cpp REV: SC sessions v0.0")
+#pragma message("servers_ingestion.cpp REV: SC sessions v0.1")
 
 namespace Sample::UI::Controllers
 {
@@ -43,7 +43,15 @@ bool StartServerController::HandleDedicatedServerSessionInfo(SdkPacket& u)
    st.TouchServer(serverId);
    auto& s = st.servers[serverId];
 
+   st.TouchSCSession(serverId);
+   auto& sc = st.scSessions[serverId];
+
    bool changed = false;
+   if (sc.serverId != serverId) {
+      sc.serverId = serverId;
+      changed = true;
+   }
+
    const std::string refreshAfter = u.payload.value("refreshAfter", "");
    if (s.refreshAfter != refreshAfter) {
       s.refreshAfter = refreshAfter;
