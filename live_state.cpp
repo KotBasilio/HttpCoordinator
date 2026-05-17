@@ -2,7 +2,7 @@
 
 #include "ui/controllers/live_state.h"
 
-#pragma message("live_state.cpp REV: SC sessions v0.1")
+#pragma message("live_state.cpp REV: SC sessions v0.2")
 
 namespace Sample::UI::Controllers {
 
@@ -46,9 +46,18 @@ void LiveState::TouchServer(const std::string& sid)
    }
 }
 
+void LiveState::TouchSCSession(const std::string& scid)
+{
+   auto& s = scSessions[scid];
+   if (s.scSessionId.empty()) {
+      s.scSessionId = scid;
+      scSessionOrder.push_back(scid);
+   }
+}
+
 bool LiveState::MoveEntityInOrder(NodeKind kind, std::string_view entityKey, int delta)
 {
-   // GraphNode.entityKey has prefixes in projector.cpp: "user:", "party:", "mmsession:".
+   // GraphNode.entityKey has prefixes in projector.cpp: "user:", "party:", "mmsession:", etc.
    // Our order vectors store raw ids (uid/pid/sid), so strip prefix here.
    switch (kind) {
       case NodeKind::User:
@@ -57,6 +66,8 @@ bool LiveState::MoveEntityInOrder(NodeKind kind, std::string_view entityKey, int
          return MoveAdjacent(partyOrder, StripPrefix(entityKey, "party:"), delta);
       case NodeKind::MMSession:
          return MoveAdjacent(sessionOrder, StripPrefix(entityKey, "mmsession:"), delta);
+      case NodeKind::SCSession:
+         return MoveAdjacent(scSessionOrder, StripPrefix(entityKey, "scsession:"), delta);
       case NodeKind::HeatedDSServer:
       case NodeKind::StandaloneServer:
          return MoveAdjacent(serverOrder, StripPrefix(entityKey, "server:"), delta);

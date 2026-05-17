@@ -62,6 +62,7 @@ private:
    void ProjectMMSessions();
    void ProjectParties();
    void ProjectServers();
+   void ProjectSCSessions();
    void UpdateColumnsInLayout();
    void ReduceLinksPartyOwnsSession();
 };

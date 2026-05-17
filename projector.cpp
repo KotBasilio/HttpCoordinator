@@ -3,7 +3,7 @@
 #include <algorithm>  
 #include <unordered_set>
 
-#pragma message("projector.cpp REV: SC sessions v0.1")
+#pragma message("projector.cpp REV: SC sessions v0.2")
 
 namespace Sample::UI::Controllers 
 {
@@ -15,7 +15,8 @@ static struct LayoutConfig
    static constexpr float xHydra = xBase;
    static constexpr float xStep = 180.0f;
    static constexpr float xUser = xHydra + xStep;
-   static constexpr float xServer = xHydra - xStep;
+   static constexpr float xSCSession = xHydra - xStep;
+   static constexpr float xServer = xSCSession - xStep;
 
    // Rows
    static constexpr float yBase = 80.0f;
@@ -73,6 +74,7 @@ static struct SaltVariants {
    uint32_t mm = 0x4D4D5345u;    // "MMSE"
    uint32_t party = 0x50415254u; // "PART"
    uint32_t server = 0x44535256u; // "DSRV"
+   uint32_t sc = 0x53435345u;    // "SCSE"
 } salt;
 
 static NodeId HashToNodeId(const std::string& s, uint32_t salt)
@@ -130,6 +132,53 @@ void StartServerController::ProjectServers()
          }
       }
    }
+}
+
+void StartServerController::ProjectSCSessions()
+{
+   auto& graph = mainModel->graph;
+   int scIdx = 0;
+
+   for (const std::string& scid : st.scSessionOrder) {
+      auto it = st.scSessions.find(scid);
+      if (it == st.scSessions.end())
+         continue;
+
+      SCSessionState& s = it->second;
+      s.viewIdx = scIdx++;
+      s.canvasY = lay.yBase + (float)s.viewIdx * lay.yStep;
+
+      const NodeId scNodeId = HashToNodeId(scid, salt.sc);
+      std::string shortId = scid.substr(0, std::min<size_t>(8, scid.size()));
+
+      auto& n = UpsertNode(graph, scNodeId);
+      n.kind = NodeKind::SCSession;
+      n.title = "SC Session";
+      n.subtitle = shortId;
+      n.entityKey = "scsession:" + scid;
+      n.pos = Vec2f(lay.xSCSession, s.canvasY);
+      n.size = lay.s32;
+
+      n.kv.clear();
+      n.kv.push_back({ "scSessionId", scid });
+      if (!s.serverId.empty())
+         n.kv.push_back({ "serverId", s.serverId });
+      if (!s.hydraUserId.empty())
+         n.kv.push_back({ "hydraUserId", s.hydraUserId });
+
+      if (!s.serverId.empty()) {
+         const NodeId serverNodeId = HashToNodeId(s.serverId, salt.server);
+         EnsureLink(graph, serverNodeId, scNodeId);
+      }
+
+      if (!s.hydraUserId.empty()) {
+         const NodeId hydraNodeId = HashToNodeId(s.hydraUserId, salt.hydra);
+         EnsureLink(graph, scNodeId, hydraNodeId);
+      }
+   }
+
+   // TODO: populate SCSessionState from reducers with scSessionId, serverId,
+   // and/or hydraUserId before this layer can render real links.
 }
 
 void StartServerController::ProjectHydraUsers()
@@ -441,6 +490,7 @@ void StartServerController::ProjectToGraph()
 
    // Create all nodes and links
    ProjectServers();
+   ProjectSCSessions();
    ProjectHydraUsers();
    ProjectParties();
    ProjectMMSessions();

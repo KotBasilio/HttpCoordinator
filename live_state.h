@@ -86,6 +86,17 @@ struct ServerState {
    std::string hydraUserId;           // attach to HydraSample keyed by uid
 };
 
+struct SCSessionState {
+   std::string scSessionId;
+
+   // Optional relationships for future reducers.
+   std::string serverId;
+   std::string hydraUserId;
+
+   int viewIdx = -1;
+   float canvasY = 0.0f;
+};
+
 struct PendingStandaloneCreate {
    std::string hydraUserId;
    std::string serverName;
@@ -123,10 +134,15 @@ struct LiveState
    std::unordered_map<std::string, ServerState> servers;
    std::vector<std::string> serverOrder;
 
+   // session-control sessions
+   std::unordered_map<std::string, SCSessionState> scSessions;
+   std::vector<std::string> scSessionOrder;
+
    void TouchUser(const std::string& uid);
    void TouchSession(const std::string& sid);
    void TouchParty(const std::string& pid);
    void TouchServer(const std::string& sid);
+   void TouchSCSession(const std::string& scid);
 
    void ResetOwners();
    void UnbindUser(const std::string& uid);
