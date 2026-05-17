@@ -262,3 +262,10 @@ The human owner prefers iterative co-design:
 
 This repository is a shared working repo for Codex and the human owner.
 When the human asks for commits/pushes, Codex may commit directly to the current branch and push to `origin` after verifying the working tree. Prefer small, named commits because that makes Codex changes easy for the human to inspect in Git.
+
+Important workflow context:
+- The full production project lives on Win11 and includes Visual Studio project files and additional source files.
+- This WSL repository is a small Codex-focused subset used for focused editing, review, and Git history.
+- The human owner bridges code between the WSL subset and the full Win11 project with local scripts.
+- Codex commits in this repo are review artifacts and collaboration checkpoints. The human owner reviews, compiles, runs, and makes production-repo commits afterward.
+- Do not be afraid to make requested changes here, but keep them easy to inspect and explain.

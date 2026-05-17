@@ -195,6 +195,12 @@ Project ritual names:
 
 Codex may commit and push in this repository when explicitly asked. Small commits are preferred because the human owner reviews Codex changes through Git.
 
+Workflow context:
+- The full app is compiled and run on Win11 in the production Visual Studio project.
+- This WSL repository is a small Codex working subset. It may omit `.vcxproj` files and some UI/source files from the full project.
+- The human owner bridges code between this subset and the Win11 project with local scripts.
+- Codex commits here are intended to make review/history easy; the human owner handles production integration after review.
+
 ## Do not do yet
 
 - Do not implement a full historical replay UI unless asked.
