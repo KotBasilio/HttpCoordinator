@@ -39,3 +39,8 @@
 
 # debug information files
 *.dwo
+
+# Windows Mark-of-the-Web metadata can appear as sidecar files when bridging
+# between Windows and WSL.
+*:Zone.Identifier
+*Zone.Identifier
