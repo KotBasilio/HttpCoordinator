@@ -1,7 +1,7 @@
 #include "graph_types.h"
 #include <imgui.h>
 
-#pragma message("graph_types.cpp REV: SC sessions v0.0")
+#pragma message("graph_types.cpp REV: SC sessions v0.1")
 
 static Vec2f AnchorRightMid(const Vec2f& node_min, const Vec2f& node_size)
 {

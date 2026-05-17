@@ -2,7 +2,7 @@
 
 #include "ui/controllers/live_state.h"
 
-#pragma message("live_state.cpp REV: SC sessions v0.0")
+#pragma message("live_state.cpp REV: SC sessions v0.1")
 
 namespace Sample::UI::Controllers {
 

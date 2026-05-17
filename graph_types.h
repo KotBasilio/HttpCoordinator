@@ -5,8 +5,6 @@
 #include <unordered_map>
 #include <cstdint>
 
-#pragma message("graph_types.h REV: UpDown v0.C")
-
 using NodeId = uint64_t;
 
 enum class NodeKind
