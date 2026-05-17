@@ -7,8 +7,6 @@
 
 #include "ui/utils/graph_types.h"
 
-#pragma message("main_model.h REV: Graph nodes v0.2")
-
 namespace Sample::UI::Models {
 
 
@@ -38,6 +36,9 @@ struct LogBuffer {
    uint32_t nextSeq = 1;
    size_t   maxEntries = 5000;
 
+   void Info(std::string msg) { Push(Models::LogLevel::Info, msg); }
+   void Warn(std::string msg) { Push(Models::LogLevel::Warn, msg); }
+   void Error(std::string msg) { Push(Models::LogLevel::Error, msg); }
    void Push(LogLevel lvl, std::string msg, double time_s = 0.0);
 
    void Clear() { entries.clear(); }
@@ -69,6 +70,7 @@ struct MainModel {
    std::string userName;
    LogBuffer logs;
    ::GraphModel graph;
+   ::GraphViewState view;
 };
 
 } // namespace Sample::UI::Models

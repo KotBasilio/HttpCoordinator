@@ -2,6 +2,8 @@
 
 #include "ui/controllers/coordinator_http_server.h"
 
+#pragma message("coordinator_http_server.cpp REV: SC sessions v0.0")
+
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
 // ParseReqName: returns the matching ReqNameID, or ABSENT_REQNAME_ID if not found.

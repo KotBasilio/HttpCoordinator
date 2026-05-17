@@ -3,6 +3,8 @@
 #include <algorithm>  
 #include <unordered_set>
 
+#pragma message("projector.cpp REV: SC sessions v0.0")
+
 namespace Sample::UI::Controllers 
 {
 

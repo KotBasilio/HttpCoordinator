@@ -2,6 +2,8 @@
 
 #include "ui/controllers/live_state.h"
 
+#pragma message("live_state.cpp REV: SC sessions v0.0")
+
 namespace Sample::UI::Controllers {
 
 static bool StartsWith(std::string_view s, std::string_view pre)

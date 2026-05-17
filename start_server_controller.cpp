@@ -1,6 +1,8 @@
 #include "ui/controllers/start_server_controller.h"
 #include "ui/controllers/coordinator_http_server.h"
 
+#pragma message("start_server_controller.cpp REV: SC sessions v0.0")
+
 namespace Sample::UI::Controllers {
 
 StartServerController::StartServerController(Models::MainModel* model, Sample::Connector::BackendConnectorInterface* connector)
