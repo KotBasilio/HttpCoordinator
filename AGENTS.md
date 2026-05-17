@@ -87,9 +87,20 @@ Likely important files:
   - Declares `SdkPacket`, `CoordinatorHttpServer`, `LiveState`, `UserState`, `PartyState`, `SessionState`, and controller methods.
 
 - `packets_ingestion.cpp`
-  - Drains queued packets.
-  - Dispatches reducers.
-  - Handles sign-in/sign-out, facts packets, party updates, MM session updates, disband/leave requests.
+  - Ingestion split anchor.
+  - Domain reducers live in `users_ingestion.cpp`, `presence_ingestion.cpp`, and `servers_ingestion.cpp`.
+
+- `packet_json_helpers.h` / `packet_json_helpers.cpp`
+  - Shared JSON extraction helpers such as `NodeAt`, `StrAt`, `BoolAt`, identity/session extraction, and small path helpers.
+
+- `users_ingestion.cpp`
+  - Handles sign-in/sign-out and user facts packets.
+
+- `presence_ingestion.cpp`
+  - Handles Party and MMSession reducers, including disband/leave requests.
+
+- `servers_ingestion.cpp`
+  - Handles dedicated-server and standalone-server reducers/correlation.
 
 - `projector.cpp`
   - Converts `LiveState` into `GraphModel`.
@@ -248,3 +259,6 @@ The human owner prefers iterative co-design:
 - codegen when greenlit
 - keep changes reviewable
 - preserve humor and clear naming where already present
+
+This repository is a shared working repo for Codex and the human owner.
+When the human asks for commits/pushes, Codex may commit directly to the current branch and push to `origin` after verifying the working tree. Prefer small, named commits because that makes Codex changes easy for the human to inspect in Git.

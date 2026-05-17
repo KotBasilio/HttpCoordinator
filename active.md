@@ -59,6 +59,10 @@ For ingestion / event handling:
 
 - `start_server_controller.h`
 - `packets_ingestion.cpp`
+- `packet_json_helpers.h`
+- `users_ingestion.cpp`
+- `presence_ingestion.cpp`
+- `servers_ingestion.cpp`
 
 For graph layout / projection:
 
@@ -188,6 +192,8 @@ Project ritual names:
 - `↔️G-sync`: confirm current files/revisions.
 - `⛓️G-rev`: review synced code.
 - `🔏G-lock`: accepted baseline.
+
+Codex may commit and push in this repository when explicitly asked. Small commits are preferred because the human owner reviews Codex changes through Git.
 
 ## Do not do yet
 
