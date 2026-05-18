@@ -2,12 +2,81 @@
 #include "ui/controllers/coordinator_http_server.h"
 #include "packet_json_helpers.h"
 
+#include <algorithm>
 #include <utility>
+#include <vector>
+
+#pragma message("presence_ingestion.cpp REV: rich kv v0.1")
 
 namespace Sample::UI::Controllers
 {
 
 using namespace nlohmann::literals; // enables "... "_json_pointer
+
+static bool SetIfDifferent(std::string& dst, const std::string& src)
+{
+   if (src.empty() || dst == src)
+      return false;
+
+   dst = src;
+   return true;
+}
+
+static std::string StringFromJsonValue(const Json& value)
+{
+   if (value.is_string()) return value.get<std::string>();
+   if (value.is_number_integer()) return std::to_string(value.get<long long>());
+   if (value.is_number_unsigned()) return std::to_string(value.get<unsigned long long>());
+   if (value.is_number_float()) return std::to_string(value.get<double>());
+   if (value.is_boolean()) return value.get<bool>() ? "true" : "false";
+   return {};
+}
+
+static std::string ExtractStaticDataValue(const Json& memberData, const char* key)
+{
+   const std::string sd = GetStr(memberData, "staticData", "");
+   if (sd.size() < 2 || sd.front() != '{')
+      return {};
+
+   const auto j = Json::parse(sd, nullptr, false);
+   if (j.is_discarded())
+      return {};
+
+   return JsonGetString(j, { key });
+}
+
+static bool ApplySessionVariants(SessionState& sess, const Json& variants)
+{
+   if (!variants.is_array())
+      return false;
+
+   std::vector<std::pair<std::string, std::string>> next;
+   for (const auto& v : variants) {
+      const std::string id = JsonGetString(v, { "id" });
+      if (id.empty())
+         continue;
+
+      std::string value = JsonGetString(v, { "value" });
+      if (value.empty()) {
+         if (auto it = v.find("values"); it != v.end() && it->is_array() && !it->empty()) {
+            value = StringFromJsonValue((*it)[0]);
+         }
+      }
+
+      if (!value.empty())
+         next.push_back({ id, value });
+   }
+
+   std::sort(next.begin(), next.end(), [](const auto& a, const auto& b) {
+      return a.first < b.first;
+   });
+
+   if (sess.variants == next)
+      return false;
+
+   sess.variants = std::move(next);
+   return true;
+}
 
 bool StartServerController::HandleMatchmakeSessionLeaveRequest(SdkPacket& u)
 {
@@ -37,7 +106,6 @@ bool StartServerController::HandleMatchmakeSessionLeaveRequest(SdkPacket& u)
 // PresenceSessionUpdate is the truth stream for MM state + membership.
 bool StartServerController::HandleMMSessionUpdate(SdkPacket& u)
 {
-   bool changed = false;
    const auto& p = u.payload;
 
    // get to session id
@@ -47,12 +115,28 @@ bool StartServerController::HandleMMSessionUpdate(SdkPacket& u)
    }
    st.TouchSession(sessionId);
    auto& sess = st.sessions[sessionId];
+   bool changed = false;
 
-   // state string
-   std::string mmState = GetStr(p, "state", "");
-   if (!mmState.empty() && mmState != sess.mmState) {
-      sess.mmState = std::move(mmState);
-      changed = true;
+   changed |= SetIfDifferent(sess.reason, JsonGetString(p, { "id", "reason" }));
+   changed |= SetIfDifferent(sess.mmState, GetStr(p, "state", ""));
+   changed |= SetIfDifferent(sess.playlistId, JsonGetString(p, { "queueData", "playListId" }));
+   changed |= SetIfDifferent(sess.playlistId, JsonGetString(p, { "gameData", "playListId", "data" }));
+   changed |= SetIfDifferent(sess.dataCenterId, JsonGetString(p, { "gameData", "dataCenterId" }));
+   changed |= SetIfDifferent(sess.sessionType, JsonGetString(p, { "gameData", "sessionType" }));
+   changed |= SetIfDifferent(sess.jip, JsonGetString(p, { "gameData", "settings", "jip" }));
+   changed |= SetIfDifferent(sess.maxPlayers, JsonGetString(p, { "gameData", "settings", "maxPlayers" }));
+   changed |= SetIfDifferent(sess.joinDelegation, JsonGetString(p, { "gameData", "settings", "joinDelegation" }));
+   changed |= SetIfDifferent(sess.longOperationCorrelationId, JsonGetString(p, { "longOperationStatus", "correlationId" }));
+   changed |= SetIfDifferent(sess.longOperationUserId, JsonGetString(p, { "longOperationStatus", "userId" }));
+
+   if (const Json* variants = NodeAt(p, "/variants"_json_pointer); variants && variants->is_array()) {
+      changed |= ApplySessionVariants(sess, *variants);
+   }
+   if (const Json* queueData = NodeAt(p, "/queueData"_json_pointer); queueData && queueData->is_object()) {
+      changed |= ApplySessionVariants(sess, queueData->value("queueVariants", Json::array()));
+   }
+   if (const Json* gameData = NodeAt(p, "/gameData"_json_pointer); gameData && gameData->is_object()) {
+      changed |= ApplySessionVariants(sess, gameData->value("variants", Json::array()));
    }
 
    // members deltas
@@ -103,14 +187,24 @@ bool StartServerController::HandleMMSessionMembers(SdkPacket& u, SessionState& s
          SessionState::MemberInfo info{};
          info.groupId = GetStr(md, "groupId", "");
          info.isOwner = BoolAt(md, "/isOwner"_json_pointer, false);
+         info.rating = JsonGetString(md, { "rating" });
+         info.sortingIndex = JsonGetString(md, { "sortingIndex" });
+         info.memberState = JsonGetString(md, { "state" });
+         info.classRole = JsonGetString(md, { "classRole" });
+         info.nickname = ExtractNicknameFromStaticData(md);
          sess.members[uid] = std::move(info);
          usr.online = true;
       } else if (op == "PRESENCE_SESSION_MEMBER_UPDATE_TYPE_REMOVE") {
          sess.members.erase(uid);
       } else if (op == "PRESENCE_SESSION_MEMBER_UPDATE_TYPE_UPDATE") {
          auto& info = sess.members[uid]; // create if missing
-         info.groupId = StrAt(md, "/groupId"_json_pointer, "");
+         SetIfDifferent(info.groupId, StrAt(md, "/groupId"_json_pointer, ""));
          info.isOwner = BoolAt(md, "/isOwner"_json_pointer, info.isOwner);
+         SetIfDifferent(info.rating, JsonGetString(md, { "rating" }));
+         SetIfDifferent(info.sortingIndex, JsonGetString(md, { "sortingIndex" }));
+         SetIfDifferent(info.memberState, JsonGetString(md, { "state" }));
+         SetIfDifferent(info.classRole, JsonGetString(md, { "classRole" }));
+         SetIfDifferent(info.nickname, ExtractNicknameFromStaticData(md));
       } else {
          OutputDebugString((op + " -- to handle as MMSessionMembers operation\n").c_str());
       }
@@ -137,6 +231,13 @@ bool StartServerController::HandlePartyUpdate(SdkPacket& u)
    auto& party = st.parties[partyId];
 
    bool changed = false;
+   changed |= SetIfDifferent(party.reason, JsonGetString(p, { "id", "reason" }));
+   changed |= SetIfDifferent(party.partyMaxCount, JsonGetString(p, { "settings", "partyMaxCount" }));
+   changed |= SetIfDifferent(party.joinDelegation, JsonGetString(p, { "settings", "joinDelegation" }));
+   changed |= SetIfDifferent(party.joinable, JsonGetString(p, { "settings", "joinable" }));
+   changed |= SetIfDifferent(party.disbandOnOwnerLeave, JsonGetString(p, { "settings", "disbandOnOwnerLeave" }));
+   changed |= SetIfDifferent(party.longOperationCorrelationId, JsonGetString(p, { "longOperationStatus", "correlationId" }));
+   changed |= SetIfDifferent(party.longOperationUserId, JsonGetString(p, { "longOperationStatus", "userId" }));
 
    // Join code (optional)
    {
@@ -173,6 +274,9 @@ bool StartServerController::HandlePartyUpdate(SdkPacket& u)
             auto& mi = party.members[uid];
             mi.isOwner = BoolAt(*jm, "/isOwner"_json_pointer, false);
             mi.mmState = StrAt(*jm, "/state"_json_pointer, "");
+            SetIfDifferent(mi.nickname, ExtractNicknameFromStaticData(*jm));
+            SetIfDifferent(mi.provider, ExtractStaticDataValue(*jm, "provider"));
+            SetIfDifferent(mi.buildPlatform, JsonGetString(*jm, { "platformData", "buildPlatform" }));
             st.users[uid].online = true; // party ADD implies online enough
             changed = true;
             if (st.users[uid].nickname.empty()) { // nickname best-effort (staticData JSON string)
@@ -187,6 +291,9 @@ bool StartServerController::HandlePartyUpdate(SdkPacket& u)
             mi.isOwner = BoolAt(*jm, "/isOwner"_json_pointer, mi.isOwner);
             const std::string s = StrAt(*jm, "/state"_json_pointer, "");
             if (!s.empty()) mi.mmState = s;
+            SetIfDifferent(mi.nickname, ExtractNicknameFromStaticData(*jm));
+            SetIfDifferent(mi.provider, ExtractStaticDataValue(*jm, "provider"));
+            SetIfDifferent(mi.buildPlatform, JsonGetString(*jm, { "platformData", "buildPlatform" }));
             st.users[uid].online = true; // party UPDATE implies online enough
             changed = true;
          } else {

@@ -117,6 +117,15 @@ static void AddKvIfMissing(std::vector<std::pair<std::string, std::string>>& kv,
       kv.push_back({ key, value });
 }
 
+static GraphNode* FindNode(GraphModel& g, NodeId id)
+{
+   for (auto& n : g.nodes)
+      if (n.id == id)
+         return &n;
+
+   return nullptr;
+}
+
 void StartServerController::ProjectServers()
 {
    auto& graph = mainModel->graph;
@@ -275,6 +284,14 @@ void StartServerController::ProjectHydraUsers()
          n.title = "Hydra";
          n.subtitle = "entry";
          n.entityKey = "hydra:" + uid;
+         n.kv.clear();
+         AddKv(n.kv, "HYDRA_USER_IDENTITY", u.userIdentity);
+         AddKv(n.kv, "HYDRA_KERNEL_SESSION_ID", u.hydraKernelSessionId);
+         AddKv(n.kv, "LINKED_USER_ID", u.userId);
+         AddKv(n.kv, "PLATFORM", u.platform);
+         AddKv(n.kv, "PROVIDER_ID", u.providerId);
+         AddKv(n.kv, "USER_IDENTITY_TYPE", u.userIdentityType);
+         AddKv(n.kv, "USER_ONLINE", u.online);
          n.pos = Vec2f(lay.xHydra, y);
          n.size = lay.s32;
       }
@@ -339,6 +356,45 @@ void StartServerController::ProjectMMSessions()
       n.pos = Vec2f(lay.xMM, s.canvasY);
       n.size = lay.s32;
 
+      n.kv.clear();
+      AddKv(n.kv, "MM_SESSION_ID", sid);
+      AddKv(n.kv, "MM_REASON", s.reason);
+      AddKv(n.kv, "MM_STATE", s.mmState);
+      AddKv(n.kv, "MEMBER_COUNT", std::to_string(s.members.size()));
+      AddKv(n.kv, "PLAYLIST_ID", s.playlistId);
+      AddKv(n.kv, "DATA_CENTER_ID", s.dataCenterId);
+      AddKv(n.kv, "SESSION_TYPE", s.sessionType);
+      AddKv(n.kv, "JIP", s.jip);
+      AddKv(n.kv, "MAX_PLAYERS", s.maxPlayers);
+      AddKv(n.kv, "JOIN_DELEGATION", s.joinDelegation);
+      AddKv(n.kv, "LONG_OPERATION_CORRELATION_ID", s.longOperationCorrelationId);
+      AddKv(n.kv, "LONG_OPERATION_USER_ID", s.longOperationUserId);
+
+      for (const auto& variant : s.variants) {
+         AddKv(n.kv, ("VARIANT_" + variant.first).c_str(), variant.second);
+      }
+
+      std::vector<std::string> memberIds;
+      memberIds.reserve(s.members.size());
+      for (const auto& mkv : s.members)
+         memberIds.push_back(mkv.first);
+      std::sort(memberIds.begin(), memberIds.end());
+
+      int memberIndex = 1;
+      for (const std::string& uid : memberIds) {
+         const auto& mi = s.members[uid];
+         const std::string prefix = "MEMBER_" + std::to_string(memberIndex) + "_";
+         AddKv(n.kv, (prefix + "USER_ID").c_str(), uid);
+         AddKv(n.kv, (prefix + "NICKNAME").c_str(), mi.nickname);
+         AddKv(n.kv, (prefix + "IS_OWNER").c_str(), mi.isOwner);
+         AddKv(n.kv, (prefix + "GROUP_ID").c_str(), mi.groupId);
+         AddKv(n.kv, (prefix + "RATING").c_str(), mi.rating);
+         AddKv(n.kv, (prefix + "SORTING_INDEX").c_str(), mi.sortingIndex);
+         AddKv(n.kv, (prefix + "MEMBER_STATE").c_str(), mi.memberState);
+         AddKv(n.kv, (prefix + "CLASS_ROLE").c_str(), mi.classRole);
+         ++memberIndex;
+      }
+
       // Membership links: User -> Session
       for (const auto& mkv : s.members) {
          const std::string& uid = mkv.first;
@@ -380,6 +436,38 @@ void StartServerController::ProjectParties()
       n.entityKey = "party:" + pid;
       n.pos = Vec2f(lay.xParty, y);
       n.size = lay.s32;
+
+      n.kv.clear();
+      AddKv(n.kv, "PARTY_ID", pid);
+      AddKv(n.kv, "PARTY_REASON", p.reason);
+      AddKv(n.kv, "MEMBER_COUNT", std::to_string(p.members.size()));
+      AddKv(n.kv, "LEADER_USER_ID", p.leaderUid);
+      AddKv(n.kv, "JOIN_CODE", p.joinCode);
+      AddKv(n.kv, "PARTY_MAX_COUNT", p.partyMaxCount);
+      AddKv(n.kv, "JOIN_DELEGATION", p.joinDelegation);
+      AddKv(n.kv, "JOINABLE", p.joinable);
+      AddKv(n.kv, "DISBAND_ON_OWNER_LEAVE", p.disbandOnOwnerLeave);
+      AddKv(n.kv, "LONG_OPERATION_CORRELATION_ID", p.longOperationCorrelationId);
+      AddKv(n.kv, "LONG_OPERATION_USER_ID", p.longOperationUserId);
+
+      std::vector<std::string> memberIds;
+      memberIds.reserve(p.members.size());
+      for (const auto& mkv : p.members)
+         memberIds.push_back(mkv.first);
+      std::sort(memberIds.begin(), memberIds.end());
+
+      int memberIndex = 1;
+      for (const std::string& uid : memberIds) {
+         const auto& mi = p.members[uid];
+         const std::string prefix = "MEMBER_" + std::to_string(memberIndex) + "_";
+         AddKv(n.kv, (prefix + "USER_ID").c_str(), uid);
+         AddKv(n.kv, (prefix + "NICKNAME").c_str(), mi.nickname);
+         AddKv(n.kv, (prefix + "IS_OWNER").c_str(), mi.isOwner);
+         AddKv(n.kv, (prefix + "MM_STATE").c_str(), mi.mmState);
+         AddKv(n.kv, (prefix + "PROVIDER").c_str(), mi.provider);
+         AddKv(n.kv, (prefix + "BUILD_PLATFORM").c_str(), mi.buildPlatform);
+         ++memberIndex;
+      }
 
       // user -> party membership links
       for (const auto& mkv : p.members) {
@@ -551,6 +639,11 @@ void StartServerController::ReduceLinksPartyOwnsSession()
 
       // add Party->Session link
       EnsureLink(graph, partyNodeId, sessNodeId);
+
+      if (GraphNode* partyNode = FindNode(graph, partyNodeId))
+         AddKvIfMissing(partyNode->kv, "REDUCED_MM_SESSION_ID", sid);
+      if (GraphNode* sessNode = FindNode(graph, sessNodeId))
+         AddKvIfMissing(sessNode->kv, "REDUCED_BY_PARTY_ID", bestParty->partyId);
    }
 }
 

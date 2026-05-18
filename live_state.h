@@ -35,13 +35,23 @@ struct UserState
 
 struct PartyState {
    std::string partyId;
+   std::string reason;
    std::string joinCode; // best effort, may be empty
    std::string leaderUid; // computed from members' isOwner
+   std::string partyMaxCount;
+   std::string joinDelegation;
+   std::string joinable;
+   std::string disbandOnOwnerLeave;
+   std::string longOperationCorrelationId;
+   std::string longOperationUserId;
 
    // members by userId
    struct MemberInfo {
       bool isOwner = false;
       std::string mmState; // MATCHMAKE_STATE_QUEUE/GAME if present
+      std::string nickname;
+      std::string provider;
+      std::string buildPlatform;
    };
    typedef std::unordered_map<std::string, MemberInfo> MapT;
    MapT members;
@@ -58,12 +68,27 @@ struct PartyState {
 struct SessionState
 {
    std::string sessionId;
+   std::string reason;
    std::string mmState; // "MATCHMAKE_STATE_QUEUE" / "MATCHMAKE_STATE_GAME" / etc.
+   std::string playlistId;
+   std::string dataCenterId;
+   std::string sessionType;
+   std::string jip;
+   std::string maxPlayers;
+   std::string joinDelegation;
+   std::string longOperationCorrelationId;
+   std::string longOperationUserId;
+   std::vector<std::pair<std::string, std::string>> variants;
 
    // members by userId
    struct MemberInfo {
       std::string groupId;
       bool isOwner = false;
+      std::string rating;
+      std::string sortingIndex;
+      std::string memberState;
+      std::string classRole;
+      std::string nickname;
    };
    typedef std::unordered_map<std::string, MemberInfo> MapT;
    MapT members;
