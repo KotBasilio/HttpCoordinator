@@ -135,7 +135,7 @@ Likely important files:
   - Handles dedicated-server, SessionControl, and standalone-server reducers/correlation.
   - Creates SCSession state from dedicated-server session info and SessionControl flows.
 
-- `projector.cpp`
+- `projector.cpp` and derivatives
   - Converts `LiveState` into `GraphModel`.
   - Places Server/SCSession/Hydra/User/Party/MM nodes.
   - Handles dynamic columns.

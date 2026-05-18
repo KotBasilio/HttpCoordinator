@@ -31,20 +31,7 @@ Next likely refinement:
 - avoid tokens, raw endpoint dumps, and transient/noisy values;
 - keep Inspector backed by `GraphNode::kv` until a stronger property-section model is truly needed.
 
-#### 2. Keep the split projector easy to bridge
-
-`projector.cpp` was split into focused modules:
-
-- `projector.cpp`: core projection orchestration.
-- `projector_internal.h`: shared internal declarations.
-- `projector_keys_values.cpp`: `GraphNode::kv` population helpers.
-- `projector_layout.cpp`: graph column and Y placement helpers.
-- `projector_nodes.cpp`: node creation/projection.
-- `projector_links.cpp`: link creation and reduction.
-
-Bridge scripts in `bridges/` should stay aware of these files.
-
-#### 3. Preserve graph behavior while iterating
+#### 2. Preserve graph behavior while iterating
 
 Current graph story remains:
 
@@ -124,8 +111,8 @@ For ingestion / event handling:
 
 For graph layout / projection:
 
-- `projector.cpp`
 - `graph_types.h`
+- `projector*`
 
 For selected-node UI:
 
