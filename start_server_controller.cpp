@@ -1,7 +1,7 @@
 #include "ui/controllers/start_server_controller.h"
 #include "ui/controllers/coordinator_http_server.h"
 
-#pragma message("start_server_controller.cpp REV: SC sessions v0.3")
+#pragma message("start_server_controller.cpp REV: rich kv v0.1")
 
 namespace Sample::UI::Controllers {
 
@@ -115,6 +115,7 @@ bool StartServerController::ApplyServerReducers(SdkPacket& u)
       case HYDRA_API_DEDICATEDSERVERS_DSDSMCOMMUNICATION_HANDSHAKERESPONSE:      return HandleDedicatedServerHandshake(u);
       case HYDRA_API_DEDICATEDSERVERS_DSDSMCOMMUNICATION_GETSERVERSESSIONINFOREQUEST:
       case HYDRA_API_DEDICATEDSERVERS_DSDSMCOMMUNICATION_GETSERVERSESSIONINFORESPONSE: return HandleDedicatedServerSessionInfo(u);
+      case HYDRA_API_DEDICATEDSERVERS_DSDSMCOMMUNICATION_SETGAMESESSIONTAGSREQUEST: return HandleDedicatedServerSetGameSessionTags(u);
    }
 
    // Standalone servers
@@ -134,9 +135,13 @@ bool StartServerController::ApplyServerReducers(SdkPacket& u)
       case HYDRA_API_SESSIONCONTROL_CREATESESSIONREQUEST:          return HandleSCCreateSessionRequest(u);
       case HYDRA_API_SESSIONCONTROL_CREATESESSIONRESPONSE:         return HandleSCCreateSessionResponse(u);
       case HYDRA_API_SESSIONCONTROL_GETSERVERINFOREQUEST:          return HandleSCGetServerInfoRequest(u);
+      case HYDRA_API_SESSIONCONTROL_GETSERVERINFORESPONSE:         return HandleSCGetServerInfoResponse(u);
       case HYDRA_API_SESSIONCONTROL_GETSESSIONEVENTSREQUEST:       return HandleSCGetSessionEventsRequest(u);
       case HYDRA_API_SESSIONCONTROL_GETSESSIONEVENTSRESPONSE:      return HandleSCGetSessionEventsResponse(u);
       case HYDRA_API_SESSIONCONTROL_PREPAREACTIVATESESSIONRESPONSE:return HandleSCPrepareActivateSessionResponse(u);
+      case HYDRA_API_SESSIONCONTROL_ACTIVATESESSION3REQUEST:       return HandleSCActivateSession3Request(u);
+      case HYDRA_API_SESSIONCONTROL_PROCESSSESSIONMEMBEREVENTSREQUEST: return HandleSCProcessSessionMemberEventsRequest(u);
+      case PROS_API_FACTS_WRITEBINARYPACKSERVERREQUEST:            return HandleFactsWriteBinaryPackServer(u);
    }
 
    return false;

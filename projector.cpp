@@ -5,7 +5,7 @@
 #include <vector>
 #include <cmath>
 
-#pragma message("projector.cpp REV: SC sessions v0.3")
+#pragma message("projector.cpp REV: rich kv v0.1")
 
 namespace Sample::UI::Controllers 
 {
@@ -89,6 +89,34 @@ static NodeId HashToNodeId(const std::string& s, uint32_t salt)
    return (NodeId)v;
 }
 
+static void AddKv(std::vector<std::pair<std::string, std::string>>& kv,
+   const char* key,
+   const std::string& value)
+{
+   if (!value.empty())
+      kv.push_back({ key, value });
+}
+
+static void AddKv(std::vector<std::pair<std::string, std::string>>& kv,
+   const char* key,
+   bool value)
+{
+   kv.push_back({ key, value ? "true" : "false" });
+}
+
+static void AddKvIfMissing(std::vector<std::pair<std::string, std::string>>& kv,
+   const char* key,
+   const std::string& value)
+{
+   if (value.empty())
+      return;
+
+   const auto it = std::find_if(kv.begin(), kv.end(),
+      [key](const auto& row) { return row.first == key; });
+   if (it == kv.end())
+      kv.push_back({ key, value });
+}
+
 void StartServerController::ProjectServers()
 {
    auto& graph = mainModel->graph;
@@ -118,13 +146,22 @@ void StartServerController::ProjectServers()
       n.size = lay.s32;
 
       n.kv.clear();
-      n.kv.push_back({ "serverId", serverId });
-      n.kv.push_back({ "kind", isStandalone ? "StandaloneServer" : "HeatedDSServer" });
-      n.kv.push_back({ "isModernApi", s.isModernApi ? "true" : "false" });
-      if (!s.scSessionId.empty())
-         n.kv.push_back({ "scSessionId", s.scSessionId });
-      //if (!s.refreshAfter.empty()) quick-updating info, becomes obsolete too soon
-      //   n.kv.push_back({ "refreshAfter", s.refreshAfter });
+      AddKv(n.kv, "SERVER_ID", serverId);
+      AddKv(n.kv, "SERVER_KIND", std::string(isStandalone ? "StandaloneServer" : "HeatedDSServer"));
+      AddKv(n.kv, "IS_MODERN_API", s.isModernApi);
+      AddKv(n.kv, "DS_API_VERSION", s.dsApiVersion);
+      AddKv(n.kv, "SERVER_VERSION", s.serverVersion);
+      AddKv(n.kv, "REFRESH_AFTER", s.refreshAfter);
+      AddKv(n.kv, "HAS_SESSION_INFO", s.hasSessionInfo);
+      AddKv(n.kv, "REPORTED_IP", s.reportedIp);
+      AddKv(n.kv, "REPORTED_IPV6", s.reportedIpv6);
+      AddKv(n.kv, "AUTH_ENDPOINT_SERVICE", s.authEndpointService);
+      AddKv(n.kv, "AUTH_ENDPOINT_IP", s.authEndpointIp);
+      AddKv(n.kv, "AUTH_ENDPOINT_PORT", s.authEndpointPort);
+      AddKv(n.kv, "LINKED_SC_SESSION_ID", s.scSessionId);
+      AddKv(n.kv, "CONNECTION_INFO", s.connectionInfo);
+      AddKv(n.kv, "SERVER_PROPERTY", s.serverProperty);
+      AddKv(n.kv, "SERVER_STATE", s.serverState);
 
       if (!s.scSessionId.empty()) {
          const NodeId scNodeId = HashToNodeId(s.scSessionId, salt.sc);
@@ -169,15 +206,21 @@ void StartServerController::ProjectSCSessions()
       n.size = lay.s32;
 
       n.kv.clear();
-      n.kv.push_back({ "SC_GAME_SESSION_ID", scid });
-      if (!s.serverId.empty())
-         n.kv.push_back({ "SERVER_ID", s.serverId });
-      if (!s.serverContextKernelSessionId.empty())
-         n.kv.push_back({ "SC_SERVER_KERNEL_SESSION_ID", s.serverContextKernelSessionId });
-      if (!s.hydraUserId.empty())
-         n.kv.push_back({ "HYDRA_USER_IDENTITY", s.hydraUserId });
-      if (!s.hydraKernelSessionId.empty())
-         n.kv.push_back({ "HYDRA_KERNEL_SESSION_ID", s.hydraKernelSessionId });
+      AddKv(n.kv, "SC_SESSION_ID", scid);
+      AddKv(n.kv, "GAME_SESSION_ID", scid);
+      AddKv(n.kv, "SERVER_CONTEXT_KERNEL_SESSION_ID", s.serverContextKernelSessionId);
+      AddKv(n.kv, "DATA_CENTER_ID", s.dataCenterId);
+      AddKv(n.kv, "CLIENT_VERSION", s.clientVersion);
+      AddKv(n.kv, "SERVER_DATA", s.serverData);
+      AddKv(n.kv, "LINKED_SERVER_ID", s.serverId);
+      AddKv(n.kv, "HYDRA_USER_IDENTITY", s.hydraUserId);
+      AddKv(n.kv, "HYDRA_KERNEL_SESSION_ID", s.hydraKernelSessionId);
+      AddKv(n.kv, "CONNECTION_INFO", s.connectionInfo);
+      AddKv(n.kv, "SERVER_PROPERTY", s.serverProperty);
+      AddKv(n.kv, "ACCEPT_STATUS", s.acceptStatus);
+      AddKv(n.kv, "REFRESH_AFTER_SECONDS", s.refreshAfterSeconds);
+      AddKv(n.kv, "LAST_SESSION_MEMBER_EVENT_ID", s.lastSessionMemberEventId);
+      AddKv(n.kv, "SERVER_FACT_SESSION_ID", s.serverFactSessionId);
       if (!s.hydraUsers.empty())
          n.kv.push_back({ "HYDRA_MEMBER_COUNT", std::to_string(s.hydraUsers.size()) });
 
@@ -190,13 +233,6 @@ void StartServerController::ProjectSCSessions()
       for (const std::string& hydraUserId : hydraUserIds) {
          n.kv.push_back({ "HYDRA_MEMBER_USER_IDENTITY", hydraUserId });
       }
-      if (!s.dataCenterId.empty())
-         n.kv.push_back({ "DATA_CENTER_ID", s.dataCenterId });
-      if (!s.clientVersion.empty())
-         n.kv.push_back({ "CLIENT_VERSION", s.clientVersion });
-      if (!s.serverData.empty())
-         n.kv.push_back({ "SERVER_DATA", s.serverData });
-
       if (!s.serverId.empty()) {
          const NodeId serverNodeId = HashToNodeId(s.serverId, salt.server);
          EnsureLink(graph, serverNodeId, scNodeId);
@@ -255,6 +291,13 @@ void StartServerController::ProjectHydraUsers()
          n.subtitle = sub;
          n.entityKey = "user:" + uid;
          n.kv = u.facts;
+         AddKvIfMissing(n.kv, "USER_IDENTITY", u.userIdentity);
+         AddKvIfMissing(n.kv, "USER_ID", u.userId);
+         AddKvIfMissing(n.kv, "ACCOUNT_NAME", u.nickname);
+         AddKvIfMissing(n.kv, "PLATFORM", u.platform);
+         AddKvIfMissing(n.kv, "PROVIDER_ID", u.providerId);
+         AddKvIfMissing(n.kv, "USER_IDENTITY_TYPE", u.userIdentityType);
+         AddKvIfMissing(n.kv, "KERNEL_SESSION_ID", u.hydraKernelSessionId);
          n.pos = Vec2f(lay.xUser, y);
          n.size = lay.s32;
          std::sort(n.kv.begin(), n.kv.end(), [](const auto& a, const auto& b) {return a.first < b.first; });

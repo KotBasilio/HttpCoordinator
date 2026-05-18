@@ -44,3 +44,6 @@
 # between Windows and WSL.
 *:Zone.Identifier
 *Zone.Identifier
+
+# Local task briefs/log snippets for Codex context. Do not commit.
+task_ctx/

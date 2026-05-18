@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#pragma message("packet_json_helpers.cpp REV: SC sessions v0.3")
+#pragma message("packet_json_helpers.cpp REV: rich kv v0.1")
 
 namespace Sample::UI::Controllers
 {
@@ -133,7 +133,12 @@ std::string JsonGetString(const Json& j, std::initializer_list<const char*> path
       if (it == cur->end()) return {};
       cur = &(*it);
    }
-   return cur->is_string() ? cur->get<std::string>() : std::string{};
+   if (cur->is_string())          return cur->get<std::string>();
+   if (cur->is_number_integer())  return std::to_string(cur->get<long long>());
+   if (cur->is_number_unsigned()) return std::to_string(cur->get<unsigned long long>());
+   if (cur->is_number_float())    return std::to_string(cur->get<double>());
+   if (cur->is_boolean())         return cur->get<bool>() ? "true" : "false";
+   return {};
 }
 
 } // namespace Sample::UI::Controllers

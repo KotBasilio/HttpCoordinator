@@ -4,12 +4,21 @@
 
 #include <algorithm>
 
-#pragma message("users_ingestion.cpp REV: SC sessions v0.3")
+#pragma message("users_ingestion.cpp REV: rich kv v0.1")
 
 namespace Sample::UI::Controllers
 {
 
 using namespace nlohmann::literals; // enables "... "_json_pointer
+
+static bool SetIfDifferent(std::string& dst, const std::string& src)
+{
+   if (src.empty() || dst == src)
+      return false;
+
+   dst = src;
+   return true;
+}
 
 bool StartServerController::HandleFactsWriteBinaryPackUser(SdkPacket& u)
 {
@@ -25,6 +34,11 @@ bool StartServerController::HandleFactsWriteBinaryPackUser(SdkPacket& u)
 
    st.TouchUser(uid);
    auto& usr = st.users[uid];
+   SetIfDifferent(usr.userIdentity, ExtractUserIdentity(p));
+   SetIfDifferent(usr.hydraKernelSessionId, ExtractHydraKernelSessionId(p));
+   SetIfDifferent(usr.platform, JsonGetString(p, { "userContext", "data", "platform" }));
+   SetIfDifferent(usr.providerId, JsonGetString(p, { "userContext", "data", "providerId" }));
+   SetIfDifferent(usr.userIdentityType, JsonGetString(p, { "userContext", "data", "userIdentityType" }));
 
    // Copy all propertyName/propertyValue pairs from header/context.
    static const auto PCTX = "/header/context"_json_pointer;
@@ -76,9 +90,15 @@ bool StartServerController::HandleSignIn(SdkPacket& u)
 
    st.users[uid].online = true;
    st.TouchUser(uid);
+   auto& usr = st.users[uid];
+   SetIfDifferent(usr.userIdentity, uid);
    const std::string hydraKernelSessionId = ExtractHydraKernelSessionId(p);
    if (!hydraKernelSessionId.empty())
-      st.users[uid].hydraKernelSessionId = hydraKernelSessionId;
+      usr.hydraKernelSessionId = hydraKernelSessionId;
+
+   SetIfDifferent(usr.platform, JsonGetString(p, { "data", "userContext", "data", "platform" }));
+   SetIfDifferent(usr.providerId, JsonGetString(p, { "data", "userContext", "data", "providerId" }));
+   SetIfDifferent(usr.userIdentityType, JsonGetString(p, { "data", "userContext", "data", "userIdentityType" }));
 
    return true;
 }

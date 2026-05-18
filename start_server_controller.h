@@ -43,9 +43,11 @@ private:
    bool HandleMMSessionUpdate(SdkPacket& u);
    bool HandleMMSessionMembers(SdkPacket& u, SessionState& sess);
    bool HandleFactsWriteBinaryPackUser(SdkPacket& u);
+   bool HandleFactsWriteBinaryPackServer(SdkPacket& u);
    bool HandleMatchmakeSessionLeaveRequest(SdkPacket& u);
    bool HandleDedicatedServerHandshake(SdkPacket& u);
    bool HandleDedicatedServerSessionInfo(SdkPacket& u);
+   bool HandleDedicatedServerSetGameSessionTags(SdkPacket& u);
    bool HandleGetStandaloneSignInCodeRequest(SdkPacket& u);
    bool HandleGetStandaloneSignInCodeResponse(SdkPacket& u);
    bool HandleSignInStandaloneCodeRequest(SdkPacket& u);
@@ -57,9 +59,12 @@ private:
    bool HandleSCCreateSessionRequest(SdkPacket& u);
    bool HandleSCCreateSessionResponse(SdkPacket& u);
    bool HandleSCGetServerInfoRequest(SdkPacket& u);
+   bool HandleSCGetServerInfoResponse(SdkPacket& u);
    bool HandleSCGetSessionEventsRequest(SdkPacket& u);
    bool HandleSCGetSessionEventsResponse(SdkPacket& u);
    bool HandleSCPrepareActivateSessionResponse(SdkPacket& u);
+   bool HandleSCActivateSession3Request(SdkPacket& u);
+   bool HandleSCProcessSessionMemberEventsRequest(SdkPacket& u);
    bool ApplyReorderCommands();
 
    // projection LiveState -> GraphModel

@@ -14,8 +14,12 @@ namespace Sample::UI::Controllers {
 struct UserState
 {
    std::string userId;      // userIdentity/userId
+   std::string userIdentity;
    std::string hydraKernelSessionId; // client/user-side kernelSessionId
    std::string nickname;    // best effort
+   std::string platform;
+   std::string providerId;
+   std::string userIdentityType;
    bool online = false;
 
    // propertyName/propertyValue
@@ -78,6 +82,17 @@ struct ServerState {
 
    bool isModernApi = false;
    std::string refreshAfter;
+   bool hasSessionInfo = false;
+   std::string dsApiVersion;
+   std::string serverVersion;
+   std::string reportedIp;
+   std::string reportedIpv6;
+   std::string authEndpointService;
+   std::string authEndpointIp;
+   std::string authEndpointPort;
+   std::string connectionInfo;
+   std::string serverProperty;
+   std::string serverState;
    double lastSeenTimeS = 0.0;
 
    int viewIdx = -1;
@@ -99,6 +114,12 @@ struct SCSessionState {
    std::string dataCenterId;
    std::string clientVersion;
    std::string serverData;
+   std::string connectionInfo;
+   std::string serverProperty;
+   std::string acceptStatus;
+   std::string refreshAfterSeconds;
+   std::string lastSessionMemberEventId;
+   std::string serverFactSessionId;
    std::unordered_map<std::string, std::string> hydraUsers;
 
    int viewIdx = -1;
@@ -129,6 +150,7 @@ struct StandaloneCorrelationState {
 
    PendingSessionControlCreate pendingSCCreate;
    std::string pendingGetSessionEventsSCSessionId;
+   std::string pendingGetServerInfoSCSessionId;
    std::string pendingGetServerSessionInfoServerId;
    std::string pendingSCActivationServerId;
 };

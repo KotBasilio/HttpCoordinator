@@ -4,7 +4,7 @@
 
 #include <utility>
 
-#pragma message("servers_ingestion.cpp REV: SC sessions v0.4")
+#pragma message("servers_ingestion.cpp REV: rich kv v0.1")
 
 namespace Sample::UI::Controllers
 {
@@ -18,6 +18,38 @@ static bool SetIfDifferent(std::string& dst, const std::string& src)
    return true;
 }
 
+static bool SetBoolIfDifferent(bool& dst, bool src)
+{
+   if (dst == src)
+      return false;
+
+   dst = src;
+   return true;
+}
+
+static bool ApplyServerInfoToSC(SCSessionState& sc, const Json& serverInfo)
+{
+   bool changed = false;
+   changed |= SetIfDifferent(sc.connectionInfo, JsonGetString(serverInfo, { "connectionInfo" }));
+   changed |= SetIfDifferent(sc.serverProperty, JsonGetString(serverInfo, { "serverProperty" }));
+   return changed;
+}
+
+static bool ApplyServerInfoToLinkedServer(LiveState& st, const SCSessionState& sc)
+{
+   if (sc.serverId.empty())
+      return false;
+
+   auto it = st.servers.find(sc.serverId);
+   if (it == st.servers.end())
+      return false;
+
+   bool changed = false;
+   changed |= SetIfDifferent(it->second.connectionInfo, sc.connectionInfo);
+   changed |= SetIfDifferent(it->second.serverProperty, sc.serverProperty);
+   return changed;
+}
+
 static bool AttachHydraContextToSC(LiveState& st, SCSessionState& sc,
    const std::string& hydraUserId,
    const std::string& hydraKernelSessionId,
@@ -27,6 +59,7 @@ static bool AttachHydraContextToSC(LiveState& st, SCSessionState& sc,
 
    if (!hydraUserId.empty()) {
       st.TouchUser(hydraUserId);
+      changed |= SetIfDifferent(st.users[hydraUserId].userIdentity, hydraUserId);
       changed |= SetIfDifferent(st.users[hydraUserId].hydraKernelSessionId, hydraKernelSessionId);
       if (sc.hydraUserId.empty())
          changed |= SetIfDifferent(sc.hydraUserId, hydraUserId);
@@ -65,6 +98,33 @@ static bool ApplySessionEventMemberContexts(LiveState& st, SCSessionState& sc, c
    } else if (j.is_array()) {
       for (const auto& item : j) {
          changed |= ApplySessionEventMemberContexts(st, sc, item);
+      }
+   }
+
+   return changed;
+}
+
+static bool ApplyServerFactsContext(SCSessionState& sc, const Json& p)
+{
+   bool changed = false;
+
+   changed |= SetIfDifferent(sc.serverFactSessionId, JsonGetString(p, { "header", "factSessionId" }));
+
+   if (const auto* ctx = NodeAt(p, Json::json_pointer("/header/context")); ctx && ctx->is_array()) {
+      for (const auto& e : *ctx) {
+         if (!e.is_object())
+            continue;
+
+         const std::string key = GetStr(e, "propertyName", "");
+         const std::string value = GetStr(e, "propertyValue", "");
+         if (key == "CLIENT_VERSION") {
+            changed |= SetIfDifferent(sc.clientVersion, value);
+         } else if (key == "KERNEL_SESSION_ID") {
+            changed |= SetIfDifferent(sc.serverContextKernelSessionId, value);
+         } else if (key == "DEDICATED_SERVER_ID") {
+            // Despite the name in server facts, observed value is the SC/kernel session id.
+            changed |= SetIfDifferent(sc.serverFactSessionId, value);
+         }
       }
    }
 
@@ -128,6 +188,14 @@ bool StartServerController::HandleDedicatedServerSessionInfo(SdkPacket& u)
    }
 
    if (u.payload.contains("sessionInfo") && !u.payload["sessionInfo"].is_null()) {
+      const Json& sessionInfo = u.payload["sessionInfo"];
+      changed |= SetBoolIfDifferent(s.hasSessionInfo, true);
+      changed |= SetIfDifferent(s.reportedIp, JsonGetString(sessionInfo, { "reportedInfo", "ip" }));
+      changed |= SetIfDifferent(s.reportedIpv6, JsonGetString(sessionInfo, { "reportedInfo", "ipv6" }));
+      changed |= SetIfDifferent(s.authEndpointService, JsonGetString(sessionInfo, { "authEndpoint", "serviceInfo", "name" }));
+      changed |= SetIfDifferent(s.authEndpointIp, JsonGetString(sessionInfo, { "authEndpoint", "ip" }));
+      changed |= SetIfDifferent(s.authEndpointPort, JsonGetString(sessionInfo, { "authEndpoint", "port" }));
+
       changed |= SetIfDifferent(standaloneCorr.pendingSCActivationServerId, serverId);
    }
 
@@ -197,7 +265,32 @@ bool StartServerController::HandleSCGetServerInfoRequest(SdkPacket& u)
    changed |= AttachHydraContextToSC(st, sc,
       JsonGetString(p, { "userContext", "data", "userIdentity" }),
       JsonGetString(p, { "userContext", "data", "kernelSessionId" }));
+   standaloneCorr.pendingGetServerInfoSCSessionId = scid;
 
+   return changed;
+}
+
+bool StartServerController::HandleSCGetServerInfoResponse(SdkPacket& u)
+{
+   const std::string scid = standaloneCorr.pendingGetServerInfoSCSessionId;
+   if (scid.empty())
+      return false;
+
+   st.TouchSCSession(scid);
+   auto& sc = st.scSessions[scid];
+
+   bool changed = false;
+   changed |= SetIfDifferent(sc.refreshAfterSeconds, JsonGetString(u.payload, { "refreshAfterSeconds" }));
+   changed |= SetIfDifferent(sc.acceptStatus, JsonGetString(u.payload, { "acceptClientResult", "status" }));
+
+   if (auto it = u.payload.find("acceptClientResult"); it != u.payload.end() && it->is_object()) {
+      if (auto itInfo = it->find("serverInfo"); itInfo != it->end() && itInfo->is_object()) {
+         changed |= ApplyServerInfoToSC(sc, *itInfo);
+         changed |= ApplyServerInfoToLinkedServer(st, sc);
+      }
+   }
+
+   standaloneCorr.pendingGetServerInfoSCSessionId.clear();
    return changed;
 }
 
@@ -230,6 +323,8 @@ bool StartServerController::HandleSCGetSessionEventsResponse(SdkPacket& u)
 
    bool changed = isNewSCSession;
    changed |= ApplySessionEventMemberContexts(st, sc, u.payload);
+   changed |= SetIfDifferent(sc.lastSessionMemberEventId,
+      JsonGetString(u.payload, { "sessionMemberEvents", "lastEventId" }));
 
    standaloneCorr.pendingGetSessionEventsSCSessionId.clear();
    return changed;
@@ -259,6 +354,89 @@ bool StartServerController::HandleSCPrepareActivateSessionResponse(SdkPacket& u)
    } else {
       // TODO: if activation responses become interleaved, correlate the
       // pending server with a queue/map keyed by stronger request evidence.
+   }
+
+   return changed;
+}
+
+bool StartServerController::HandleSCActivateSession3Request(SdkPacket& u)
+{
+   const std::string scid = JsonGetString(u.payload, { "serverContext", "data", "kernelSessionId" });
+   if (scid.empty())
+      return false;
+
+   const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
+   st.TouchSCSession(scid);
+   auto& sc = st.scSessions[scid];
+
+   bool changed = isNewSCSession;
+   changed |= SetIfDifferent(sc.serverContextKernelSessionId, scid);
+
+   if (auto it = u.payload.find("serverInfo"); it != u.payload.end() && it->is_object()) {
+      changed |= ApplyServerInfoToSC(sc, *it);
+      changed |= ApplyServerInfoToLinkedServer(st, sc);
+   }
+
+   return changed;
+}
+
+bool StartServerController::HandleSCProcessSessionMemberEventsRequest(SdkPacket& u)
+{
+   const std::string scid = JsonGetString(u.payload, { "serverContext", "data", "kernelSessionId" });
+   if (scid.empty())
+      return false;
+
+   const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
+   st.TouchSCSession(scid);
+   auto& sc = st.scSessions[scid];
+
+   bool changed = isNewSCSession;
+   changed |= SetIfDifferent(sc.serverContextKernelSessionId, scid);
+
+   if (auto it = u.payload.find("list"); it != u.payload.end() && it->is_array()) {
+      for (const auto& item : *it) {
+         changed |= SetIfDifferent(sc.acceptStatus, JsonGetString(item, { "data", "status" }));
+      }
+   }
+
+   return changed;
+}
+
+bool StartServerController::HandleFactsWriteBinaryPackServer(SdkPacket& u)
+{
+   std::string scid = JsonGetString(u.payload, { "serverContext", "data", "kernelSessionId" });
+   if (scid.empty())
+      scid = JsonGetString(u.payload, { "header", "factSessionId" });
+   if (scid.empty())
+      return false;
+
+   const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
+   st.TouchSCSession(scid);
+   auto& sc = st.scSessions[scid];
+
+   bool changed = isNewSCSession;
+   changed |= SetIfDifferent(sc.serverContextKernelSessionId, scid);
+   changed |= ApplyServerFactsContext(sc, u.payload);
+
+   return changed;
+}
+
+bool StartServerController::HandleDedicatedServerSetGameSessionTags(SdkPacket& u)
+{
+   const std::string scid = JsonGetString(u.payload, { "context", "data", "kernelSessionId" });
+   if (scid.empty())
+      return false;
+
+   const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
+   st.TouchSCSession(scid);
+   auto& sc = st.scSessions[scid];
+
+   bool changed = isNewSCSession;
+   changed |= SetIfDifferent(sc.serverContextKernelSessionId, scid);
+
+   if (!sc.serverId.empty()) {
+      st.TouchServer(sc.serverId);
+      changed |= SetIfDifferent(st.servers[sc.serverId].serverState, JsonGetString(u.payload, { "state" }));
    }
 
    return changed;
