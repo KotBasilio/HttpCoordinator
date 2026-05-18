@@ -123,8 +123,8 @@ void StartServerController::ProjectServers()
       n.kv.push_back({ "isModernApi", s.isModernApi ? "true" : "false" });
       if (!s.scSessionId.empty())
          n.kv.push_back({ "scSessionId", s.scSessionId });
-      if (!s.refreshAfter.empty())
-         n.kv.push_back({ "refreshAfter", s.refreshAfter });
+      //if (!s.refreshAfter.empty()) quick-updating info, becomes obsolete too soon
+      //   n.kv.push_back({ "refreshAfter", s.refreshAfter });
 
       if (!s.scSessionId.empty()) {
          const NodeId scNodeId = HashToNodeId(s.scSessionId, salt.sc);

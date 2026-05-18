@@ -5,7 +5,16 @@
 
 static bool IsReorderable(NodeKind k)
 {
-   return (k == NodeKind::User) || (k == NodeKind::Party) || (k == NodeKind::MMSession);
+   switch (k) {
+      case NodeKind::User:
+      case NodeKind::Party:
+      case NodeKind::MMSession:
+      case NodeKind::SCSession:
+      case NodeKind::StandaloneServer:
+      case NodeKind::HeatedDSServer:
+         return true;
+   }
+   return false;
 }
 
 InspectorPanel::InspectorPanel(GraphViewState& view_, GraphModel& model_, Sample::Tex::TextureManager& tex_)

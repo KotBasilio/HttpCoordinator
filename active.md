@@ -26,8 +26,9 @@ The recent working baseline includes:
 - Projector rebuilding `GraphModel` from `LiveState`
 - User key/value facts displayed in Inspector
 - SCSession layer between Server and Hydra
-- Server → SCSession link from dedicated-server session info
+- Server → SCSession link from dedicated-server session-info + SessionControl activation evidence
 - SCSession → HydraSample link from verified SessionControl user context
+- More node kinds are reorderable from the Inspector, including SCSession and server nodes
 - Dynamic sticky columns:
   - Hydra column: always
   - User column: always
@@ -105,6 +106,14 @@ Possible future improvement:
 
 Current reliable evidence:
 
+- Dedicated Server `serverId` is not an SC session id.
+- `Hydra.Api.DedicatedServers.DsDsmCommunication.GetServerSessionInfoRequest`
+  - stores the pending Dedicated Server id.
+- `Hydra.Api.DedicatedServers.DsDsmCommunication.GetServerSessionInfoResponse`
+  - when `sessionInfo` is present, marks that server as pending SC activation.
+- `Hydra.Api.SessionControl.PrepareActivateSessionResponse`
+  - contains the real SC id at `serverContext.data.kernelSessionId`
+  - links the pending Dedicated Server to that real SC id.
 - `Hydra.Api.SessionControl.CreateSessionRequest`
   - stores pending user-side context:
     - `context.data.userIdentity`
@@ -120,7 +129,7 @@ Current reliable evidence:
 - `Hydra.Api.SessionControl.GetSessionEventsResponse`
   - attaches member contexts from `serverUserContext.userContext.data.*` to the pending SC id
 
-Do not collapse `userIdentity`, Facts `USER_ID`, and user/client `kernelSessionId`. Store observed values and link only when the SessionControl packet flow proves the relationship.
+Do not collapse `serverId`, SC `gameSessionId`, server-context `kernelSessionId`, `userIdentity`, Facts `USER_ID`, and user/client `kernelSessionId`. Store observed values and link only when the packet flow proves the relationship.
 
 ### Party ↔ MMSession binding
 
@@ -183,8 +192,22 @@ Verify against real SessionControl traffic:
 - CreateSessionRequest followed by CreateSessionResponse creates SCSession → HydraSample.
 - GetServerInfoRequest confirms/updates the same link.
 - GetSessionEventsRequest/Response can add member Hydra contexts to the SCSession.
-- Dedicated-server session info still creates Server → SCSession.
+- Dedicated-server session info followed by PrepareActivateSessionResponse creates Server → SCSession.
 - Inspector shows factual SC keys such as `SC_GAME_SESSION_ID`, `SC_SERVER_KERNEL_SESSION_ID`, `HYDRA_USER_IDENTITY`, and `HYDRA_KERNEL_SESSION_ID`.
+
+### Task 5 — Rich Node Property Tables
+
+Next major direction:
+
+- Make Inspector property tables richer and node-specific.
+- Keep `GraphNode::kv` as the projection payload surface unless a stronger table model is clearly needed.
+- Prefer factual fields from reducer state over transient/noisy fields.
+- Avoid showing fast-expiring values such as short `refreshAfter` timers unless they are useful for the current debug task.
+- Useful first targets:
+  - Server: server id, kind, modern API flag, linked SC session id, server name / standalone relation when present.
+  - SCSession: game session id, server-context kernel session id, linked server id, Hydra user identity, Hydra kernel session id, member count.
+  - User: user id, nickname, online state, kernel session id, Facts key/value payload.
+  - Party/MM: stable ids, member count, owner/leader, join code/state, reduced link explanation when useful.
 
 ## Validation approach
 

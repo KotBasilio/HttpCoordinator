@@ -4,8 +4,6 @@
 
 #include <utility>
 
-#pragma message("presence_ingestion.cpp REV: SC sessions v0.0")
-
 namespace Sample::UI::Controllers
 {
 

@@ -38,7 +38,8 @@ The UI is split into four panes:
 3. Inspector panel, right
    - Shows selected node metadata.
    - Shows incoming/outgoing links.
-   - Shows key/value facts for selected user nodes.
+   - Shows key/value facts for selected nodes.
+   - Next major direction is richer, node-specific property tables instead of one generic facts table.
 
 4. Logs panel, bottom
    - Shows runtime logs.
@@ -168,7 +169,11 @@ Column order is:
 Server → SCSession → HydraSample → User → Party → MMSession
 
 Current reliable linking rules:
-- Dedicated-server session info can create/confirm an SCSession and link Server → SCSession.
+- Dedicated-server handshake/session info creates the Server node, but `serverId` is not an SC session id.
+- `GetServerSessionInfoRequest` stores the pending Dedicated Server id.
+- `GetServerSessionInfoResponse` with `sessionInfo` marks that server as pending SC activation.
+- `Hydra.Api.SessionControl.PrepareActivateSessionResponse` contains the real SC id in `serverContext.data.kernelSessionId`.
+- Server → SCSession is linked only when that activation flow proves `ServerState::scSessionId`.
 - `Hydra.Api.SessionControl.CreateSessionRequest` stores pending user-side context:
   - `userIdentity`
   - user/client `kernelSessionId`
@@ -180,8 +185,9 @@ Current reliable linking rules:
 
 Projector behavior:
 - Render SCSession nodes from `LiveState::scSessions`.
-- Add Server → SCSession only when `SCSessionState::serverId` is known.
+- Add Server → SCSession when `ServerState::scSessionId` or `SCSessionState::serverId` is known.
 - Add SCSession → HydraSample only when SessionControl state has verified user identity context.
+- Never use Dedicated Server `serverId` as an SC session id.
 - Do not invent SC links from matching-looking IDs without packet evidence.
 
 ## Party / MM design
@@ -263,8 +269,10 @@ The current active line is improving graph evolution from real Hydra/SDK event s
 
 Recent / active features include:
 - User facts displayed in Inspector.
+- Inspector can display `GraphNode::kv` for any selected node; richer per-node property tables are the next direction.
 - Party nodes.
 - Dynamic sticky graph columns.
+- SCSession column and evidence-based Server → SCSession → HydraSample linking.
 - Party → MM link reduction.
 - Handling Party disband and MM leave requests.
 - Investigating identity mapping among `userIdentity`, `userId`, and Facts `USER_ID`.
