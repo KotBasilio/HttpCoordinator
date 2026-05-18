@@ -104,19 +104,6 @@ static void AddKv(std::vector<std::pair<std::string, std::string>>& kv,
    kv.push_back({ key, value ? "true" : "false" });
 }
 
-static void AddKvIfMissing(std::vector<std::pair<std::string, std::string>>& kv,
-   const char* key,
-   const std::string& value)
-{
-   if (value.empty())
-      return;
-
-   const auto it = std::find_if(kv.begin(), kv.end(),
-      [key](const auto& row) { return row.first == key; });
-   if (it == kv.end())
-      kv.push_back({ key, value });
-}
-
 static std::string FindKvValue(const std::vector<std::pair<std::string, std::string>>& kv,
    const char* key)
 {
@@ -124,6 +111,30 @@ static std::string FindKvValue(const std::vector<std::pair<std::string, std::str
       [key](const auto& row) { return row.first == key; });
 
    return (it == kv.end()) ? std::string{} : it->second;
+}
+
+static void AddKvIfMissing(std::vector<std::pair<std::string, std::string>>& kv,
+   const char* key,
+   const std::string& value,
+   const char* existingKey = nullptr)
+{
+   if (value.empty())
+      return;
+
+   // Check if the key already exists
+   const auto it = std::find_if(kv.begin(), kv.end(),
+      [key](const auto& row) { return row.first == key; });
+   if (it != kv.end())
+      return;
+
+   // Check if the value exists under the alternative key
+   if (existingKey) {
+      std::string existingValue = FindKvValue(kv, existingKey);
+      if (existingValue == value)
+         return;
+   }
+
+   kv.push_back({ key, value });
 }
 
 static GraphNode* FindNode(GraphModel& g, NodeId id)
@@ -165,7 +176,7 @@ void StartServerController::ProjectServers()
 
       n.kv.clear();
       AddKv(n.kv, "SERVER_ID", serverId);
-      AddKv(n.kv, "SERVER_KIND", std::string(isStandalone ? "StandaloneServer" : "HeatedDSServer"));
+      AddKv(n.kv, "SERVER_KIND", n.title);
       AddKv(n.kv, "IS_MODERN_API", s.isModernApi);
       AddKv(n.kv, "DS_API_VERSION", s.dsApiVersion);
       AddKv(n.kv, "SERVER_VERSION", s.serverVersion);
@@ -317,15 +328,11 @@ void StartServerController::ProjectHydraUsers()
          n.subtitle = sub;
          n.entityKey = "user:" + uid;
          n.kv = u.facts;
-         const std::string factUserId = FindKvValue(n.kv, "USER_ID");
-         const std::string effectiveUserId = !factUserId.empty() ? factUserId : u.userId;
-         if (u.userIdentity != effectiveUserId)
-            AddKvIfMissing(n.kv, "USER_IDENTITY", u.userIdentity);
+         AddKvIfMissing(n.kv, "USER_IDENTITY", u.userIdentity, "USER_ID");
          AddKvIfMissing(n.kv, "USER_ID", u.userId);
          AddKvIfMissing(n.kv, "ACCOUNT_NAME", u.nickname);
          AddKvIfMissing(n.kv, "PLATFORM", u.platform);
-         if (u.providerId != FindKvValue(n.kv, "PROVIDER"))
-            AddKvIfMissing(n.kv, "PROVIDER_ID", u.providerId);
+         AddKvIfMissing(n.kv, "PROVIDER_ID", u.providerId, "PROVIDER");
          AddKvIfMissing(n.kv, "USER_IDENTITY_TYPE", u.userIdentityType);
          AddKvIfMissing(n.kv, "KERNEL_SESSION_ID", u.hydraKernelSessionId);
          n.pos = Vec2f(lay.xUser, y);
