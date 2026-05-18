@@ -21,105 +21,42 @@ The tool should help us understand multiplayer/session behavior by turning noisy
 
 ### Current priority
 
-#### 1. Validate SCSession linking against real SessionControl traffic
+#### 1. Keep rich node properties useful and factual
 
-The latest direction is evidence-based Server/SC/Hydra linking:
+Recent work populated `GraphNode::kv` for Server, SCSession, User, HydraSample, Party, and MMSession nodes.
 
-- Dedicated Server `serverId` is **not** an SC session id.
-- Real SC session ids come from:
-  - `CreateSessionResponse.gameSessionId`
-  - `serverContext.data.kernelSessionId`
-- User/Hydra-side context comes from:
-  - `userContext.data.userIdentity`
-  - `userContext.data.kernelSessionId`
-  - similar `context.data.*` paths when present
+Next likely refinement:
+- keep adding only stable, named facts observed in reducer state;
+- omit empty placeholders and duplicate identity aliases;
+- avoid tokens, raw endpoint dumps, and transient/noisy values;
+- keep Inspector backed by `GraphNode::kv` until a stronger property-section model is truly needed.
 
-Current expected visual chain:
+#### 2. Keep the split projector easy to bridge
+
+`projector.cpp` was split into focused modules:
+
+- `projector.cpp`: core projection orchestration.
+- `projector_internal.h`: shared internal declarations.
+- `projector_keys_values.cpp`: `GraphNode::kv` population helpers.
+- `projector_layout.cpp`: graph column and Y placement helpers.
+- `projector_nodes.cpp`: node creation/projection.
+- `projector_links.cpp`: link creation and reduction.
+
+Bridge scripts in `bridges/` should stay aware of these files.
+
+#### 3. Preserve graph behavior while iterating
+
+Current graph story remains:
 
 ```text
-HeatedDSServer / StandaloneServer → SCSession → HydraSample → User
+Server → SCSession → HydraSample → User → Party → MMSession
 ```
 
-Validation questions:
-- Does `GetServerSessionInfoRequest/Response` followed by `PrepareActivateSessionResponse` create exactly one Server → SCSession link for the tested run?
-- Does `CreateSessionRequest/Response` or `GetServerInfoRequest` create SCSession → HydraSample only when user-side context is observed?
-- Are extra SCSession nodes being created from non-SC IDs?
-- Are stale pending correlation fields cleared or harmless for the current ordered stream?
-
-#### 2. Prepare richer node property tables
-
-Next UI direction:
-
-- Keep `GraphNode::kv` as the projection payload surface unless pressure demands a stronger model.
-- Make Inspector property tables richer and more node-specific.
-- Prefer factual reducer state over transient/noisy values.
-
-Useful first targets:
-- Server: server id, kind, modern API flag, linked SC session id, server name / standalone relation when present.
-- SCSession: game session id, server-context kernel session id, linked server id, Hydra user identity, Hydra kernel session id, member count.
-- User: user id, nickname, online state, kernel session id, Facts key/value payload.
-- Party/MM: stable ids, member count, owner/leader, join code/state, reduced link explanation when useful.
-
-#### 3. Keep Party/MM behavior stable
-
-Existing Party/MM logic should remain stable while SC work continues.
-
-Do not redesign Party/MM unless the task explicitly asks for it.
+Existing Party/MM and SCSession behavior should remain stable unless a task explicitly promotes a change.
 
 ## Validated
 
-These are recent accepted/working baselines. They are useful context, not all current work.
-
-### Ingestion and reducer/projector architecture
-
-Validated baseline:
-
-1. HTTP request arrives.
-2. Request becomes `SdkPacket`.
-3. Dispatch happens by `SdkPacket::reqNameId`.
-4. Reducers update `LiveState`.
-5. At the end of the ingestion drain batch:
-   - if anything changed, call projector once.
-6. Projector clears/rebuilds `GraphModel` deterministically.
-
-Do not directly hand-edit graph nodes from packet handlers.
-
-### User facts in Inspector
-
-Validated behavior:
-- `Pros.Api.Facts.WriteBinaryPackUserRequest` carries useful `propertyName` / `propertyValue` pairs.
-- These are projected into `GraphNode::kv`.
-- Inspector displays these pairs for selected nodes, especially User nodes.
-
-### Dynamic sticky columns
-
-Validated behavior:
-- Hydra column: always.
-- User column: always.
-- Party column: appears once a renderable Party exists, then stays for the run.
-- MM column: appears once a renderable MM session exists, then stays for the run.
-- SCSession is placed between Server and Hydra.
-
-### Party and MM projection
-
-Validated / intended behavior:
-- Party reducer handles `Hydra.Api.Push.Presence.PresencePartyUpdate`.
-- Party nodes hide when empty.
-- MMSession nodes hide when empty.
-- Party and MM Y positions are based on average member User Y.
-- Overlap nudging keeps multiple groups visually separated.
-- Party → MM link reduction:
-  - if Party member set matches MMSession member set;
-  - and MM leader belongs to that Party;
-  - replace direct User → MMSession links with Party → MMSession link.
-
-### SCSession layer
-
-Validated direction:
-- SCSession is the SessionControl/game-session layer between Server and Hydra.
-- Dedicated Server `serverId` must not be used as an SCSession id.
-- Server → SCSession should be based on observed activation flow, not ID resemblance.
-- SCSession → Hydra should be based on observed user-side SessionControl context.
+Accepted baselines live in `history.md` so this cockpit stays short.
 
 ## Deferred
 

@@ -17,7 +17,7 @@ HTTP/event stream
 
 The graph is not hand-authored. It is derived from incoming packets.
 
-Also read `active.md` at repo root for the current task focus; it is intentionally short-lived and may override older project direction notes. Treat `AGENTS.md` as durable repo guidance and `active.md` as the current cockpit.
+Also read `active.md` at repo root for the current task focus; it is intentionally short-lived and may override older project direction notes. Treat `AGENTS.md` as durable repo guidance, `active.md` as the current cockpit, and `history.md` as accepted background that should not clutter the cockpit.
 
 ## Two-chat community: Codex ↔ Archy ↔ LL
 
@@ -280,6 +280,10 @@ The human workflow uses:
 - `🔏G-lock`: mark a reviewed baseline as accepted.
 
 Respect these labels in comments or task notes if they appear. Do not assume stale code is current.
+
+## Maintainer commands
+
+- `MD-up`: update `AGENTS.md`, `active.md`, and `history.md` with accumulated project/workflow knowledge. Keep `active.md` focused on current work, move accepted or older validated ideas into `history.md`, then commit and push as usual.
 
 ## Style preferences
 
