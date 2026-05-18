@@ -117,6 +117,15 @@ static void AddKvIfMissing(std::vector<std::pair<std::string, std::string>>& kv,
       kv.push_back({ key, value });
 }
 
+static std::string FindKvValue(const std::vector<std::pair<std::string, std::string>>& kv,
+   const char* key)
+{
+   const auto it = std::find_if(kv.begin(), kv.end(),
+      [key](const auto& row) { return row.first == key; });
+
+   return (it == kv.end()) ? std::string{} : it->second;
+}
+
 static GraphNode* FindNode(GraphModel& g, NodeId id)
 {
    for (auto& n : g.nodes)
@@ -160,7 +169,7 @@ void StartServerController::ProjectServers()
       AddKv(n.kv, "IS_MODERN_API", s.isModernApi);
       AddKv(n.kv, "DS_API_VERSION", s.dsApiVersion);
       AddKv(n.kv, "SERVER_VERSION", s.serverVersion);
-      AddKv(n.kv, "REFRESH_AFTER", s.refreshAfter);
+      //AddKv(n.kv, "REFRESH_AFTER", s.refreshAfter); too transient, don't add
       AddKv(n.kv, "HAS_SESSION_INFO", s.hasSessionInfo);
       AddKv(n.kv, "REPORTED_IP", s.reportedIp);
       AddKv(n.kv, "REPORTED_IPV6", s.reportedIpv6);
@@ -227,7 +236,7 @@ void StartServerController::ProjectSCSessions()
       AddKv(n.kv, "CONNECTION_INFO", s.connectionInfo);
       AddKv(n.kv, "SERVER_PROPERTY", s.serverProperty);
       AddKv(n.kv, "ACCEPT_STATUS", s.acceptStatus);
-      AddKv(n.kv, "REFRESH_AFTER_SECONDS", s.refreshAfterSeconds);
+      //AddKv(n.kv, "REFRESH_AFTER_SECONDS", s.refreshAfterSeconds); too transient, don't add
       AddKv(n.kv, "LAST_SESSION_MEMBER_EVENT_ID", s.lastSessionMemberEventId);
       AddKv(n.kv, "SERVER_FACT_SESSION_ID", s.serverFactSessionId);
       if (!s.hydraUsers.empty())
@@ -308,11 +317,15 @@ void StartServerController::ProjectHydraUsers()
          n.subtitle = sub;
          n.entityKey = "user:" + uid;
          n.kv = u.facts;
-         AddKvIfMissing(n.kv, "USER_IDENTITY", u.userIdentity);
+         const std::string factUserId = FindKvValue(n.kv, "USER_ID");
+         const std::string effectiveUserId = !factUserId.empty() ? factUserId : u.userId;
+         if (u.userIdentity != effectiveUserId)
+            AddKvIfMissing(n.kv, "USER_IDENTITY", u.userIdentity);
          AddKvIfMissing(n.kv, "USER_ID", u.userId);
          AddKvIfMissing(n.kv, "ACCOUNT_NAME", u.nickname);
          AddKvIfMissing(n.kv, "PLATFORM", u.platform);
-         AddKvIfMissing(n.kv, "PROVIDER_ID", u.providerId);
+         if (u.providerId != FindKvValue(n.kv, "PROVIDER"))
+            AddKvIfMissing(n.kv, "PROVIDER_ID", u.providerId);
          AddKvIfMissing(n.kv, "USER_IDENTITY_TYPE", u.userIdentityType);
          AddKvIfMissing(n.kv, "KERNEL_SESSION_ID", u.hydraKernelSessionId);
          n.pos = Vec2f(lay.xUser, y);
