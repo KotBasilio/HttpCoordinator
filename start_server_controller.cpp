@@ -117,13 +117,8 @@ bool StartServerController::ApplyServerReducers(SdkPacket& u)
       case HYDRA_API_DEDICATEDSERVERS_DSDSMCOMMUNICATION_GETSERVERSESSIONINFORESPONSE: return HandleDedicatedServerSessionInfo(u);
    }
 
-   // SessionControl / standalone servers
+   // Standalone servers
    switch (u.reqNameId) {
-      case HYDRA_API_SESSIONCONTROL_CREATESESSIONREQUEST:          return HandleSCCreateSessionRequest(u);
-      case HYDRA_API_SESSIONCONTROL_CREATESESSIONRESPONSE:         return HandleSCCreateSessionResponse(u);
-      case HYDRA_API_SESSIONCONTROL_GETSERVERINFOREQUEST:          return HandleSCGetServerInfoRequest(u);
-      case HYDRA_API_SESSIONCONTROL_GETSESSIONEVENTSREQUEST:       return HandleSCGetSessionEventsRequest(u);
-      case HYDRA_API_SESSIONCONTROL_GETSESSIONEVENTSRESPONSE:      return HandleSCGetSessionEventsResponse(u);
       case PROS_GLOBAL_API_AUTH_GETSTANDALONESIGNINCODEREQUEST:   return HandleGetStandaloneSignInCodeRequest(u);
       case PROS_GLOBAL_API_AUTH_GETSTANDALONESIGNINCODERESPONSE:  return HandleGetStandaloneSignInCodeResponse(u);
       case PROS_GLOBAL_API_AUTH_SIGNINSTANDALONECODEREQUEST:      return HandleSignInStandaloneCodeRequest(u);
@@ -132,6 +127,16 @@ bool StartServerController::ApplyServerReducers(SdkPacket& u)
       case HYDRA_API_SESSIONCONTROL_CREATESERVERRESPONSE:         return HandleCreateStandaloneServerResponse(u);
       case HYDRA_API_SESSIONCONTROL_HEARTBEATSERVERREQUEST:       return HandleStandaloneHeartbeatServerRequest(u);
       case HYDRA_API_CHALLENGES_SERVERGETCHALLENGESREQUEST:       return HandleStandaloneServerGetChallengesRequest(u);
+   }
+
+   // SessionControl
+   switch (u.reqNameId) {
+      case HYDRA_API_SESSIONCONTROL_CREATESESSIONREQUEST:          return HandleSCCreateSessionRequest(u);
+      case HYDRA_API_SESSIONCONTROL_CREATESESSIONRESPONSE:         return HandleSCCreateSessionResponse(u);
+      case HYDRA_API_SESSIONCONTROL_GETSERVERINFOREQUEST:          return HandleSCGetServerInfoRequest(u);
+      case HYDRA_API_SESSIONCONTROL_GETSESSIONEVENTSREQUEST:       return HandleSCGetSessionEventsRequest(u);
+      case HYDRA_API_SESSIONCONTROL_GETSESSIONEVENTSRESPONSE:      return HandleSCGetSessionEventsResponse(u);
+      case HYDRA_API_SESSIONCONTROL_PREPAREACTIVATESESSIONRESPONSE:return HandleSCPrepareActivateSessionResponse(u);
    }
 
    return false;

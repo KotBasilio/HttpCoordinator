@@ -121,8 +121,15 @@ void StartServerController::ProjectServers()
       n.kv.push_back({ "serverId", serverId });
       n.kv.push_back({ "kind", isStandalone ? "StandaloneServer" : "HeatedDSServer" });
       n.kv.push_back({ "isModernApi", s.isModernApi ? "true" : "false" });
+      if (!s.scSessionId.empty())
+         n.kv.push_back({ "scSessionId", s.scSessionId });
       if (!s.refreshAfter.empty())
          n.kv.push_back({ "refreshAfter", s.refreshAfter });
+
+      if (!s.scSessionId.empty()) {
+         const NodeId scNodeId = HashToNodeId(s.scSessionId, salt.sc);
+         EnsureLink(graph, nodeId, scNodeId);
+      }
 
       if (isStandalone) {
          if (!s.serverName.empty())

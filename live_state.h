@@ -85,6 +85,7 @@ struct ServerState {
 
    std::string serverName;            // standalone server name
    std::string hydraUserId;           // attach to HydraSample keyed by uid
+   std::string scSessionId;           // linked SessionControl session id, when proven
 };
 
 struct SCSessionState {
@@ -128,6 +129,8 @@ struct StandaloneCorrelationState {
 
    PendingSessionControlCreate pendingSCCreate;
    std::string pendingGetSessionEventsSCSessionId;
+   std::string pendingGetServerSessionInfoServerId;
+   std::string pendingSCActivationServerId;
 };
 
 struct LiveState

@@ -4,7 +4,7 @@
 
 #include <utility>
 
-#pragma message("servers_ingestion.cpp REV: SC sessions v0.3")
+#pragma message("servers_ingestion.cpp REV: SC sessions v0.4")
 
 namespace Sample::UI::Controllers
 {
@@ -98,27 +98,37 @@ bool StartServerController::HandleDedicatedServerHandshake(SdkPacket& u)
 
 bool StartServerController::HandleDedicatedServerSessionInfo(SdkPacket& u)
 {
-   const std::string serverId = u.payload.value("serverId", "");
-   if (serverId.empty())
+   if (u.reqNameId == HYDRA_API_DEDICATEDSERVERS_DSDSMCOMMUNICATION_GETSERVERSESSIONINFOREQUEST) {
+      const std::string serverId = u.payload.value("serverId", "");
+      if (serverId.empty())
+         return false;
+
+      const bool isNewServer = (st.servers.find(serverId) == st.servers.end());
+      st.TouchServer(serverId);
+      standaloneCorr.pendingGetServerSessionInfoServerId = serverId;
+      return isNewServer;
+   }
+
+   const std::string serverId = standaloneCorr.pendingGetServerSessionInfoServerId;
+   if (serverId.empty()) {
+      // TODO: if server session info responses become interleaved, correlate
+      // requests/responses with a queue or stronger request id instead.
       return false;
+   }
 
    st.TouchServer(serverId);
    auto& s = st.servers[serverId];
 
-   st.TouchSCSession(serverId);
-   auto& sc = st.scSessions[serverId];
-
    bool changed = false;
-   if (sc.serverId != serverId) {
-      sc.serverId = serverId;
-      changed = true;
-   }
-   changed |= SetIfDifferent(sc.serverContextKernelSessionId, serverId);
 
    const std::string refreshAfter = u.payload.value("refreshAfter", "");
    if (s.refreshAfter != refreshAfter) {
       s.refreshAfter = refreshAfter;
       changed = true;
+   }
+
+   if (u.payload.contains("sessionInfo") && !u.payload["sessionInfo"].is_null()) {
+      changed |= SetIfDifferent(standaloneCorr.pendingSCActivationServerId, serverId);
    }
 
    s.lastSeenTimeS = u.recv_time_s;
@@ -222,6 +232,35 @@ bool StartServerController::HandleSCGetSessionEventsResponse(SdkPacket& u)
    changed |= ApplySessionEventMemberContexts(st, sc, u.payload);
 
    standaloneCorr.pendingGetSessionEventsSCSessionId.clear();
+   return changed;
+}
+
+bool StartServerController::HandleSCPrepareActivateSessionResponse(SdkPacket& u)
+{
+   const std::string scid = JsonGetString(u.payload, { "serverContext", "data", "kernelSessionId" });
+   if (scid.empty())
+      return false;
+
+   const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
+   st.TouchSCSession(scid);
+   auto& sc = st.scSessions[scid];
+
+   bool changed = isNewSCSession;
+   changed |= SetIfDifferent(sc.serverContextKernelSessionId, scid);
+   changed |= SetIfDifferent(sc.serverData, JsonGetString(u.payload, { "serverData" }));
+
+   const std::string serverId = standaloneCorr.pendingSCActivationServerId;
+   if (!serverId.empty()) {
+      st.TouchServer(serverId);
+      auto& server = st.servers[serverId];
+      changed |= SetIfDifferent(server.scSessionId, scid);
+      changed |= SetIfDifferent(sc.serverId, serverId);
+      standaloneCorr.pendingSCActivationServerId.clear();
+   } else {
+      // TODO: if activation responses become interleaved, correlate the
+      // pending server with a queue/map keyed by stronger request evidence.
+   }
+
    return changed;
 }
 
