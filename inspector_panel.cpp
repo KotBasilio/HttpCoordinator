@@ -1,7 +1,8 @@
 #include "inspector_panel.h"
 #include <imgui.h>
+#include <algorithm>
 
-#pragma message("inspector_panel.cpp REV: SC sessions v0.3")
+#pragma message("inspector_panel.cpp REV: rich kv v0.2")
 
 static bool IsReorderable(NodeKind k)
 {
@@ -144,10 +145,15 @@ void InspectorPanel::DrawNodeKeys(const GraphNode& n)
       float childHeight = std::max(minHeight, availY);
       ImGui::BeginChild("facts_kv", ImVec2(0, childHeight), true);
 
-      if (ImGui::BeginTable("facts_tbl", 2,
-         ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp)) {
+      ImGuiTableFlags flags =
+         ImGuiTableFlags_RowBg |
+         ImGuiTableFlags_BordersInnerV |
+         ImGuiTableFlags_BordersOuter |
+         ImGuiTableFlags_Resizable |
+         ImGuiTableFlags_SizingStretchProp;
 
-         ImGui::TableSetupColumn("propName", ImGuiTableColumnFlags_WidthFixed, 170.0f);
+      if (ImGui::BeginTable("facts_tbl", 2, flags)) {
+         ImGui::TableSetupColumn("propName", ImGuiTableColumnFlags_WidthFixed, 220.0f);
          ImGui::TableSetupColumn("propValue", ImGuiTableColumnFlags_WidthStretch);
          ImGui::TableHeadersRow();
 

@@ -99,7 +99,7 @@ void FillSCSessionKv(GraphNode& n, const SCSessionState& s, const std::string& s
       n.kv.push_back({ "HYDRA_MEMBER_COUNT", std::to_string(s.hydraUsers.size()) });
 
    for (const std::string& hydraUserId : hydraUserIds) {
-      n.kv.push_back({ "HYDRA_MEMBER_USER_IDENTITY", hydraUserId });
+      n.kv.push_back({ "HYDRA_MEMBER_USER_ID", hydraUserId });
    }
 }
 
