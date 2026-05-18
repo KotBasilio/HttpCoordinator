@@ -51,13 +51,16 @@ The relevant `NodeKind` values include:
 
 - `HydraSample`
 - `User`
+- `SCSession`
 - `Party`
 - `MMSession`
 - plus older/demo kinds such as `DSSession`, `HeatedDSServer`, `SCSession`, etc.
 
 For the current feature line, the main graph story is:
 
-HydraSample → User → Party → MMSession
+HeatedDSServer / StandaloneServer → SCSession → HydraSample → User → Party → MMSession
+
+SCSession is the SessionControl/game-session layer between Servers and Hydra.
 
 HydraSample and User columns are always present.
 Party and MMSession columns are dynamic/sticky per run:
@@ -100,12 +103,14 @@ Likely important files:
   - Handles Party and MMSession reducers, including disband/leave requests.
 
 - `servers_ingestion.cpp`
-  - Handles dedicated-server and standalone-server reducers/correlation.
+  - Handles dedicated-server, SessionControl, and standalone-server reducers/correlation.
+  - Creates SCSession state from dedicated-server session info and SessionControl flows.
 
 - `projector.cpp`
   - Converts `LiveState` into `GraphModel`.
-  - Places Hydra/User/Party/MM nodes.
+  - Places Server/SCSession/Hydra/User/Party/MM nodes.
   - Handles dynamic columns.
+  - Projects Server → SCSession and SCSession → Hydra links when reducer state proves them.
   - Applies link reduction such as Party → MM when Party members match MM session members.
 
 - `graph_types.h`
@@ -154,6 +159,31 @@ There may be several IDs:
 
 Do not assume these are the same without checking. This identity seam is one of the main reasons this Coordinator tool exists.
 
+## SessionControl / SCSession design
+
+`NodeKind::SCSession` represents the SessionControl game-session layer.
+
+Column order is:
+
+Server → SCSession → HydraSample → User → Party → MMSession
+
+Current reliable linking rules:
+- Dedicated-server session info can create/confirm an SCSession and link Server → SCSession.
+- `Hydra.Api.SessionControl.CreateSessionRequest` stores pending user-side context:
+  - `userIdentity`
+  - user/client `kernelSessionId`
+  - optional factual debug fields such as data center / client version / server data
+- `Hydra.Api.SessionControl.CreateSessionResponse` uses `gameSessionId` as the SC session id and attaches the pending user-side context.
+- `Hydra.Api.SessionControl.GetServerInfoRequest` directly confirms `gameSessionId` + user-side context in one packet.
+- `Hydra.Api.SessionControl.GetSessionEventsRequest` remembers `serverContext.data.kernelSessionId` as the current SC session id.
+- The following `GetSessionEventsResponse` can attach member user contexts from `serverUserContext.userContext.data.*`.
+
+Projector behavior:
+- Render SCSession nodes from `LiveState::scSessions`.
+- Add Server → SCSession only when `SCSessionState::serverId` is known.
+- Add SCSession → HydraSample only when SessionControl state has verified user identity context.
+- Do not invent SC links from matching-looking IDs without packet evidence.
+
 ## Party / MM design
 
 Party handling is based on `Hydra.Api.Push.Presence.PresencePartyUpdate`.
@@ -186,7 +216,9 @@ This makes the graph read as “Party goes matchmaking” instead of a tangle of
 
 ## Layout rules
 
-Hydra/User/Party/MM nodes are placed in columns.
+Server/SCSession/Hydra/User/Party/MM nodes are placed in columns.
+
+SCSession is placed between Server and Hydra.
 
 Users have stable Y positions based on first-seen order.
 

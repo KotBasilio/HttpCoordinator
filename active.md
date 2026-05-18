@@ -14,7 +14,7 @@ The tool should help us understand multiplayer/session behavior by turning noisy
 
 Current graph story:
 
-HydraSample → User → Party → MMSession
+Server → SCSession → HydraSample → User → Party → MMSession
 
 ## Current baseline
 
@@ -25,6 +25,9 @@ The recent working baseline includes:
 - Reducers updating `LiveState`
 - Projector rebuilding `GraphModel` from `LiveState`
 - User key/value facts displayed in Inspector
+- SCSession layer between Server and Hydra
+- Server → SCSession link from dedicated-server session info
+- SCSession → HydraSample link from verified SessionControl user context
 - Dynamic sticky columns:
   - Hydra column: always
   - User column: always
@@ -98,6 +101,27 @@ When adding logic that connects users, parties, and MM sessions, inspect actual 
 Possible future improvement:
 - maintain an identity map from `userIdentity` to canonical `USER_ID` when Facts packets reveal both.
 
+### SessionControl / SCSession binding
+
+Current reliable evidence:
+
+- `Hydra.Api.SessionControl.CreateSessionRequest`
+  - stores pending user-side context:
+    - `context.data.userIdentity`
+    - `context.data.kernelSessionId`
+    - or equivalent `userContext.data.*`
+- `Hydra.Api.SessionControl.CreateSessionResponse`
+  - uses `gameSessionId` as the SC session id
+  - attaches the pending user-side context to that SC session
+- `Hydra.Api.SessionControl.GetServerInfoRequest`
+  - directly confirms `gameSessionId` plus `userContext.data.userIdentity` and user/client `kernelSessionId`
+- `Hydra.Api.SessionControl.GetSessionEventsRequest`
+  - stores pending SC id from `serverContext.data.kernelSessionId`
+- `Hydra.Api.SessionControl.GetSessionEventsResponse`
+  - attaches member contexts from `serverUserContext.userContext.data.*` to the pending SC id
+
+Do not collapse `userIdentity`, Facts `USER_ID`, and user/client `kernelSessionId`. Store observed values and link only when the SessionControl packet flow proves the relationship.
+
 ### Party ↔ MMSession binding
 
 Preferred current heuristic:
@@ -118,6 +142,8 @@ Current visual behavior:
 - Hide empty Party nodes.
 - Hide empty MMSession nodes.
 - Keep Party/MM columns sticky once they were visible in the run.
+
+SCSession nodes are state-backed and should only appear when reducers have observed a real SC id such as `gameSessionId` or `serverContext.data.kernelSessionId`.
 
 ## Near-term tasks
 
@@ -150,6 +176,16 @@ Before changing Party ↔ MM binding, inspect actual Facts and Presence packets.
 
 Do not guess new semantics if the stream does not prove them.
 
+### Task 4 — Validate SCSession linking
+
+Verify against real SessionControl traffic:
+
+- CreateSessionRequest followed by CreateSessionResponse creates SCSession → HydraSample.
+- GetServerInfoRequest confirms/updates the same link.
+- GetSessionEventsRequest/Response can add member Hydra contexts to the SCSession.
+- Dedicated-server session info still creates Server → SCSession.
+- Inspector shows factual SC keys such as `SC_GAME_SESSION_ID`, `SC_SERVER_KERNEL_SESSION_ID`, `HYDRA_USER_IDENTITY`, and `HYDRA_KERNEL_SESSION_ID`.
+
 ## Validation approach
 
 Recommended manual validation:
@@ -157,6 +193,8 @@ Recommended manual validation:
 1. Run app.
 2. Feed known Hydra logs / replay stream.
 3. Watch graph evolution:
+   - Server/SCSession nodes appear when real server/session-control events arrive.
+   - SCSession links to HydraSample when SessionControl context proves the relation.
    - HydraSample/User nodes appear.
    - User facts appear in Inspector.
    - Party node appears when Party exists.
