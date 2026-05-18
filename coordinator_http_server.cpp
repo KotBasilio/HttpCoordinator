@@ -2,7 +2,7 @@
 
 #include "ui/controllers/coordinator_http_server.h"
 
-#pragma message("coordinator_http_server.cpp REV: SC sessions v0.1")
+#pragma message("coordinator_http_server.cpp REV: SC sessions v0.3")
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 

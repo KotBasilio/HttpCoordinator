@@ -4,7 +4,7 @@
 
 #include <algorithm>
 
-#pragma message("users_ingestion.cpp REV: SC sessions v0.1")
+#pragma message("users_ingestion.cpp REV: SC sessions v0.3")
 
 namespace Sample::UI::Controllers
 {

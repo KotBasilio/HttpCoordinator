@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#pragma message("packet_json_helpers.cpp REV: SC sessions v0.1")
+#pragma message("packet_json_helpers.cpp REV: SC sessions v0.3")
 
 namespace Sample::UI::Controllers
 {

@@ -1,7 +1,7 @@
 #include "inspector_panel.h"
 #include <imgui.h>
 
-#pragma message("inspector_panel.cpp REV: UpDown v0.C")
+#pragma message("inspector_panel.cpp REV: SC sessions v0.3")
 
 static bool IsReorderable(NodeKind k)
 {
