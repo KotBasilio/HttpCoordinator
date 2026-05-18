@@ -4,10 +4,72 @@
 
 #include <utility>
 
-#pragma message("servers_ingestion.cpp REV: SC sessions v0.1")
+#pragma message("servers_ingestion.cpp REV: SC sessions v0.2")
 
 namespace Sample::UI::Controllers
 {
+
+static bool SetIfDifferent(std::string& dst, const std::string& src)
+{
+   if (src.empty() || dst == src)
+      return false;
+
+   dst = src;
+   return true;
+}
+
+static bool AttachHydraContextToSC(LiveState& st, SCSessionState& sc,
+   const std::string& hydraUserId,
+   const std::string& hydraKernelSessionId,
+   const std::string& dataCenterId = {})
+{
+   bool changed = false;
+
+   if (!hydraUserId.empty()) {
+      st.TouchUser(hydraUserId);
+      changed |= SetIfDifferent(st.users[hydraUserId].hydraKernelSessionId, hydraKernelSessionId);
+      if (sc.hydraUserId.empty())
+         changed |= SetIfDifferent(sc.hydraUserId, hydraUserId);
+
+      auto it = sc.hydraUsers.find(hydraUserId);
+      if (it == sc.hydraUsers.end()) {
+         sc.hydraUsers[hydraUserId] = hydraKernelSessionId;
+         changed = true;
+      } else {
+         changed |= SetIfDifferent(it->second, hydraKernelSessionId);
+      }
+   }
+
+   changed |= SetIfDifferent(sc.hydraKernelSessionId, hydraKernelSessionId);
+   changed |= SetIfDifferent(sc.dataCenterId, dataCenterId);
+
+   return changed;
+}
+
+static bool ApplySessionEventMemberContexts(LiveState& st, SCSessionState& sc, const Json& j)
+{
+   bool changed = false;
+
+   if (j.is_object()) {
+      auto it = j.find("serverUserContext");
+      if (it != j.end() && it->is_object()) {
+         const Json& suc = *it;
+         const std::string hydraUserId = JsonGetString(suc, { "userContext", "data", "userIdentity" });
+         const std::string hydraKernelSessionId = JsonGetString(suc, { "userContext", "data", "kernelSessionId" });
+         changed |= AttachHydraContextToSC(st, sc, hydraUserId, hydraKernelSessionId);
+      }
+
+      for (const auto& kv : j.items()) {
+         changed |= ApplySessionEventMemberContexts(st, sc, kv.value());
+      }
+   } else if (j.is_array()) {
+      for (const auto& item : j) {
+         changed |= ApplySessionEventMemberContexts(st, sc, item);
+      }
+   }
+
+   return changed;
+}
 
 bool StartServerController::HandleDedicatedServerHandshake(SdkPacket& u)
 {
@@ -51,6 +113,7 @@ bool StartServerController::HandleDedicatedServerSessionInfo(SdkPacket& u)
       sc.serverId = serverId;
       changed = true;
    }
+   changed |= SetIfDifferent(sc.serverContextKernelSessionId, serverId);
 
    const std::string refreshAfter = u.payload.value("refreshAfter", "");
    if (s.refreshAfter != refreshAfter) {
@@ -59,6 +122,106 @@ bool StartServerController::HandleDedicatedServerSessionInfo(SdkPacket& u)
    }
 
    s.lastSeenTimeS = u.recv_time_s;
+   return changed;
+}
+
+bool StartServerController::HandleSCCreateSessionRequest(SdkPacket& u)
+{
+   const auto& p = u.payload;
+
+   PendingSessionControlCreate ctx;
+   ctx.hydraUserId = ExtractUserIdentity(p);
+   ctx.hydraKernelSessionId = ExtractHydraKernelSessionId(p);
+   ctx.dataCenterId = JsonGetString(p, { "dataCenterId" });
+   ctx.clientVersion = JsonGetString(p, { "clientVersion" });
+   ctx.serverData = JsonGetString(p, { "serverData" });
+
+   if (ctx.hydraUserId.empty() && ctx.hydraKernelSessionId.empty())
+      return false;
+
+   if (!ctx.hydraUserId.empty()) {
+      st.TouchUser(ctx.hydraUserId);
+      SetIfDifferent(st.users[ctx.hydraUserId].hydraKernelSessionId, ctx.hydraKernelSessionId);
+   }
+
+   standaloneCorr.pendingSCCreate = std::move(ctx);
+   return false; // correlation only until CreateSessionResponse gives gameSessionId
+}
+
+bool StartServerController::HandleSCCreateSessionResponse(SdkPacket& u)
+{
+   const auto& p = u.payload;
+   const std::string scid = JsonGetString(p, { "gameSessionId" });
+   if (scid.empty())
+      return false;
+
+   const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
+   st.TouchSCSession(scid);
+   auto& sc = st.scSessions[scid];
+
+   bool changed = isNewSCSession;
+   changed |= SetIfDifferent(sc.serverContextKernelSessionId, scid);
+
+   const auto& ctx = standaloneCorr.pendingSCCreate;
+   changed |= AttachHydraContextToSC(st, sc, ctx.hydraUserId, ctx.hydraKernelSessionId, ctx.dataCenterId);
+   changed |= SetIfDifferent(sc.clientVersion, ctx.clientVersion);
+   changed |= SetIfDifferent(sc.serverData, ctx.serverData);
+
+   standaloneCorr.pendingSCCreate = {};
+   return changed;
+}
+
+bool StartServerController::HandleSCGetServerInfoRequest(SdkPacket& u)
+{
+   const auto& p = u.payload;
+   const std::string scid = JsonGetString(p, { "gameSessionId" });
+   if (scid.empty())
+      return false;
+
+   const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
+   st.TouchSCSession(scid);
+   auto& sc = st.scSessions[scid];
+
+   bool changed = isNewSCSession;
+   changed |= SetIfDifferent(sc.serverContextKernelSessionId, scid);
+   changed |= AttachHydraContextToSC(st, sc,
+      JsonGetString(p, { "userContext", "data", "userIdentity" }),
+      JsonGetString(p, { "userContext", "data", "kernelSessionId" }));
+
+   return changed;
+}
+
+bool StartServerController::HandleSCGetSessionEventsRequest(SdkPacket& u)
+{
+   const std::string scid = JsonGetString(u.payload, { "serverContext", "data", "kernelSessionId" });
+   if (scid.empty())
+      return false;
+
+   standaloneCorr.pendingGetSessionEventsSCSessionId = scid;
+
+   const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
+   st.TouchSCSession(scid);
+   auto& sc = st.scSessions[scid];
+
+   bool changed = isNewSCSession;
+   changed |= SetIfDifferent(sc.serverContextKernelSessionId, scid);
+   return changed;
+}
+
+bool StartServerController::HandleSCGetSessionEventsResponse(SdkPacket& u)
+{
+   const std::string scid = standaloneCorr.pendingGetSessionEventsSCSessionId;
+   if (scid.empty())
+      return false;
+
+   const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
+   st.TouchSCSession(scid);
+   auto& sc = st.scSessions[scid];
+
+   bool changed = isNewSCSession;
+   changed |= ApplySessionEventMemberContexts(st, sc, u.payload);
+
+   standaloneCorr.pendingGetSessionEventsSCSessionId.clear();
    return changed;
 }
 

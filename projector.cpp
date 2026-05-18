@@ -2,8 +2,10 @@
 #include "ui/models/start_server_model.h"
 #include <algorithm>  
 #include <unordered_set>
+#include <vector>
+#include <cmath>
 
-#pragma message("projector.cpp REV: SC sessions v0.2")
+#pragma message("projector.cpp REV: SC sessions v0.3")
 
 namespace Sample::UI::Controllers 
 {
@@ -160,11 +162,33 @@ void StartServerController::ProjectSCSessions()
       n.size = lay.s32;
 
       n.kv.clear();
-      n.kv.push_back({ "scSessionId", scid });
+      n.kv.push_back({ "SC_GAME_SESSION_ID", scid });
       if (!s.serverId.empty())
-         n.kv.push_back({ "serverId", s.serverId });
+         n.kv.push_back({ "SERVER_ID", s.serverId });
+      if (!s.serverContextKernelSessionId.empty())
+         n.kv.push_back({ "SC_SERVER_KERNEL_SESSION_ID", s.serverContextKernelSessionId });
       if (!s.hydraUserId.empty())
-         n.kv.push_back({ "hydraUserId", s.hydraUserId });
+         n.kv.push_back({ "HYDRA_USER_IDENTITY", s.hydraUserId });
+      if (!s.hydraKernelSessionId.empty())
+         n.kv.push_back({ "HYDRA_KERNEL_SESSION_ID", s.hydraKernelSessionId });
+      if (!s.hydraUsers.empty())
+         n.kv.push_back({ "HYDRA_MEMBER_COUNT", std::to_string(s.hydraUsers.size()) });
+
+      std::vector<std::string> hydraUserIds;
+      hydraUserIds.reserve(s.hydraUsers.size());
+      for (const auto& hkv : s.hydraUsers)
+         hydraUserIds.push_back(hkv.first);
+      std::sort(hydraUserIds.begin(), hydraUserIds.end());
+
+      for (const std::string& hydraUserId : hydraUserIds) {
+         n.kv.push_back({ "HYDRA_MEMBER_USER_IDENTITY", hydraUserId });
+      }
+      if (!s.dataCenterId.empty())
+         n.kv.push_back({ "DATA_CENTER_ID", s.dataCenterId });
+      if (!s.clientVersion.empty())
+         n.kv.push_back({ "CLIENT_VERSION", s.clientVersion });
+      if (!s.serverData.empty())
+         n.kv.push_back({ "SERVER_DATA", s.serverData });
 
       if (!s.serverId.empty()) {
          const NodeId serverNodeId = HashToNodeId(s.serverId, salt.server);
@@ -175,10 +199,14 @@ void StartServerController::ProjectSCSessions()
          const NodeId hydraNodeId = HashToNodeId(s.hydraUserId, salt.hydra);
          EnsureLink(graph, scNodeId, hydraNodeId);
       }
+      for (const std::string& hydraUserId : hydraUserIds) {
+         const NodeId hydraNodeId = HashToNodeId(hydraUserId, salt.hydra);
+         EnsureLink(graph, scNodeId, hydraNodeId);
+      }
    }
 
-   // TODO: populate SCSessionState from reducers with scSessionId, serverId,
-   // and/or hydraUserId before this layer can render real links.
+   // Server links come from dedicated-server session info.
+   // Hydra links come from verified SessionControl request/response context.
 }
 
 void StartServerController::ProjectHydraUsers()

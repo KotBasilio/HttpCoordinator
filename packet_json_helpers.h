@@ -19,6 +19,7 @@ std::optional<std::string> StringAt(const Json& j, const JsonPointer& ptr);
 bool BoolAt(const Json& j, const JsonPointer& ptr, bool fallback = false) noexcept;
 
 std::string ExtractUserIdentity(const Json& p);
+std::string ExtractHydraKernelSessionId(const Json& p);
 std::string ExtractSessionId(const Json& p);
 std::string ExtractNicknameFromStaticData(const Json& memberData);
 std::string ExtractFactsHeaderValue(const Json& p, const char* key);

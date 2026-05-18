@@ -4,7 +4,7 @@
 
 #include <algorithm>
 
-#pragma message("users_ingestion.cpp REV: SC sessions v0.0")
+#pragma message("users_ingestion.cpp REV: SC sessions v0.1")
 
 namespace Sample::UI::Controllers
 {
@@ -76,6 +76,9 @@ bool StartServerController::HandleSignIn(SdkPacket& u)
 
    st.users[uid].online = true;
    st.TouchUser(uid);
+   const std::string hydraKernelSessionId = ExtractHydraKernelSessionId(p);
+   if (!hydraKernelSessionId.empty())
+      st.users[uid].hydraKernelSessionId = hydraKernelSessionId;
 
    return true;
 }

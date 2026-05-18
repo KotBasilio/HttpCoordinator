@@ -54,6 +54,11 @@ private:
    bool HandleCreateStandaloneServerResponse(SdkPacket& u);
    bool HandleStandaloneHeartbeatServerRequest(SdkPacket& u);
    bool HandleStandaloneServerGetChallengesRequest(SdkPacket& u);
+   bool HandleSCCreateSessionRequest(SdkPacket& u);
+   bool HandleSCCreateSessionResponse(SdkPacket& u);
+   bool HandleSCGetServerInfoRequest(SdkPacket& u);
+   bool HandleSCGetSessionEventsRequest(SdkPacket& u);
+   bool HandleSCGetSessionEventsResponse(SdkPacket& u);
    bool ApplyReorderCommands();
 
    // projection LiveState -> GraphModel

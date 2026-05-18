@@ -14,6 +14,7 @@ namespace Sample::UI::Controllers {
 struct UserState
 {
    std::string userId;      // userIdentity/userId
+   std::string hydraKernelSessionId; // client/user-side kernelSessionId
    std::string nickname;    // best effort
    bool online = false;
 
@@ -92,9 +93,23 @@ struct SCSessionState {
    // Optional relationships for future reducers.
    std::string serverId;
    std::string hydraUserId;
+   std::string hydraKernelSessionId;
+   std::string serverContextKernelSessionId;
+   std::string dataCenterId;
+   std::string clientVersion;
+   std::string serverData;
+   std::unordered_map<std::string, std::string> hydraUsers;
 
    int viewIdx = -1;
    float canvasY = 0.0f;
+};
+
+struct PendingSessionControlCreate {
+   std::string hydraUserId;
+   std::string hydraKernelSessionId;
+   std::string dataCenterId;
+   std::string clientVersion;
+   std::string serverData;
 };
 
 struct PendingStandaloneCreate {
@@ -110,6 +125,9 @@ struct StandaloneCorrelationState {
    std::unordered_map<std::string, std::string> serverTokenToHydraUserId;
 
    std::deque<PendingStandaloneCreate> pendingCreates;
+
+   PendingSessionControlCreate pendingSCCreate;
+   std::string pendingGetSessionEventsSCSessionId;
 };
 
 struct LiveState

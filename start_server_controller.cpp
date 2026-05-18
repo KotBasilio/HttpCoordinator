@@ -1,7 +1,7 @@
 #include "ui/controllers/start_server_controller.h"
 #include "ui/controllers/coordinator_http_server.h"
 
-#pragma message("start_server_controller.cpp REV: SC sessions v0.1")
+#pragma message("start_server_controller.cpp REV: SC sessions v0.2")
 
 namespace Sample::UI::Controllers {
 
@@ -117,8 +117,13 @@ bool StartServerController::ApplyServerReducers(SdkPacket& u)
       case HYDRA_API_DEDICATEDSERVERS_DSDSMCOMMUNICATION_GETSERVERSESSIONINFORESPONSE: return HandleDedicatedServerSessionInfo(u);
    }
 
-   // Standalone servers
+   // SessionControl / standalone servers
    switch (u.reqNameId) {
+      case HYDRA_API_SESSIONCONTROL_CREATESESSIONREQUEST:          return HandleSCCreateSessionRequest(u);
+      case HYDRA_API_SESSIONCONTROL_CREATESESSIONRESPONSE:         return HandleSCCreateSessionResponse(u);
+      case HYDRA_API_SESSIONCONTROL_GETSERVERINFOREQUEST:          return HandleSCGetServerInfoRequest(u);
+      case HYDRA_API_SESSIONCONTROL_GETSESSIONEVENTSREQUEST:       return HandleSCGetSessionEventsRequest(u);
+      case HYDRA_API_SESSIONCONTROL_GETSESSIONEVENTSRESPONSE:      return HandleSCGetSessionEventsResponse(u);
       case PROS_GLOBAL_API_AUTH_GETSTANDALONESIGNINCODEREQUEST:   return HandleGetStandaloneSignInCodeRequest(u);
       case PROS_GLOBAL_API_AUTH_GETSTANDALONESIGNINCODERESPONSE:  return HandleGetStandaloneSignInCodeResponse(u);
       case PROS_GLOBAL_API_AUTH_SIGNINSTANDALONECODEREQUEST:      return HandleSignInStandaloneCodeRequest(u);

@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#pragma message("packet_json_helpers.cpp REV: SC sessions v0.0")
+#pragma message("packet_json_helpers.cpp REV: SC sessions v0.1")
 
 namespace Sample::UI::Controllers
 {
@@ -65,6 +65,18 @@ std::string ExtractUserIdentity(const Json& p)
    static const auto P1 = "/data/userContext/data/userIdentity"_json_pointer;
    static const auto P2 = "/userContext/data/userIdentity"_json_pointer;
    static const auto P3 = "/context/data/userIdentity"_json_pointer;
+
+   if (auto s = StringAt(p, P1)) return std::move(*s);
+   if (auto s = StringAt(p, P2)) return std::move(*s);
+   if (auto s = StringAt(p, P3)) return std::move(*s);
+   return {};
+}
+
+std::string ExtractHydraKernelSessionId(const Json& p)
+{
+   static const auto P1 = "/data/userContext/data/kernelSessionId"_json_pointer;
+   static const auto P2 = "/userContext/data/kernelSessionId"_json_pointer;
+   static const auto P3 = "/context/data/kernelSessionId"_json_pointer;
 
    if (auto s = StringAt(p, P1)) return std::move(*s);
    if (auto s = StringAt(p, P2)) return std::move(*s);
