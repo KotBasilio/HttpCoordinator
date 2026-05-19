@@ -181,6 +181,12 @@ static const GraphNode* FindUniqueNodeEchoForValue(const GraphModel& graph, cons
          continue;
       }
 
+      // prefer users over everything else
+      if (node.kind == NodeKind::User) {
+         return &node;
+      }
+
+      // if we already have a match and it's not a user, then we have multiple echoes => no unique target
       if (found != nullptr) {
          return nullptr;
       }

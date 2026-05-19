@@ -6,8 +6,6 @@
 #include <utility>
 #include <vector>
 
-#pragma message("presence_ingestion.cpp REV: rich kv v0.1")
-
 namespace Sample::UI::Controllers
 {
 

@@ -2,8 +2,6 @@
 
 #include <utility>
 
-#pragma message("packet_json_helpers.cpp REV: rich kv v0.1")
-
 namespace Sample::UI::Controllers
 {
 

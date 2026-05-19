@@ -4,8 +4,6 @@
 
 #include <functional>
 
-#pragma message("projector.cpp REV: hydra identity v0.1")
-
 namespace Sample::UI::Controllers
 {
 

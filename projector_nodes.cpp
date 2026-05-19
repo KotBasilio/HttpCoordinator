@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#pragma message("projector_nodes.cpp REV: hydra identity v0.1")
+#pragma message("projector_nodes.cpp REV: rich kv v0.3")
 
 namespace Sample::UI::Controllers
 {

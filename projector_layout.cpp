@@ -2,8 +2,6 @@
 
 #include <cmath>
 
-#pragma message("projector_layout.cpp REV: projector split v0.1")
-
 namespace Sample::UI::Controllers
 {
 

@@ -1,8 +1,6 @@
 #include "ui/controllers/start_server_controller.h"
 #include "ui/controllers/coordinator_http_server.h"
 
-#pragma message("packets_ingestion.cpp REV: SC sessions v0.3")
-
 namespace Sample::UI::Controllers
 {
 

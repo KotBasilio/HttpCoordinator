@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <unordered_set>
 
-#pragma message("projector_links.cpp REV: projector split v0.1")
-
 namespace Sample::UI::Controllers
 {
 

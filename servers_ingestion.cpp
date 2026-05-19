@@ -4,8 +4,6 @@
 
 #include <utility>
 
-#pragma message("servers_ingestion.cpp REV: rich kv v0.1")
-
 namespace Sample::UI::Controllers
 {
 
