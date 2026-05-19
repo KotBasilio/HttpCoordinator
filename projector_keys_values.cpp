@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#pragma message("projector_keys_values.cpp REV: projector split v0.1")
+#pragma message("projector_keys_values.cpp REV: hydra identity v0.1")
 
 namespace Sample::UI::Controllers
 {
@@ -103,9 +103,11 @@ void FillSCSessionKv(GraphNode& n, const SCSessionState& s, const std::string& s
    }
 }
 
-void FillHydraKv(GraphNode& n, const UserState& u)
+void FillHydraKv(GraphNode& n, const UserState& u, const std::string& hydraIdentityKey)
 {
    n.kv.clear();
+   AddKv(n.kv, "HYDRA_ENTITY_ID", hydraIdentityKey);
+   AddKv(n.kv, "RUNTIME_SEANCE_ID", u.runtimeSeanceId);
    AddKv(n.kv, "HYDRA_USER_IDENTITY", u.userIdentity);
    AddKv(n.kv, "HYDRA_KERNEL_SESSION_ID", u.hydraKernelSessionId);
    AddKv(n.kv, "LINKED_USER_ID", u.userId);

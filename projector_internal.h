@@ -50,6 +50,9 @@ void EnsureLink(GraphModel& g, NodeId from, NodeId to,
    GraphPort fromPort = GraphPort::Right, GraphPort toPort = GraphPort::Left);
 NodeId HashToNodeId(const std::string& s, uint32_t salt);
 GraphNode* FindNode(GraphModel& g, NodeId id);
+std::string HydraIdentityKeyForUser(const LiveState& st, const std::string& userId);
+NodeId HydraNodeIdForUser(const LiveState& st, const std::string& userId);
+std::string HydraEntityKeyForUser(const LiveState& st, const std::string& userId);
 
 void AddKv(std::vector<std::pair<std::string, std::string>>& kv,
    const char* key,
@@ -65,7 +68,7 @@ void AddKvIfMissing(std::vector<std::pair<std::string, std::string>>& kv,
 void FillServerKv(GraphNode& n, const ServerState& s, const std::string& serverId);
 void FillSCSessionKv(GraphNode& n, const SCSessionState& s, const std::string& scid,
    const std::vector<std::string>& hydraUserIds);
-void FillHydraKv(GraphNode& n, const UserState& u);
+void FillHydraKv(GraphNode& n, const UserState& u, const std::string& hydraIdentityKey);
 void FillUserKv(GraphNode& n, const UserState& u);
 void FillMMSessionKv(GraphNode& n, const SessionState& s, const std::string& sid);
 void FillPartyKv(GraphNode& n, const PartyState& p, const std::string& pid);

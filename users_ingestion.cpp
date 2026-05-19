@@ -4,7 +4,7 @@
 
 #include <algorithm>
 
-#pragma message("users_ingestion.cpp REV: rich kv v0.1")
+#pragma message("users_ingestion.cpp REV: hydra identity v0.1")
 
 namespace Sample::UI::Controllers
 {
@@ -36,6 +36,7 @@ bool StartServerController::HandleFactsWriteBinaryPackUser(SdkPacket& u)
    auto& usr = st.users[uid];
    SetIfDifferent(usr.userIdentity, ExtractUserIdentity(p));
    SetIfDifferent(usr.hydraKernelSessionId, ExtractHydraKernelSessionId(p));
+   SetIfDifferent(usr.runtimeSeanceId, ExtractFactsHeaderValue(p, "RUNTIME_SEANCE_ID"));
    SetIfDifferent(usr.platform, JsonGetString(p, { "userContext", "data", "platform" }));
    SetIfDifferent(usr.providerId, JsonGetString(p, { "userContext", "data", "providerId" }));
    SetIfDifferent(usr.userIdentityType, JsonGetString(p, { "userContext", "data", "userIdentityType" }));
@@ -62,6 +63,10 @@ bool StartServerController::HandleFactsWriteBinaryPackUser(SdkPacket& u)
          } else {
             v = usr.nickname;
          }
+      }
+
+      if (k == "RUNTIME_SEANCE_ID") {
+         SetIfDifferent(usr.runtimeSeanceId, v);
       }
 
       usr.facts.emplace_back(k, v);

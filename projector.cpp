@@ -4,7 +4,7 @@
 
 #include <functional>
 
-#pragma message("projector.cpp REV: projector split v0.1")
+#pragma message("projector.cpp REV: hydra identity v0.1")
 
 namespace Sample::UI::Controllers
 {
@@ -57,6 +57,30 @@ NodeId HashToNodeId(const std::string& s, uint32_t salt)
    v &= 0x7fffffffU;
    if (v == 0) v = 1;
    return (NodeId)v;
+}
+
+std::string HydraIdentityKeyForUser(const LiveState& st, const std::string& userId)
+{
+   auto it = st.users.find(userId);
+   if (it != st.users.end()) {
+      const UserState& u = it->second;
+      if (!u.runtimeSeanceId.empty())
+         return u.runtimeSeanceId;
+      if (!u.hydraKernelSessionId.empty())
+         return u.hydraKernelSessionId;
+   }
+
+   return userId;
+}
+
+NodeId HydraNodeIdForUser(const LiveState& st, const std::string& userId)
+{
+   return HashToNodeId(HydraIdentityKeyForUser(st, userId), salt.hydra);
+}
+
+std::string HydraEntityKeyForUser(const LiveState& st, const std::string& userId)
+{
+   return "hydra:" + HydraIdentityKeyForUser(st, userId);
 }
 
 GraphNode* FindNode(GraphModel& g, NodeId id)

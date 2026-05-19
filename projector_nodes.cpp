@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#pragma message("projector_nodes.cpp REV: projector split v0.1")
+#pragma message("projector_nodes.cpp REV: hydra identity v0.1")
 
 namespace Sample::UI::Controllers
 {
@@ -47,7 +47,7 @@ void StartServerController::ProjectServers()
             n.title = s.serverName;
 
          if (!s.hydraUserId.empty()) {
-            const NodeId hydraId = HashToNodeId(s.hydraUserId, salt.hydra);
+            const NodeId hydraId = HydraNodeIdForUser(st, s.hydraUserId);
             EnsureLink(graph, nodeId, hydraId);
          }
       }
@@ -93,11 +93,11 @@ void StartServerController::ProjectSCSessions()
       }
 
       if (!s.hydraUserId.empty()) {
-         const NodeId hydraNodeId = HashToNodeId(s.hydraUserId, salt.hydra);
+         const NodeId hydraNodeId = HydraNodeIdForUser(st, s.hydraUserId);
          EnsureLink(graph, scNodeId, hydraNodeId);
       }
       for (const std::string& hydraUserId : hydraUserIds) {
-         const NodeId hydraNodeId = HashToNodeId(hydraUserId, salt.hydra);
+         const NodeId hydraNodeId = HydraNodeIdForUser(st, hydraUserId);
          EnsureLink(graph, scNodeId, hydraNodeId);
       }
    }
@@ -119,7 +119,8 @@ void StartServerController::ProjectHydraUsers()
       const float y = lay.yBase + (float)i * lay.yStep;
       u.canvasY = y;
 
-      const NodeId hydraId = HashToNodeId(uid, salt.hydra);
+      const std::string hydraIdentityKey = HydraIdentityKeyForUser(st, uid);
+      const NodeId hydraId = HydraNodeIdForUser(st, uid);
       const NodeId userId = HashToNodeId(uid, salt.user);
 
       // HydraSample
@@ -128,8 +129,8 @@ void StartServerController::ProjectHydraUsers()
          n.kind = NodeKind::HydraSample;
          n.title = "Hydra";
          n.subtitle = "entry";
-         n.entityKey = "hydra:" + uid;
-         FillHydraKv(n, u);
+         n.entityKey = HydraEntityKeyForUser(st, uid);
+         FillHydraKv(n, u, hydraIdentityKey);
          n.pos = Vec2f(lay.xHydra, y);
          n.size = lay.s32;
       }

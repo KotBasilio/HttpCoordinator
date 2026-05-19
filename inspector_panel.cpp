@@ -218,13 +218,9 @@ void InspectorPanel::DrawNodeKeys(const GraphNode& n)
 {
    ImGui::Separator();
 
-   // we attempt to draw entityKey only if there's no USER_ID in kv
+   // entityKey always
    if (!n.entityKey.empty()) {
-      auto it = std::find_if(n.kv.begin(), n.kv.end(),
-         [](const std::pair<std::string, std::string>& pair) { return pair.first == "USER_ID"; });
-      if (it == n.kv.end()) {
-         ImGui::Text("%s", n.entityKey.c_str());
-      }
+      ImGui::Text("%s", n.entityKey.c_str());
    }
 
    // kv is here => draw entire section
