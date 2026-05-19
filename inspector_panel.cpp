@@ -125,6 +125,35 @@ void InspectorPanel::DrawUpDownButtons(const GraphNode& n, const ImVec2& fieldsS
    // restore cursor so layout continues normally under the fields
    ImGui::SetCursorPos(fieldsEnd);
 }
+
+static float ClampFloat(float lo, float v, float hi)
+{
+   if (hi < lo) hi = lo;
+   return (v < lo) ? lo : (v > hi) ? hi : v;
+}
+
+static float CalcPropNameColumnWidth(const std::vector<std::pair<std::string, std::string>>& kv)
+{
+   const ImGuiStyle& style = ImGui::GetStyle();
+
+   float w = ImGui::CalcTextSize("propName").x;
+
+   for (const auto& row : kv) {
+      w = std::max(w, ImGui::CalcTextSize(row.first.c_str()).x);
+   }
+
+   // Cell padding on both sides + small breathing room
+   w += style.CellPadding.x * 2.0f + 5.0f;
+
+   // Do not let propName eat the whole Inspector.
+   const float avail = ImGui::GetContentRegionAvail().x;
+   const float minW = 120.0f;
+   const float maxW = std::max(minW, avail * 0.75f);
+
+   return ClampFloat(minW, w, maxW);
+}
+
+
 void InspectorPanel::DrawNodeKeys(const GraphNode& n)
 {
    ImGui::Separator();
@@ -145,15 +174,10 @@ void InspectorPanel::DrawNodeKeys(const GraphNode& n)
       float childHeight = std::max(minHeight, availY);
       ImGui::BeginChild("facts_kv", ImVec2(0, childHeight), true);
 
-      ImGuiTableFlags flags =
-         ImGuiTableFlags_RowBg |
-         ImGuiTableFlags_BordersInnerV |
-         ImGuiTableFlags_BordersOuter |
-         ImGuiTableFlags_Resizable |
-         ImGuiTableFlags_SizingStretchProp;
-
+      ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp;
       if (ImGui::BeginTable("facts_tbl", 2, flags)) {
-         ImGui::TableSetupColumn("propName", ImGuiTableColumnFlags_WidthFixed, 220.0f);
+         float propNameWidth = CalcPropNameColumnWidth(n.kv);
+         ImGui::TableSetupColumn("propName", ImGuiTableColumnFlags_WidthFixed, propNameWidth);
          ImGui::TableSetupColumn("propValue", ImGuiTableColumnFlags_WidthStretch);
          ImGui::TableHeadersRow();
 
