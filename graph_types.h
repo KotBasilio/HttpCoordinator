@@ -115,6 +115,8 @@ struct GraphModel
       return (it == indexById.end()) ? nullptr : &nodes[it->second];
    }
 
+   const GraphNode* FindUniqueNodeEchoForValue(const std::string& value) const;
+
    // projection counter increments after every ProjectToGraph()
    uint64_t projectionGeneration = 0; 
 };

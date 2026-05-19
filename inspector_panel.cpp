@@ -8,6 +8,9 @@
 
 #pragma message("inspector_panel.cpp REV: clickable kv v0.1")
 
+#define COPY_BUTTON_LABEL "[  ]"
+
+// -- Helpers --
 static bool IsReorderable(NodeKind k)
 {
    switch (k) {
@@ -22,6 +25,57 @@ static bool IsReorderable(NodeKind k)
    return false;
 }
 
+static bool IsHexDigit(char c)
+{
+   return std::isxdigit(static_cast<unsigned char>(c)) != 0;
+}
+
+static bool IsBase64ishChar(char c)
+{
+   const unsigned char uc = static_cast<unsigned char>(c);
+   return std::isalnum(uc) || c == '+' || c == '/' || c == '=' || c == '_' || c == '-';
+}
+
+static bool IsNumericKvValue(std::string_view value)
+{
+   if (value.empty()) {
+      return false;
+   }
+
+   std::string s(value);
+   char* end = nullptr;
+   (void)std::strtod(s.c_str(), &end);
+   return end != s.c_str() && end && *end == '\0';
+}
+
+static bool IsBinaryLikeKvValue(std::string_view value)
+{
+   if (value.size() > 2 && value[0] == '0' && (value[1] == 'x' || value[1] == 'X')) {
+      return std::all_of(value.begin() + 2, value.end(), IsHexDigit);
+   }
+
+   const bool allHex = !value.empty() && std::all_of(value.begin(), value.end(), IsHexDigit);
+   if (allHex && value.size() >= 24) {
+      return true;
+   }
+
+   const bool allBase64ish = !value.empty() && std::all_of(value.begin(), value.end(), IsBase64ishChar);
+   return allBase64ish && value.size() >= 48;
+}
+
+static bool IsBooleanLikeKvValue(std::string_view value)
+{
+   // Convert the string to lowercase (C++17 has no direct std::string overload for tolower)
+   std::string lowerValue(value);
+   std::transform(lowerValue.begin(), lowerValue.end(), lowerValue.begin(), [](unsigned char c) {
+      return static_cast<char>(std::tolower(c));
+      });
+
+   // Check for common boolean-like values
+   return lowerValue == "true" || lowerValue == "false" || lowerValue == "yes" || lowerValue == "no" || lowerValue == "1" || lowerValue == "0";
+}
+
+// -- Implementation --
 InspectorPanel::InspectorPanel(GraphViewState& view_, GraphModel& model_, Sample::Tex::TextureManager& tex_)
    : view(view_)
    , model(model_)
@@ -157,49 +211,11 @@ static float CalcPropNameColumnWidth(const std::vector<std::pair<std::string, st
    return ClampFloat(minW, w, maxW);
 }
 
-static bool IsHexDigit(char c)
-{
-   return std::isxdigit(static_cast<unsigned char>(c)) != 0;
-}
-
-static bool IsBase64ishChar(char c)
-{
-   const unsigned char uc = static_cast<unsigned char>(c);
-   return std::isalnum(uc) || c == '+' || c == '/' || c == '=' || c == '_' || c == '-';
-}
-
-static bool IsNumericKvValue(std::string_view value)
-{
-   if (value.empty()) {
-      return false;
-   }
-
-   std::string s(value);
-   char* end = nullptr;
-   (void)std::strtod(s.c_str(), &end);
-   return end != s.c_str() && end && *end == '\0';
-}
-
-static bool IsBinaryLikeKvValue(std::string_view value)
-{
-   if (value.size() > 2 && value[0] == '0' && (value[1] == 'x' || value[1] == 'X')) {
-      return std::all_of(value.begin() + 2, value.end(), IsHexDigit);
-   }
-
-   const bool allHex = !value.empty() && std::all_of(value.begin(), value.end(), IsHexDigit);
-   if (allHex && value.size() >= 24) {
-      return true;
-   }
-
-   const bool allBase64ish = !value.empty() && std::all_of(value.begin(), value.end(), IsBase64ishChar);
-   return allBase64ish && value.size() >= 48;
-}
-
 static std::string BuildKvCopyText(std::string_view key, std::string_view value)
 {
-   if (IsNumericKvValue(value) || IsBinaryLikeKvValue(value)) {
+   if (IsNumericKvValue(value) || IsBooleanLikeKvValue(value)) {
       std::string out(key);
-      out += ":";
+      out += "=";
       out += value;
       return out;
    }
@@ -225,34 +241,9 @@ static bool NodeEchoesValue(const GraphNode& node, const std::string& value)
    return node.title == value;
 }
 
-static const GraphNode* FindUniqueNodeEchoForValue(const GraphModel& graph, const std::string& value)
-{
-   const GraphNode* found = nullptr;
-
-   for (const GraphNode& node : graph.nodes) {
-      if (!NodeEchoesValue(node, value)) {
-         continue;
-      }
-
-      // prefer users over everything else
-      if (node.kind == NodeKind::User) {
-         return &node;
-      }
-
-      // if we already have a match and it's not a user, then we have multiple echoes => no unique target
-      if (found != nullptr) {
-         return nullptr;
-      }
-
-      found = &node;
-   }
-
-   return found;
-}
-
 void InspectorPanel::DrawMaybeClickableKvValue(const std::string& value)
 {
-   const GraphNode* target = FindUniqueNodeEchoForValue(model, value);
+   const GraphNode* target = model.FindUniqueNodeEchoForValue(value);
    if (!target) {
       ImGui::TextWrapped("%s", value.c_str());
       return;
@@ -279,14 +270,48 @@ void InspectorPanel::DrawKvCopyButton(int rowIndex, const std::string& key, cons
    const bool copiesKeyValue = copyText.size() != value.size() || copyText != value;
 
    ImGui::PushID(rowIndex);
-   if (ImGui::SmallButton("[  ]")) {
+   if (ImGui::SmallButton(COPY_BUTTON_LABEL)) {
       ImGui::SetClipboardText(copyText.c_str());
    }
    ImGui::PopID();
 
    if (ImGui::IsItemHovered()) {
-      ImGui::SetTooltip("%s", copiesKeyValue ? "Copy key:value" : "Copy value");
+      auto textTooltip = "Copy:" + copyText;
+      ImGui::SetTooltip(textTooltip.c_str());
    }
+}
+
+void InspectorPanel::DrawKeyValTable(const GraphNode& n)
+{
+   const float minHeight = 250.0f;
+   float availY = ImGui::GetContentRegionAvail().y;
+   float childHeight = std::max(minHeight, availY);
+   ImGui::BeginChild("facts_kv", ImVec2(0, childHeight), true);
+
+   ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp;
+   if (ImGui::BeginTable("facts_tbl", 3, flags)) {
+      float propNameWidth = CalcPropNameColumnWidth(n.kv);
+      ImGui::TableSetupColumn("propName", ImGuiTableColumnFlags_WidthFixed, propNameWidth);
+      ImGui::TableSetupColumn("propValue", ImGuiTableColumnFlags_WidthStretch);
+      ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, ImGui::CalcTextSize(COPY_BUTTON_LABEL).x + ImGui::GetStyle().FramePadding.x * 2.0f);
+      ImGui::TableHeadersRow();
+
+      int rowIndex = 0;
+      for (const auto& kv : n.kv) {
+         ImGui::TableNextRow();
+         ImGui::TableSetColumnIndex(0);
+         ImGui::TextUnformatted(kv.first.c_str());
+         ImGui::TableSetColumnIndex(1);
+         DrawMaybeClickableKvValue(kv.second);
+         ImGui::TableSetColumnIndex(2);
+         DrawKvCopyButton(rowIndex, kv.first, kv.second);
+         ++rowIndex;
+      }
+
+      ImGui::EndTable();
+   }
+
+   ImGui::EndChild();
 }
 
 void InspectorPanel::DrawNodeKeys(const GraphNode& n)
@@ -300,35 +325,7 @@ void InspectorPanel::DrawNodeKeys(const GraphNode& n)
 
    // kv is here => draw entire section
    if (!n.kv.empty()) {
-      const float minHeight = 250.0f;
-      float availY = ImGui::GetContentRegionAvail().y;
-      float childHeight = std::max(minHeight, availY);
-      ImGui::BeginChild("facts_kv", ImVec2(0, childHeight), true);
-
-      ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp;
-      if (ImGui::BeginTable("facts_tbl", 3, flags)) {
-         float propNameWidth = CalcPropNameColumnWidth(n.kv);
-         ImGui::TableSetupColumn("propName", ImGuiTableColumnFlags_WidthFixed, propNameWidth);
-         ImGui::TableSetupColumn("propValue", ImGuiTableColumnFlags_WidthStretch);
-         ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, ImGui::CalcTextSize("[  ]").x + ImGui::GetStyle().FramePadding.x * 2.0f);
-         ImGui::TableHeadersRow();
-
-         int rowIndex = 0;
-         for (const auto& kv : n.kv) {
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::TextUnformatted(kv.first.c_str());
-            ImGui::TableSetColumnIndex(1);
-            DrawMaybeClickableKvValue(kv.second);
-            ImGui::TableSetColumnIndex(2);
-            DrawKvCopyButton(rowIndex, kv.first, kv.second);
-            ++rowIndex;
-         }
-
-         ImGui::EndTable();
-      }
-
-      ImGui::EndChild();
+      DrawKeyValTable(n);
    }
 }
 

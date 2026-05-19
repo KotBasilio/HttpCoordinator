@@ -19,6 +19,7 @@ private:
    void DrawNotFound(NodeId id);
    void DrawNode(const GraphNode& n);
    void DrawUpDownButtons(const GraphNode& n, const ImVec2& fieldsStart);
+   void DrawKeyValTable(const GraphNode& n);
    void DrawNodeKeys(const GraphNode& n);
    void DrawMaybeClickableKvValue(const std::string& value);
    void DrawKvCopyButton(int rowIndex, const std::string& key, const std::string& value);
