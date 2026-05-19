@@ -50,6 +50,16 @@ Validated behavior:
 - Inspector displays `GraphNode::kv` for selected nodes.
 - Duplicate aliases are suppressed when `USER_IDENTITY == USER_ID` or `PROVIDER_ID == PROVIDER`.
 
+### Inspector kv navigation and copy
+
+Validated behavior:
+- Property values can be clickable when they resolve to an existing graph node.
+- Resolution checks exact `entityKey`, bare suffix after `:`, and unique node title.
+- User nodes are intentionally preferred over other echoes while Hydra runtime identity may still be pending.
+- Each kv row has a small `[  ]` copy button.
+- Numeric and boolean-like values copy as `key=value`; other values copy as plain value.
+- Binary-like detection helpers may remain parked for future copy formatting.
+
 ### Dynamic sticky columns
 
 Validated behavior:

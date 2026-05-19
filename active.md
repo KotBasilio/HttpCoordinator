@@ -1,6 +1,6 @@
 # ImGui Coordinator — Active Task Context
 
-Last updated: 2026-05-18
+Last updated: 2026-05-19
 
 This file is the short-lived cockpit for the current Codex work.
 `AGENTS.md` is the durable repo guidance; this file is allowed to change often.
@@ -24,6 +24,11 @@ The tool should help us understand multiplayer/session behavior by turning noisy
 #### 1. Keep rich node properties useful and factual
 
 Recent work populated `GraphNode::kv` for Server, SCSession, User, HydraSample, Party, and MMSession nodes.
+
+Current Inspector polish:
+- kv values can act as graph navigation links when they echo existing graph nodes;
+- User nodes are intentionally preferred when a pending Hydra identity still collides with a User id;
+- each kv row has a small copy button for fast evidence extraction.
 
 Next likely refinement:
 - keep adding only stable, named facts observed in reducer state;

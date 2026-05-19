@@ -277,7 +277,7 @@ void InspectorPanel::DrawKvCopyButton(int rowIndex, const std::string& key, cons
 
    if (ImGui::IsItemHovered()) {
       auto textTooltip = "Copy:" + copyText;
-      ImGui::SetTooltip(textTooltip.c_str());
+      ImGui::SetTooltip("%s", textTooltip.c_str());
    }
 }
 
