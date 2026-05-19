@@ -1,8 +1,9 @@
 #include "inspector_panel.h"
 #include <imgui.h>
 #include <algorithm>
+#include <string>
 
-#pragma message("inspector_panel.cpp REV: rich kv v0.2")
+#pragma message("inspector_panel.cpp REV: clickable kv v0.1")
 
 static bool IsReorderable(NodeKind k)
 {
@@ -153,6 +154,65 @@ static float CalcPropNameColumnWidth(const std::vector<std::pair<std::string, st
    return ClampFloat(minW, w, maxW);
 }
 
+static bool NodeEchoesValue(const GraphNode& node, const std::string& value)
+{
+   if (value.empty()) {
+      return false;
+   }
+
+   if (node.entityKey == value) {
+      return true;
+   }
+
+   const size_t colon = node.entityKey.find(':');
+   if (colon != std::string::npos && node.entityKey.substr(colon + 1) == value) {
+      return true;
+   }
+
+   return node.title == value;
+}
+
+static const GraphNode* FindUniqueNodeEchoForValue(const GraphModel& graph, const std::string& value)
+{
+   const GraphNode* found = nullptr;
+
+   for (const GraphNode& node : graph.nodes) {
+      if (!NodeEchoesValue(node, value)) {
+         continue;
+      }
+
+      if (found != nullptr) {
+         return nullptr;
+      }
+
+      found = &node;
+   }
+
+   return found;
+}
+
+void InspectorPanel::DrawMaybeClickableKvValue(const std::string& value)
+{
+   const GraphNode* target = FindUniqueNodeEchoForValue(model, value);
+   if (!target) {
+      ImGui::TextWrapped("%s", value.c_str());
+      return;
+   }
+
+   ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered));
+   ImGui::TextWrapped("%s", value.c_str());
+   ImGui::PopStyleColor();
+
+   if (ImGui::IsItemHovered()) {
+      const std::string& jumpName = target->entityKey.empty() ? target->title : target->entityKey;
+      ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+      ImGui::SetTooltip("Jump to %s", jumpName.c_str());
+   }
+
+   if (ImGui::IsItemClicked()) {
+      view.selected.node = target->id;
+   }
+}
 
 void InspectorPanel::DrawNodeKeys(const GraphNode& n)
 {
@@ -186,7 +246,7 @@ void InspectorPanel::DrawNodeKeys(const GraphNode& n)
             ImGui::TableSetColumnIndex(0);
             ImGui::TextUnformatted(kv.first.c_str());
             ImGui::TableSetColumnIndex(1);
-            ImGui::TextWrapped("%s", kv.second.c_str());
+            DrawMaybeClickableKvValue(kv.second);
          }
 
          ImGui::EndTable();
