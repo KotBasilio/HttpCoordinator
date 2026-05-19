@@ -223,24 +223,6 @@ static std::string BuildKvCopyText(std::string_view key, std::string_view value)
    return std::string(value);
 }
 
-static bool NodeEchoesValue(const GraphNode& node, const std::string& value)
-{
-   if (value.empty()) {
-      return false;
-   }
-
-   if (node.entityKey == value) {
-      return true;
-   }
-
-   const size_t colon = node.entityKey.find(':');
-   if (colon != std::string::npos && node.entityKey.substr(colon + 1) == value) {
-      return true;
-   }
-
-   return node.title == value;
-}
-
 void InspectorPanel::DrawMaybeClickableKvValue(const std::string& value)
 {
    const GraphNode* target = model.FindUniqueNodeEchoForValue(value);
@@ -267,7 +249,6 @@ void InspectorPanel::DrawMaybeClickableKvValue(const std::string& value)
 void InspectorPanel::DrawKvCopyButton(int rowIndex, const std::string& key, const std::string& value)
 {
    const std::string copyText = BuildKvCopyText(key, value);
-   const bool copiesKeyValue = copyText.size() != value.size() || copyText != value;
 
    ImGui::PushID(rowIndex);
    if (ImGui::SmallButton(COPY_BUTTON_LABEL)) {
