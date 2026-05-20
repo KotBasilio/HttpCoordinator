@@ -12,19 +12,6 @@ namespace Sample::Tex {
 // OpenGL texture id type (GLuint). We avoid including GL headers here.
 using GLTextureHandle = unsigned int;
 
-enum class IconID {
-   Unknown,
-   User,
-   Party,
-   SCSession,
-   HeatedDSServer,
-   StandaloneServer,
-   HydraSample,
-   DSSession,
-   MMSession,
-   MMFlowSample,
-};
-
 struct IconVariant {
    int sizePx = 0;
    AssetID asset = ASSET_COUNT;
@@ -45,8 +32,7 @@ public:
    ImTextureID Access(AssetID id);
    ImTextureID IconForKind(NodeKind kind);
    ImTextureID IconForKind(NodeKind kind, float desiredPx);
-   ImTextureID Icon(IconID id, float desiredPx);
-   AssetID IconAsset(IconID id, float desiredPx) const;
+   AssetID IconAssetForKind(NodeKind kind, float desiredPx) const;
 
    // Remove a single texture (optional convenience).
    void Unload(const std::string& relativePath);
@@ -65,8 +51,6 @@ private:
    };
 
    std::unordered_map<std::string, Entry> m_cache;
-
-   static IconID IconIDForKind(NodeKind kind);
 
    // Get or load a texture. Returns ImTextureID_Invalid on failure.
    ImTextureID GetOrLoad(const std::string& relativePath);

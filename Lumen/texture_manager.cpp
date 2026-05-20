@@ -81,20 +81,20 @@ IconLODSet MakeIconLODSet(const IconVariant (&variants)[N])
    return IconLODSet{ variants, N };
 }
 
-IconLODSet LODSetForIcon(IconID id)
+IconLODSet LODSetForKind(NodeKind kind)
 {
-   switch (id) {
-      case IconID::User:             return MakeIconLODSet(kUserIcon);
-      case IconID::Party:            return MakeIconLODSet(kPartyIcon);
-      case IconID::SCSession:        return MakeIconLODSet(kSCSessionIcon);
-      case IconID::HeatedDSServer:   return MakeIconLODSet(kHeatedDSServerIcon);
-      case IconID::StandaloneServer: return MakeIconLODSet(kStandaloneServerIcon);
-      case IconID::HydraSample:      return MakeIconLODSet(kHydraSampleIcon);
-      case IconID::DSSession:        return MakeIconLODSet(kDSSessionIcon);
-      case IconID::MMSession:        return MakeIconLODSet(kMMSessionIcon);
-      case IconID::MMFlowSample:     return MakeIconLODSet(kMMFlowSampleIcon);
-      case IconID::Unknown:
-      default:                       return MakeIconLODSet(kUnknownIcon);
+   switch (kind) {
+      case NodeKind::User:             return MakeIconLODSet(kUserIcon);
+      case NodeKind::Party:            return MakeIconLODSet(kPartyIcon);
+      case NodeKind::SCSession:        return MakeIconLODSet(kSCSessionIcon);
+      case NodeKind::HeatedDSServer:   return MakeIconLODSet(kHeatedDSServerIcon);
+      case NodeKind::StandaloneServer: return MakeIconLODSet(kStandaloneServerIcon);
+      case NodeKind::HydraSample:      return MakeIconLODSet(kHydraSampleIcon);
+      case NodeKind::DSSession:        return MakeIconLODSet(kDSSessionIcon);
+      case NodeKind::MMSession:        return MakeIconLODSet(kMMSessionIcon);
+      case NodeKind::MMFlowSample:     return MakeIconLODSet(kMMFlowSampleIcon);
+      case NodeKind::Unknown:
+      default:                         return MakeIconLODSet(kUnknownIcon);
    }
 }
 
@@ -194,36 +194,14 @@ void TextureManager::ValidateAssetPipeline()
 }
 
 
-IconID TextureManager::IconIDForKind(NodeKind kind)
+AssetID TextureManager::IconAssetForKind(NodeKind kind, float desiredPx) const
 {
-   switch (kind) {
-      case NodeKind::Unknown:          return IconID::Unknown;
-      case NodeKind::User:             return IconID::User;
-      case NodeKind::Party:            return IconID::Party;
-      case NodeKind::SCSession:        return IconID::SCSession;
-      case NodeKind::HeatedDSServer:   return IconID::HeatedDSServer;
-      case NodeKind::StandaloneServer: return IconID::StandaloneServer;
-      case NodeKind::HydraSample:      return IconID::HydraSample;
-      case NodeKind::DSSession:        return IconID::DSSession;
-      case NodeKind::MMSession:        return IconID::MMSession;
-      case NodeKind::MMFlowSample:     return IconID::MMFlowSample;
-      default:                         return IconID::Unknown;
-   }
-}
-
-AssetID TextureManager::IconAsset(IconID id, float desiredPx) const
-{
-   return ChooseLODAsset(LODSetForIcon(id), desiredPx);
-}
-
-ImTextureID TextureManager::Icon(IconID id, float desiredPx)
-{
-   return Access(IconAsset(id, desiredPx));
+   return ChooseLODAsset(LODSetForKind(kind), desiredPx);
 }
 
 ImTextureID TextureManager::IconForKind(NodeKind kind, float desiredPx)
 {
-   return Icon(IconIDForKind(kind), desiredPx);
+   return Access(IconAssetForKind(kind, desiredPx));
 }
 
 ImTextureID TextureManager::IconForKind(NodeKind kind)
