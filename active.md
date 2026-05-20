@@ -25,12 +25,15 @@ The tool should help us understand multiplayer/session behavior by turning noisy
 
 This repo may be worked on by more than one Codex instance.
 
-- **Forge**: primary graph/reducer/session implementation lane.
-- **Lumen**: ImGui texture, mipmap, icon, and visual asset handling lane.
+- **Forge**: primary graph/reducer/session implementation lane. Its lane folder is `Forge/`.
+- **Lumen**: ImGui texture, mipmap, icon, and visual asset handling lane. Its lane folder is `Lumen/`.
 
 Both lanes share the same repo and Git history. Before editing, each instance should
 read `AGENTS.md` and `active.md`, check the working tree, and avoid overlapping
 file edits unless the task explicitly crosses lanes.
+
+Use `interlane.md` as the shared mailbox for cross-lane notes, requests, warnings,
+and handoffs. Keep entries short, dated when useful, and signed by lane name.
 
 Lumen should preserve existing graph/reducer/projector behavior unless a visual
 task explicitly requires coordination with those systems.
