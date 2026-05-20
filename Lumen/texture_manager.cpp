@@ -1,9 +1,11 @@
 #define COORD_ASSET_MAP_IMPL
 #include "texture_manager.h"
 
+#include <cassert>
 #include <cstdio>
 #include <cctype>
 #include <algorithm>
+#include <cmath>
 #include <windows.h>
 #include <fstream>
 #include <string>
@@ -15,6 +17,105 @@
 #include "stb_image.h"
 
 namespace Sample::Tex {
+
+namespace {
+
+const IconVariant kUnknownIcon[] = {
+   { 16, AssetID::IC_INFORMATION_16_PX },
+   { 32, AssetID::IC_INFORMATION_32_PX },
+};
+
+const IconVariant kUserIcon[] = {
+   { 24, AssetID::VIRTUAL_24_PX_1 },
+   { 56, AssetID::VIRTUAL_56_PX_1 },
+};
+
+const IconVariant kPartyIcon[] = {
+   { 24, AssetID::VIRTUAL_24_PX_2 },
+   { 56, AssetID::VIRTUAL_56_PX_2 },
+};
+
+const IconVariant kSCSessionIcon[] = {
+   { 16, AssetID::IC_SCSESSION_16_PX },
+   { 56, AssetID::VIRTUAL_56_PX },
+};
+
+const IconVariant kHeatedDSServerIcon[] = {
+   { 16, AssetID::IC_HEATEDDS_SERVER_16_PX },
+   { 32, AssetID::IC_HEATEDDS_SERVER_32_PX },
+};
+
+const IconVariant kStandaloneServerIcon[] = {
+   { 16, AssetID::IC_STANDALONE_SERVER_16_PX },
+   { 32, AssetID::IC_STANDALONE_SERVER_32_PX },
+};
+
+const IconVariant kHydraSampleIcon[] = {
+   { 16, AssetID::IC_PVE_16_PX_2 },
+   { 32, AssetID::IC_PVE_32_PX_2 },
+};
+
+const IconVariant kDSSessionIcon[] = {
+   { 24, AssetID::VIRTUAL_24_PX },
+   { 56, AssetID::VIRTUAL_56_PX },
+};
+
+const IconVariant kMMSessionIcon[] = {
+   { 24, AssetID::VIRTUAL_24_PX_3 },
+   { 56, AssetID::VIRTUAL_56_PX_3 },
+};
+
+const IconVariant kMMFlowSampleIcon[] = {
+   { 16, AssetID::IC_PVE_16_PX_1 },
+   { 32, AssetID::IC_PVE_32_PX_1 },
+};
+
+struct IconLODSet {
+   const IconVariant* variants = nullptr;
+   size_t count = 0;
+};
+
+template<size_t N>
+IconLODSet MakeIconLODSet(const IconVariant (&variants)[N])
+{
+   return IconLODSet{ variants, N };
+}
+
+IconLODSet LODSetForIcon(IconID id)
+{
+   switch (id) {
+      case IconID::User:             return MakeIconLODSet(kUserIcon);
+      case IconID::Party:            return MakeIconLODSet(kPartyIcon);
+      case IconID::SCSession:        return MakeIconLODSet(kSCSessionIcon);
+      case IconID::HeatedDSServer:   return MakeIconLODSet(kHeatedDSServerIcon);
+      case IconID::StandaloneServer: return MakeIconLODSet(kStandaloneServerIcon);
+      case IconID::HydraSample:      return MakeIconLODSet(kHydraSampleIcon);
+      case IconID::DSSession:        return MakeIconLODSet(kDSSessionIcon);
+      case IconID::MMSession:        return MakeIconLODSet(kMMSessionIcon);
+      case IconID::MMFlowSample:     return MakeIconLODSet(kMMFlowSampleIcon);
+      case IconID::Unknown:
+      default:                       return MakeIconLODSet(kUnknownIcon);
+   }
+}
+
+AssetID ChooseLODAsset(IconLODSet set, float desiredPx)
+{
+   if (!set.variants || set.count == 0)
+      return AssetID::IC_INFORMATION_32_PX;
+
+   if (!std::isfinite(desiredPx) || desiredPx <= 0.0f)
+      desiredPx = 32.0f;
+
+   for (size_t i = 0; i < set.count; ++i) {
+      if ((float)set.variants[i].sizePx >= desiredPx)
+         return set.variants[i].asset;
+   }
+
+   return set.variants[set.count - 1].asset;
+}
+
+} // namespace
+
 TextureManager::TextureManager()
 {
    ValidateAssetPipeline();
@@ -93,26 +194,41 @@ void TextureManager::ValidateAssetPipeline()
 }
 
 
+IconID TextureManager::IconIDForKind(NodeKind kind)
+{
+   switch (kind) {
+      case NodeKind::Unknown:          return IconID::Unknown;
+      case NodeKind::User:             return IconID::User;
+      case NodeKind::Party:            return IconID::Party;
+      case NodeKind::SCSession:        return IconID::SCSession;
+      case NodeKind::HeatedDSServer:   return IconID::HeatedDSServer;
+      case NodeKind::StandaloneServer: return IconID::StandaloneServer;
+      case NodeKind::HydraSample:      return IconID::HydraSample;
+      case NodeKind::DSSession:        return IconID::DSSession;
+      case NodeKind::MMSession:        return IconID::MMSession;
+      case NodeKind::MMFlowSample:     return IconID::MMFlowSample;
+      default:                         return IconID::Unknown;
+   }
+}
+
+AssetID TextureManager::IconAsset(IconID id, float desiredPx) const
+{
+   return ChooseLODAsset(LODSetForIcon(id), desiredPx);
+}
+
+ImTextureID TextureManager::Icon(IconID id, float desiredPx)
+{
+   return Access(IconAsset(id, desiredPx));
+}
+
+ImTextureID TextureManager::IconForKind(NodeKind kind, float desiredPx)
+{
+   return Icon(IconIDForKind(kind), desiredPx);
+}
+
 ImTextureID TextureManager::IconForKind(NodeKind kind)
 {
-   auto iconIdForKind = [](NodeKind kind) -> AssetID {
-      switch (kind) {
-         case NodeKind::Unknown:          return AssetID::IC_INFORMATION_32_PX;
-         case NodeKind::User:             return AssetID::VIRTUAL_56_PX_1;
-         case NodeKind::Party:            return AssetID::VIRTUAL_56_PX_2;
-         case NodeKind::SCSession:        return AssetID::VIRTUAL_56_PX;
-         case NodeKind::HeatedDSServer:   return AssetID::IC_HEATEDDS_SERVER_32_PX;
-         case NodeKind::StandaloneServer: return AssetID::IC_STANDALONE_SERVER_32_PX;
-         case NodeKind::HydraSample:      return AssetID::IC_PVE_32_PX_2;
-         case NodeKind::DSSession:        return AssetID::VIRTUAL_56_PX;
-         case NodeKind::MMSession:        return AssetID::VIRTUAL_56_PX_3;
-         case NodeKind::MMFlowSample:     return AssetID::IC_PVE_32_PX_1;
-         default:                         return AssetID::IC_INFORMATION_32_PX;
-      }
-   };
-
-   auto id = iconIdForKind(kind);
-   return Access(id);
+   return IconForKind(kind, 32.0f);
 }
 
 TextureManager::~TextureManager()
