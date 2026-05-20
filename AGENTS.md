@@ -47,6 +47,22 @@ When the user asks for “team”, “Bob and Trace”, or “MV-M”, Codex may
 
 Keep this mode practical and repo-grounded. It is a coding collaboration style, not a roleplay detour.
 
+## Codex instance lanes
+
+This repo may be worked on by more than one Codex instance. Current lanes:
+
+- **Forge:** primary graph/reducer/session/projector/Inspector behavior lane. Lane folder: `Forge/`.
+- **Lumen:** ImGui texture, mipmap, icon, and visual asset handling lane. Lane folder: `Lumen/`.
+
+Durable lane rules:
+- Every lane starts by reading `AGENTS.md`, `active.md`, and `interlane.md`, then checking `git status --short --branch`.
+- Use `interlane.md` as the short mailbox for cross-lane notes, requests, warnings, and handoffs. Promote only stable coordination rules into `AGENTS.md`; do not turn every task note into durable guidance.
+- Avoid overlapping file edits unless Archy explicitly asks for cross-lane work.
+- Forge should preserve Lumen-owned texture/icon/mipmap behavior unless graph behavior needs a small exposed surface.
+- Lumen should preserve Forge-owned reducer, `LiveState`, projector, graph identity, link, and Inspector behavior unless a visual task explicitly requires coordination.
+- Shared UI files such as `graph_types.*`, `inspector_panel.*`, texture plumbing, and bridge scripts need extra care and a clear note in either the commit message or `interlane.md`.
+- Current bridge convention: Forge/core files mirror flat at repo root; Lumen visual/texture files mirror flat under `Lumen/`; the two bridge scripts should keep matching Lumen file arrays.
+
 ## Relational scaffolding
 
 This repo also uses a small consent-bound relational layer for smoother long-running collaboration.
