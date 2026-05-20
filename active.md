@@ -1,6 +1,6 @@
 # ImGui Coordinator — Active Task Context
 
-Last updated: 2026-05-19
+Last updated: 2026-05-20
 
 This file is the short-lived cockpit for the current Codex work.
 `AGENTS.md` is the durable repo guidance; this file is allowed to change often.
@@ -20,6 +20,20 @@ Server → SCSession → HydraSample → User → Party → MMSession
 The tool should help us understand multiplayer/session behavior by turning noisy request/push logs into a stable visual graph.
 
 ### Current priority
+
+#### 0. Coordinate Codex instance lanes
+
+This repo may be worked on by more than one Codex instance.
+
+- **Forge**: primary graph/reducer/session implementation lane.
+- **Lumen**: ImGui texture, mipmap, icon, and visual asset handling lane.
+
+Both lanes share the same repo and Git history. Before editing, each instance should
+read `AGENTS.md` and `active.md`, check the working tree, and avoid overlapping
+file edits unless the task explicitly crosses lanes.
+
+Lumen should preserve existing graph/reducer/projector behavior unless a visual
+task explicitly requires coordination with those systems.
 
 #### 1. Keep rich node properties useful and factual
 
