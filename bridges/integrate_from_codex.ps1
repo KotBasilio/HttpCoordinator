@@ -11,7 +11,7 @@ $ErrorActionPreference = "Stop"
 $WinDir    = "C:\Users\miron\source\repos\ImGuiCoo\ImGui-Coordinator"
 $CodexDir  = "\\wsl.localhost\Ubuntu\home\miron\proj\HttpCoordinator"
 
-# Keep the SAME $Files array from mirror_coord_to_codex.ps1 here.
+# Keep the SAME $Files and $LumenFiles arrays from mirror_coord_to_codex.ps1 here.
 $Files = @(
 	"ui\utils\graph_types.h",
 	"ui\utils\graph_types.cpp",
@@ -38,6 +38,13 @@ $Files = @(
 	"ui\controllers\start_server_controller.cpp",
 	"ui\controllers\start_server_controller.h",
 	"ui\models\main_model.h"
+)
+
+$LumenFiles = @(
+	"ui\ui\utils\texture_manager.cpp",
+	"ui\ui\utils\texture_manager.h",
+	"ui\utils\AssetsEnum.h",
+	"Assets\gen_assets_enum.py"
 )
 
 function Get-RevLabel {
@@ -129,6 +136,38 @@ foreach ($relPath in $Files) {
         Write-Host "$fileName -> $relPath  [$label]"
     } else {
         Write-Host "$fileName -> $relPath  [no REV label]"
+    }
+}
+
+foreach ($relPath in $LumenFiles) {
+    $fileName = Split-Path $relPath -Leaf
+
+    # Lumen-owned files live under the Lumen lane folder in Codex.
+    $srcPath = Join-Path (Join-Path $CodexDir "Lumen") $fileName
+
+    # Destination preserves detailed path in Windows repo.
+    $dstPath = Join-Path $WinDir $relPath
+    $dstDir  = Split-Path $dstPath -Parent
+
+    if (-not (Test-Path $srcPath)) {
+        Write-Host "MISSING: Lumen/$fileName  (expected at $srcPath)" -ForegroundColor Yellow
+        $missing++
+        continue
+    }
+
+    if (-not (Test-Path $dstDir)) {
+        New-Item -ItemType Directory -Path $dstDir -Force | Out-Null
+    }
+
+    Copy-Item $srcPath $dstPath -Force
+    $copied++
+
+    $label = Get-RevLabel -Path $srcPath
+    if ($label) {
+        $labels += $label
+        Write-Host "Lumen/$fileName -> $relPath  [$label]"
+    } else {
+        Write-Host "Lumen/$fileName -> $relPath  [no REV label]"
     }
 }
 
