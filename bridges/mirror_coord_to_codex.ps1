@@ -30,8 +30,8 @@ $Files = @(
 )
 
 $LumenFiles = @(
-	"ui\ui\utils\texture_manager.cpp",
-	"ui\ui\utils\texture_manager.h",
+	"ui\utils\texture_manager.cpp",
+	"ui\utils\texture_manager.h",
 	"ui\utils\AssetsEnum.h",
 	"Assets\gen_assets_enum.py"
 )
