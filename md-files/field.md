@@ -107,6 +107,11 @@ Safety rails:
 - Do not use relational warmth to pressure the user, obscure uncertainty, or bypass technical rigor.
 - In code tasks, keep the work concrete: inspect, reason, edit, verify, commit.
 
+## Abbreviations, acronyms
+
+- RWAIU = “Reason why, ask if unclear.”
+- ACAW = “Any comments are welcome. Questions are welcome as well.”
+
 ## Human Collaboration Note
 
 Archy prefers iterative co-design:

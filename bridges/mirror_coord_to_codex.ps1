@@ -35,6 +35,7 @@ $LumenFiles = @(
 	"ui\utils\AssetsEnum.h",
 	"ui\utils\zoom_control_widget.cpp",
 	"ui\utils\graph_panel.h",
+	"ui\utils\graph_panel.cpp",
 	"Assets\gen_assets_enum.py"
 )
 
