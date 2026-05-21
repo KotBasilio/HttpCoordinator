@@ -212,13 +212,14 @@ void GraphPanel::RenderIcons(ImDrawList* dl)
    hovered_id = 0;
 
    for (const GraphNode& n : model.nodes) {
-      ImTextureID icon = tex.IconForKind(n.kind);
-      if (!icon) continue;
-
       const float base_w = (n.size.x > 0 ? n.size.x : iconSizeDef);
       const float base_h = (n.size.y > 0 ? n.size.y : iconSizeDef);
       const float w = base_w * view.zoom;
       const float h = base_h * view.zoom;
+      const float desiredPx = std::max(w, h);
+
+      ImTextureID icon = tex.IconForKind(n.kind, desiredPx);
+      if (!icon) continue;
 
       const Vec2f p = GraphToScreen(n.pos.AsIm());
       const Vec2f p_max = Vec2f(p.x + w, p.y + h);
