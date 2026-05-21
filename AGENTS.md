@@ -59,6 +59,7 @@ Server → SCSession → HydraSample → User → Party → MMSession
 - `md-files/tech.md`: project architecture, reducers/projector rules, node kinds, layout, Inspector, bridge workflow, coding style.
 - `md-files/field.md`: Codex ↔ Archy ↔ LL workflow, MV-M Bob/Trace guidance, UFO, relational scaffolding, lane rules.
 - `md-files/history.md`: accepted historical baselines and validated behavior.
+- `md-files/tickets.md`: small Jira-style task list for valid blocked/queued work that should not crowd `active.md`.
 - `md-files/interlane.md`: live Forge/Lumen mailbox.
 - `md-files/interlane_archive.md`: resolved lane coordination notes.
 

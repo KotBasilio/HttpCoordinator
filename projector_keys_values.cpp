@@ -29,6 +29,18 @@ static std::string FindKvValue(const std::vector<std::pair<std::string, std::str
    return (it == kv.end()) ? std::string{} : it->second;
 }
 
+template <typename Map>
+static std::vector<std::string> SortedKeys(const Map& rows)
+{
+   std::vector<std::string> keys;
+   keys.reserve(rows.size());
+   for (const auto& row : rows)
+      keys.push_back(row.first);
+
+   std::sort(keys.begin(), keys.end());
+   return keys;
+}
+
 void AddKvIfMissing(std::vector<std::pair<std::string, std::string>>& kv,
    const char* key,
    const std::string& value,
@@ -37,13 +49,11 @@ void AddKvIfMissing(std::vector<std::pair<std::string, std::string>>& kv,
    if (value.empty())
       return;
 
-   // Check if the key already exists
    const auto it = std::find_if(kv.begin(), kv.end(),
       [key](const auto& row) { return row.first == key; });
    if (it != kv.end())
       return;
 
-   // Check if the value exists under the alternative key
    if (existingKey) {
       std::string existingValue = FindKvValue(kv, existingKey);
       if (existingValue == value)
@@ -148,11 +158,7 @@ void FillMMSessionKv(GraphNode& n, const SessionState& s, const std::string& sid
       AddKv(n.kv, ("VARIANT_" + variant.first).c_str(), variant.second);
    }
 
-   std::vector<std::string> memberIds;
-   memberIds.reserve(s.members.size());
-   for (const auto& mkv : s.members)
-      memberIds.push_back(mkv.first);
-   std::sort(memberIds.begin(), memberIds.end());
+   const std::vector<std::string> memberIds = SortedKeys(s.members);
 
    int memberIndex = 1;
    for (const std::string& uid : memberIds) {
@@ -185,11 +191,7 @@ void FillPartyKv(GraphNode& n, const PartyState& p, const std::string& pid)
    AddKv(n.kv, "LONG_OPERATION_CORRELATION_ID", p.longOperationCorrelationId);
    AddKv(n.kv, "LONG_OPERATION_USER_ID", p.longOperationUserId);
 
-   std::vector<std::string> memberIds;
-   memberIds.reserve(p.members.size());
-   for (const auto& mkv : p.members)
-      memberIds.push_back(mkv.first);
-   std::sort(memberIds.begin(), memberIds.end());
+   const std::vector<std::string> memberIds = SortedKeys(p.members);
 
    int memberIndex = 1;
    for (const std::string& uid : memberIds) {
