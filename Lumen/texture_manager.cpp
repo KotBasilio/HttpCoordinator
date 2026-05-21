@@ -98,20 +98,21 @@ IconLODSet LODSetForKind(NodeKind kind)
    }
 }
 
-AssetID ChooseLODAsset(IconLODSet set, float desiredPx)
+IconLodInfo ChooseLOD(IconLODSet set, float desiredPx)
 {
    if (!set.variants || set.count == 0)
-      return AssetID::IC_INFORMATION_32_PX;
+      return IconLodInfo{ AssetID::IC_INFORMATION_32_PX, 32 };
 
    if (!std::isfinite(desiredPx) || desiredPx <= 0.0f)
       desiredPx = 32.0f;
 
    for (size_t i = 0; i < set.count; ++i) {
       if ((float)set.variants[i].sizePx >= desiredPx)
-         return set.variants[i].asset;
+         return IconLodInfo{ set.variants[i].asset, set.variants[i].sizePx };
    }
 
-   return set.variants[set.count - 1].asset;
+   const IconVariant& largest = set.variants[set.count - 1];
+   return IconLodInfo{ largest.asset, largest.sizePx };
 }
 
 } // namespace
@@ -196,7 +197,12 @@ void TextureManager::ValidateAssetPipeline()
 
 AssetID TextureManager::IconAssetForKind(NodeKind kind, float desiredPx) const
 {
-   return ChooseLODAsset(LODSetForKind(kind), desiredPx);
+   return IconLodInfoForKind(kind, desiredPx).asset;
+}
+
+IconLodInfo TextureManager::IconLodInfoForKind(NodeKind kind, float desiredPx) const
+{
+   return ChooseLOD(LODSetForKind(kind), desiredPx);
 }
 
 ImTextureID TextureManager::IconForKind(NodeKind kind, float desiredPx)

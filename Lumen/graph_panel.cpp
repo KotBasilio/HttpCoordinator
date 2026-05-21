@@ -3,6 +3,8 @@
 #include <algorithm> // std::clamp
 #include <cmath> // std::sqrt, std::abs
 
+#pragma message("graph_panel.cpp REV: LODs v0.1")
+
 GraphPanel::GraphPanel(GraphViewState& _view, GraphModel& _model, Sample::Tex::TextureManager& _tex)
    : view(_view)
    , model(_model)
@@ -210,6 +212,13 @@ void GraphPanel::RenderIcons(ImDrawList* dl)
    const Vec2f mouse = ImGui::GetIO().MousePos;
    const bool canvas_hovered = ImGui::IsItemHovered();
    hovered_id = 0;
+   if (view.selected.node != 0) {
+      view.selected.desiredPx = 0.0f;
+      view.selected.drawW = 0.0f;
+      view.selected.drawH = 0.0f;
+      view.selected.assetID = 0;
+      view.selected.lodPx = 0;
+   }
 
    for (const GraphNode& n : model.nodes) {
       const float base_w = (n.size.x > 0 ? n.size.x : iconSizeDef);
@@ -218,8 +227,17 @@ void GraphPanel::RenderIcons(ImDrawList* dl)
       const float h = base_h * view.zoom;
       const float desiredPx = std::max(w, h);
 
-      ImTextureID icon = tex.IconForKind(n.kind, desiredPx);
+      auto lod = tex.IconLodInfoForKind(n.kind, desiredPx);
+      ImTextureID icon = tex.Access(lod.asset);
       if (!icon) continue;
+
+      if (n.id == view.selected.node) {
+         view.selected.desiredPx = desiredPx;
+         view.selected.drawW = w;
+         view.selected.drawH = h;
+         view.selected.assetID = static_cast<int>(lod.asset);
+         view.selected.lodPx = lod.variantPx;
+      }
 
       const Vec2f p = GraphToScreen(n.pos.AsIm());
       const Vec2f p_max = Vec2f(p.x + w, p.y + h);

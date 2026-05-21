@@ -124,6 +124,13 @@ struct GraphModel
 // Shared selection spine across panels (Inventory, Graph, Inspector).
 struct SelectionState {
    NodeId node = 0; // 0 = nothing selected
+
+   // Icon Lod Debug
+   float desiredPx = 0.0f;
+   float drawW = 0.0f;
+   float drawH = 0.0f;
+   int assetID = 0; // AssetID of the icon chosen for the selected node
+   int lodPx = 0;
 };
 
 // View state for a canvas: with pan, zoom

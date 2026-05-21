@@ -17,6 +17,11 @@ struct IconVariant {
    AssetID asset = ASSET_COUNT;
 };
 
+struct IconLodInfo {
+   AssetID asset = ASSET_COUNT;
+   int variantPx = 0;
+};
+
 // Small, shared texture cache for ImGui/OpenGL.
 // Loads images from disk using stb_image and uploads to OpenGL as GL_TEXTURE_2D.
 class TextureManager {
@@ -33,6 +38,7 @@ public:
    ImTextureID IconForKind(NodeKind kind);
    ImTextureID IconForKind(NodeKind kind, float desiredPx);
    AssetID IconAssetForKind(NodeKind kind, float desiredPx) const;
+   IconLodInfo IconLodInfoForKind(NodeKind kind, float desiredPx) const;
 
    // Remove a single texture (optional convenience).
    void Unload(const std::string& relativePath);
