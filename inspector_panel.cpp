@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 
-#pragma message("inspector_panel.cpp REV: LODs v0.1")
+#pragma message("inspector_panel.cpp REV: LODs v0.2")
 
 #define COPY_BUTTON_LABEL "[  ]"
 
@@ -132,9 +132,9 @@ void InspectorPanel::DrawNode(const GraphNode& n)
    ImGui::Text("Kind: %s", ToString(n.kind));
    ImGui::Text("Pos: (%.1f, %.1f)", n.pos.x, n.pos.y);
    ImGui::Text("Size: (%.1f, %.1f)", n.size.x, n.size.y);
-   if (view.selected.node == n.id && view.selected.lodPx > 0) {
+   if (view.IsSelected(n.id) && view.selected.lodPx > 0) {
       ImGui::SameLine();
-      ImGui::Text("Icon LOD: %d px", view.selected.lodPx);
+      ImGui::Text("LOD: %d px", view.selected.lodPx);
    }
 
    // move up/down
@@ -245,7 +245,7 @@ void InspectorPanel::DrawMaybeClickableKvValue(const std::string& value)
    }
 
    if (ImGui::IsItemClicked()) {
-      view.selected.node = target->id;
+      view.SelectNode(target->id);
    }
 }
 
@@ -326,7 +326,7 @@ void InspectorPanel::DrawClickableLink(const GraphLink& e, NodeId idDest)
 
    // Make it clickable. We don't want highlight to persist here, so pass false.
    if (ImGui::Selectable(label.c_str(), false)) {
-      view.selected.node = idDest;
+      view.SelectNode(idDest);
    }
 
    ImGui::PopID();

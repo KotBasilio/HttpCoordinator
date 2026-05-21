@@ -149,20 +149,14 @@ bool StartServerController::ApplyReorderCommands()
 {
    // Apply Inspector reorder intent (layout-only). This must trigger a reproject
    // even when there are no new packets.
-   {
-      // NOTE: adjust this path if your GraphViewState lives somewhere else.
-      // In your UI, InspectorPanel already holds a GraphViewState&; this should be the same instance.
-      GraphViewState& view = mainModel->view;
+   GraphViewState& view = mainModel->view;
 
-      const int delta = view.pendingUpDownDelta;
-      if (delta != 0) {
-         view.pendingUpDownDelta = 0;
-
-         const NodeId sel = view.selected.node;
-         const GraphNode* n = mainModel->graph.Find(sel);
-         if (n) {
-            return st.MoveEntityInOrder(n->kind, n->entityKey, delta);
-         }
+   const int delta = view.pendingUpDownDelta;
+   if (delta != 0) {
+      view.pendingUpDownDelta = 0;
+      const GraphNode* n = mainModel->graph.Find(view.selected.node);
+      if (n) {
+         return st.MoveEntityInOrder(n->kind, n->entityKey, delta);
       }
    }
 

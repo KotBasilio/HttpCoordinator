@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 
-#pragma message("graph_types.cpp REV: rich kv v0.3")
+#pragma message("graph_types.cpp REV: LODs v0.2")
 
 // -- Helpers --
 static Vec2f AnchorRightMid(const Vec2f& node_min, const Vec2f& node_size)
@@ -114,4 +114,10 @@ const GraphNode* GraphModel::FindUniqueNodeEchoForValue(const std::string& value
    }
 
    return found;
+}
+
+void GraphViewState::SelectNode(NodeId id)
+{
+   selected = SelectionState{};
+   selected.node = id;
 }

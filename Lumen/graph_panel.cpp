@@ -3,7 +3,7 @@
 #include <algorithm> // std::clamp
 #include <cmath> // std::sqrt, std::abs
 
-#pragma message("graph_panel.cpp REV: LODs v0.1")
+#pragma message("graph_panel.cpp REV: LODs v0.2")
 
 GraphPanel::GraphPanel(GraphViewState& _view, GraphModel& _model, Sample::Tex::TextureManager& _tex)
    : view(_view)
@@ -82,7 +82,7 @@ void GraphPanel::ProcessMouseCommands()
 
    // Click selection (click on empty space clears selection)
    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-      view.selected.node = hovered_id;
+      view.SelectNode(hovered_id);
       return;
    }
 }
@@ -112,8 +112,7 @@ void GraphPanel::RenderLinks(ImDrawList* dl)
 {
    // a spider visual: a bright selected node (as a body), plus links (as limbs)
    // over a web of dimmed other links -- looks like a spider.
-   const NodeId sel = view.selected.node;
-   const bool spider = view.dimUnrelatedLinks && (sel != 0);
+   const bool spider = view.dimUnrelatedLinks && view.HasSelection();
    constexpr float kDim = 0.15f;
 
    // Policy: draw at most one arrowhead per target node to avoid alpha stacking blobs.
@@ -126,7 +125,7 @@ void GraphPanel::RenderLinks(ImDrawList* dl)
       }
 
       // spider mode, related link => skip none
-      if (spider && (e.to == sel || e.from == sel)) {
+      if (spider && (view.IsSelected(e.to) || view.IsSelected(e.from))) {
          return true;
       }
 
@@ -141,7 +140,7 @@ void GraphPanel::RenderLinks(ImDrawList* dl)
       const GraphNode* b = model.Find(e.to);
       if (!a || !b) continue;
 
-      const bool related = !spider || (e.from == sel) || (e.to == sel);
+      const bool related = !spider || view.IsSelected(e.to) || view.IsSelected(e.from);
       const ImU32 col = related ? e.color : ScaleAlpha(e.color, kDim);
 
       // Node icon sizes in *graph space* (your model), scaled by view.zoom
@@ -206,19 +205,14 @@ void GraphPanel::RenderLinks(ImDrawList* dl)
    }
 }
 
+// besides drawing icons, this also updates hovered_id
+// and updates view.selected for debug display
 void GraphPanel::RenderIcons(ImDrawList* dl)
 {
-   // --- MVP icon draw ---
+   // --- icon draw ---
    const Vec2f mouse = ImGui::GetIO().MousePos;
    const bool canvas_hovered = ImGui::IsItemHovered();
    hovered_id = 0;
-   if (view.selected.node != 0) {
-      view.selected.desiredPx = 0.0f;
-      view.selected.drawW = 0.0f;
-      view.selected.drawH = 0.0f;
-      view.selected.assetID = 0;
-      view.selected.lodPx = 0;
-   }
 
    for (const GraphNode& n : model.nodes) {
       const float base_w = (n.size.x > 0 ? n.size.x : iconSizeDef);
@@ -231,7 +225,7 @@ void GraphPanel::RenderIcons(ImDrawList* dl)
       ImTextureID icon = tex.Access(lod.asset);
       if (!icon) continue;
 
-      if (n.id == view.selected.node) {
+      if (view.IsSelected(n.id)) {
          view.selected.desiredPx = desiredPx;
          view.selected.drawW = w;
          view.selected.drawH = h;
@@ -256,7 +250,7 @@ void GraphPanel::RenderIcons(ImDrawList* dl)
       RenderITexts(w, h, dl, n);
 
       // Selection border around ICON ONLY
-      if (view.selected.node == n.id) {
+      if (view.IsSelected(n.id)) {
          const float rounding = 10.0f * view.zoom;
          const float thickness = std::clamp(3.0f * view.zoom, 1.0f, 4.0f);
          dl->AddRect(p.AsIm(), p_max.AsIm(), IM_COL32(0, 200, 255, 255), rounding, 0, thickness);

@@ -145,4 +145,9 @@ struct GraphViewState {
 
    // Spider mode: when a node is selected, dim unrelated links.
    bool dimUnrelatedLinks = true;
+
+   void ClearSelection() { selected = SelectionState{}; }
+   void SelectNode(NodeId id);
+   bool IsSelected(NodeId id) const { return selected.node == id; }
+   bool HasSelection() const { return selected.node != 0; }
 };
