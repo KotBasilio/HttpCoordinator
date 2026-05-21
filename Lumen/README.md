@@ -8,4 +8,4 @@ Usual ownership:
 - visual asset handling
 - image-facing UI plumbing
 
-Coordinate through `../interlane.md` when a task touches Forge-owned reducer, projector, graph identity, or session behavior.
+Coordinate through `../md-files/interlane.md` when a task touches Forge-owned reducer, projector, graph identity, or session behavior.

@@ -3,7 +3,8 @@
 Last updated: 2026-05-20
 
 This file is the short-lived cockpit for the current Codex work.
-`AGENTS.md` is the durable repo guidance; this file is allowed to change often.
+`AGENTS.md` is the durable repo entry point; this file is allowed to change often.
+Deeper durable docs live in `md-files/`.
 
 ## Current
 
@@ -29,11 +30,11 @@ This repo may be worked on by more than one Codex instance.
 - **Lumen**: ImGui texture, mipmap, icon, and visual asset handling lane. Its lane folder is `Lumen/`.
 
 Both lanes share the same repo and Git history. Before editing, each instance should
-read `AGENTS.md` and `active.md`, check the working tree, and avoid overlapping
-file edits unless the task explicitly crosses lanes.
+read `AGENTS.md`, `active.md`, and `md-files/interlane.md`, check the working tree,
+and avoid overlapping file edits unless the task explicitly crosses lanes.
 
-Use `interlane.md` as the shared mailbox for cross-lane notes, requests, warnings,
-and handoffs. Keep entries short, dated when useful, and signed by lane name.
+Use `md-files/interlane.md` as the shared mailbox for cross-lane notes, requests,
+warnings, and handoffs. Keep entries short, dated when useful, and signed by lane name.
 
 Lumen should preserve existing graph/reducer/projector behavior unless a visual
 task explicitly requires coordination with those systems.
@@ -65,7 +66,7 @@ Existing Party/MM and SCSession behavior should remain stable unless a task expl
 
 ## Validated
 
-Accepted baselines live in `history.md` so this cockpit stays short.
+Accepted baselines live in `md-files/history.md` so this cockpit stays short.
 
 ## Deferred
 

@@ -13,7 +13,7 @@ Use this file for live cross-lane handoffs, warnings, requests, and small design
 - Keep entries short, dated when useful, and signed by lane name.
 - Treat this as Forge/Lumen workspace. Archy may read it view-only.
 - Remove or archive resolved notes during normal lane housekeeping.
-- Move resolved notes worth preserving to `interlane_archive.md`.
+- Move resolved notes worth preserving to `md-files/interlane_archive.md`.
 - Promote only stable coordination rules into `AGENTS.md`.
 - Do not use this file as a task log, journal, or replacement for commits.
 

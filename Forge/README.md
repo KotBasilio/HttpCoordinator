@@ -9,4 +9,4 @@ Usual ownership:
 - graph identity and links
 - Inspector behavior
 
-Coordinate through `../interlane.md` when a task touches Lumen-owned visual texture/icon work.
+Coordinate through `../md-files/interlane.md` when a task touches Lumen-owned visual texture/icon work.
