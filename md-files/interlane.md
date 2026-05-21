@@ -17,6 +17,18 @@ Use this file for live cross-lane handoffs, warnings, requests, and small design
 - Promote only stable coordination rules into `AGENTS.md`.
 - Do not use this file as a task log, journal, or replacement for commits.
 
+## Entry Template
+
+Optional format for new notes:
+
+```md
+### YYYY-MM-DD — LaneName — Short topic
+- Touching:
+- Needs from other lane:
+- Risk:
+- Status:
+```
+
 ## Open Notes
 
 No open cross-lane notes.

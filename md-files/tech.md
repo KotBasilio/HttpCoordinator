@@ -87,7 +87,7 @@ SCSession is the SessionControl/game-session layer between Servers and Hydra.
 
 - `servers_ingestion.cpp`
   - Dedicated-server, SessionControl, and standalone-server reducers/correlation.
-  - Creates SCSession state from dedicated-server session info and SessionControl flows.
+  - Handles Dedicated Server state and SessionControl flows; links Server → SCSession only when activation flow proves the SC id.
 
 - `projector.cpp` and `projector_*`
   - Convert `LiveState` into `GraphModel`.

@@ -106,6 +106,22 @@ Relevant Hydra/user bridge flow:
 
 ## Workflow History
 
+### Codex instance lanes stabilized
+
+Forge and Lumen lane behavior is considered stable enough to live in durable/background docs rather than dominate `active.md`.
+
+Current lanes:
+
+- **Forge:** graph/reducer/session/projector/Inspector behavior.
+- **Lumen:** ImGui texture, mipmap, icon, and visual asset handling.
+
+Durable lane rhythm:
+- Every lane starts by reading `AGENTS.md`, `active.md`, and `md-files/interlane.md`, then checking `git status --short --branch`.
+- Use `md-files/interlane.md` for live cross-lane notes, requests, warnings, and handoffs.
+- Avoid overlapping file edits unless Archy explicitly asks for cross-lane work.
+- Promote only stable coordination rules into durable docs.
+- Keep `active.md` focused on current product/code work, not ongoing lane housekeeping.
+
 ### WSL subset and bridge scripts
 
 The full production app is compiled and run on Win11 in Visual Studio.

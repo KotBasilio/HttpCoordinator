@@ -56,6 +56,18 @@ Current lanes:
 - **Forge:** primary graph/reducer/session/projector/Inspector behavior lane. Lane folder: `../Forge/`.
 - **Lumen:** ImGui texture, mipmap, icon, and visual asset handling lane. Lane folder: `../Lumen/`.
 
+### Lane Ownership Table
+
+| Area | Default lane | Notes |
+|---|---|---|
+| reducers / `LiveState` / SessionControl | Forge | Lumen should not edit unless a task explicitly crosses lanes. |
+| projector / graph links / graph identity | Forge | Preserve reducer → `LiveState` → projector → `GraphModel` flow. |
+| `inspector_panel.*` | Forge | Lumen writes to `md-files/interlane.md` if a visual task needs Inspector changes. |
+| textures / icons / mipmaps / `TextureManager` | Lumen | Preserve node semantics and graph identity. |
+| `graph_types.*` | Shared | Leave an interlane note if touched. |
+| bridge scripts / mirror scripts | Shared | Keep Forge/Lumen file arrays aligned. |
+| docs / lane coordination notes | Shared | Keep `active.md` current, move stable lane rules to durable docs/history. |
+
 Durable lane rules:
 
 - Every lane starts by reading `AGENTS.md`, `active.md`, and `md-files/interlane.md`, then checking `git status --short --branch`.
@@ -64,7 +76,7 @@ Durable lane rules:
 - Avoid overlapping file edits unless Archy explicitly asks for cross-lane work.
 - Forge should preserve Lumen-owned texture/icon/mipmap behavior unless graph behavior needs a small exposed surface.
 - Lumen should preserve Forge-owned reducer, `LiveState`, projector, graph identity, link, and Inspector behavior unless a visual task explicitly requires coordination.
-- Shared UI files such as `graph_types.*`, `inspector_panel.*`, texture plumbing, and bridge scripts need extra care and a clear note in either the commit message or `md-files/interlane.md`.
+- Shared or cross-lane files such as `graph_types.*`, texture plumbing, and bridge scripts need extra care and a clear note in either the commit message or `md-files/interlane.md`.
 - Current bridge convention: Forge/core files mirror flat at repo root; Lumen visual/texture files mirror flat under `Lumen/`; bridge scripts should keep matching Lumen file arrays.
 
 ## Interlane Chalkboard
