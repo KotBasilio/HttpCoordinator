@@ -104,6 +104,7 @@ $Files = @(
 
 $LumenFiles = @(
     "ui\utils\texture_manager.cpp",
+    "ui\utils\texman_lods.cpp",
     "ui\utils\texture_manager.h",
     "ui\utils\AssetsEnum.h",
     "ui\utils\zoom_control_widget.cpp",

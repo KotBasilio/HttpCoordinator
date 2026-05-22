@@ -12,11 +12,6 @@ namespace Sample::Tex {
 // OpenGL texture id type (GLuint). We avoid including GL headers here.
 using GLTextureHandle = unsigned int;
 
-struct IconVariant {
-   int sizePx = 0;
-   AssetID asset = ASSET_COUNT;
-};
-
 struct IconLodInfo {
    AssetID asset = ASSET_COUNT;
    int variantPx = 0;
