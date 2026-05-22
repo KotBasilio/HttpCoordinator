@@ -261,6 +261,10 @@ Current bridge convention:
 
 - Forge/core files mirror flat at repo root.
 - Lumen visual/texture files mirror flat under `Lumen/`.
+- Preferred bridge entry point is `bridges/bridge.ps1`:
+  - `.\bridge.ps1 -Direction ToCodex`
+  - `.\bridge.ps1 -Direction ToWin`
+- Older one-way bridge scripts remain for compatibility while `bridge.ps1` is tested.
 - Bridge scripts should keep matching Lumen file arrays.
 - Codex commits here are review artifacts and collaboration checkpoints.
 - Archy reviews, compiles, runs, and makes production-repo commits afterward.
