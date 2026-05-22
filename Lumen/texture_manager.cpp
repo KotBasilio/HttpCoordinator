@@ -51,8 +51,11 @@ const IconVariant kStandaloneServerIcon[] = {
 };
 
 const IconVariant kHydraSampleIcon[] = {
-   { 16, AssetID::IC_PVE_16_PX_2 },
-   { 32, AssetID::IC_PVE_32_PX_2 },
+   { 24, AssetID::HYDRASAMPLE_24PX },
+   { 104, AssetID::HYDRASAMPLE_104PX },
+   { 184, AssetID::HYDRASAMPLE_184PX },
+   { 264, AssetID::HYDRASAMPLE_264PX },
+   { 344, AssetID::HYDRASAMPLE_344PX },
 };
 
 const IconVariant kDSSessionIcon[] = {
