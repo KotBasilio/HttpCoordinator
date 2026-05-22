@@ -6,8 +6,6 @@
 #include <string>
 #include <string_view>
 
-#pragma message("inspector_panel.cpp REV: LODs v0.3")
-
 #define COPY_BUTTON_LABEL "[  ]"
 
 // -- Helpers --

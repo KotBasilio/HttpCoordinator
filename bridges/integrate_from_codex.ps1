@@ -118,33 +118,6 @@ $LumenFiles = @(
 	"Assets\gen_assets_enum.py"
 )
 
-function Get-RevLabel {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Path
-    )
-
-    $m = Select-String -Path $Path -Pattern '#pragma\s+message' | Select-Object -First 1
-    if (-not $m) {
-        return $null
-    }
-
-    $line = $m.Line
-
-    # Prefer extracting from REV: onward.
-    $revIdx = $line.IndexOf("REV:")
-    if ($revIdx -ge 0) {
-        $label = $line.Substring($revIdx).Trim()
-
-        # Remove trailing quote/paren noise if present.
-        $label = $label -replace '[\"\)\s]+$', ''
-        return $label
-    }
-
-    # Fallback: return pragma message line itself, trimmed.
-    return $line.Trim()
-}
-
 Write-Host "Grab CODEX -> Coordinator"
 Write-Host "CodexDir: $CodexDir"
 Write-Host "WinDir:   $WinDir"
@@ -174,7 +147,6 @@ if ($dupes.Count -gt 0) {
     throw "Cannot safely copy from flat CodexDir with duplicate basenames."
 }
 
-$labels = @()
 $copied = 0
 $missing = 0
 
@@ -201,13 +173,7 @@ foreach ($relPath in $Files) {
     Copy-Item $srcPath $dstPath -Force
     $copied++
 
-    $label = Get-RevLabel -Path $srcPath
-    if ($label) {
-        $labels += $label
-        Write-Host "$fileName -> $relPath  [$label]"
-    } else {
-        Write-Host "$fileName -> $relPath  [no REV label]"
-    }
+    Write-Host "$fileName -> $relPath"
 }
 
 foreach ($relPath in $LumenFiles) {
@@ -233,34 +199,9 @@ foreach ($relPath in $LumenFiles) {
     Copy-Item $srcPath $dstPath -Force
     $copied++
 
-    $label = Get-RevLabel -Path $srcPath
-    if ($label) {
-        $labels += $label
-        Write-Host "Lumen/$fileName -> $relPath  [$label]"
-    } else {
-        Write-Host "Lumen/$fileName -> $relPath  [no REV label]"
-    }
+    Write-Host "Lumen/$fileName -> $relPath"
 }
 
 Write-Host ""
 Write-Host "Copied $copied file(s). Missing $missing file(s)."
 Write-Host ""
-
-if ($labels.Count -gt 0) {
-	$mostFrequent = $labels | Group-Object | Sort-Object Count -Descending | Select-Object -First 1
-	Write-Host "Grabbed from CODEX"
-	Write-Host "Most frequent label: $($mostFrequent.Name) (appeared $($mostFrequent.Count) times)"
-
-	$uniqueLabels = @($labels | Sort-Object -Unique)
-
-	if ($uniqueLabels.Count -gt 1) {
-		Write-Host ""
-		Write-Host "All detected labels:" -ForegroundColor Yellow
-		foreach ($l in $uniqueLabels) {
-			$count = @($labels | Where-Object { $_ -eq $l }).Count
-			Write-Host "  $l ($count)"
-		}
-	}
-} else {
-    Write-Host "No labels detected in any file."
-}

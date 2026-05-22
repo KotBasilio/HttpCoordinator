@@ -241,14 +241,6 @@ Do not introduce `GraphPropertySection` until `GraphNode::kv` is clearly insuffi
 
 Logs are part of the development workflow.
 
-The project may use `#pragma message("... REV: ...")` stamps to identify file versions during review.
-
-Workflow ritual names:
-
-- `↔️G-sync`: confirm current files/revisions.
-- `⛓️G-rev`: review synced code.
-- `🔏G-lock`: accepted baseline.
-
 ## Bridge Workflow
 
 The full production project lives on Win11 and includes Visual Studio project files and additional source files.

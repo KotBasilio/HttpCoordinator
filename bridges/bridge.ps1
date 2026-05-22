@@ -112,67 +112,6 @@ $LumenFiles = @(
     "Assets\gen_assets_enum.py"
 )
 
-function Get-RevLabel {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Path
-    )
-
-    $m = Select-String -Path $Path -Pattern '#pragma\s+message' | Select-Object -First 1
-    if (-not $m) {
-        return $null
-    }
-
-    $line = $m.Line
-    $revIdx = $line.IndexOf("REV:")
-    if ($revIdx -ge 0) {
-        $label = $line.Substring($revIdx).Trim()
-        $label = $label -replace '[\"\)\s]+$', ''
-        return $label
-    }
-
-    return $line.Trim()
-}
-
-function New-CodebaseZip {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string[]]$Files,
-
-        [Parameter(Mandatory = $true)]
-        [string]$WinDir,
-
-        [Parameter(Mandatory = $true)]
-        [string]$TempDir,
-
-        [Parameter(Mandatory = $true)]
-        [string]$ZipName
-    )
-
-    $tmpDir = Join-Path $TempDir "Codebase"
-
-    if (Test-Path $tmpDir) {
-        Remove-Item $tmpDir -Recurse -Force
-    }
-    New-Item -ItemType Directory -Path $tmpDir | Out-Null
-
-    foreach ($file in $Files) {
-        $srcPath = Join-Path $WinDir $file
-        $destPath = Join-Path $tmpDir (Split-Path $file -Leaf)
-        Copy-Item $srcPath $destPath -Force
-    }
-
-    $zipBaseName = ($ZipName -replace '^\s*REV:\s*', 'Codebase-') -replace '\s+', ''
-    $zipPath = Join-Path $TempDir "$zipBaseName.zip"
-
-    if (Test-Path $zipPath) {
-        Remove-Item $zipPath -Force
-    }
-    Compress-Archive -Path "$tmpDir\*" -DestinationPath $zipPath
-
-    Write-Host "Codebase zipped to $zipPath"
-}
-
 function Assert-NoDuplicateFlatBasenames {
     param(
         [Parameter(Mandatory = $true)]
@@ -211,14 +150,7 @@ function Copy-ToCodexFile {
 
     $srcPath = Join-Path $WinDir $RelPath
     Copy-Item $srcPath $DestRoot -Force
-
-    $label = Get-RevLabel -Path $srcPath
-    if ($label) {
-        $script:labels += $label
-        Write-Host "$RelPath -> $label"
-    } else {
-        Write-Host "$RelPath -> no stamp"
-    }
+    Write-Host "$RelPath -> $DestRoot"
 }
 
 function Copy-ToWinFile {
@@ -254,14 +186,7 @@ function Copy-ToWinFile {
 
     Copy-Item $srcPath $dstPath -Force
     $script:copied++
-
-    $label = Get-RevLabel -Path $srcPath
-    if ($label) {
-        $script:labels += $label
-        Write-Host "$displaySource -> $RelPath  [$label]"
-    } else {
-        Write-Host "$displaySource -> $RelPath  [no REV label]"
-    }
+    Write-Host "$displaySource -> $RelPath"
 }
 
 function Invoke-ToCodexBridge {
@@ -272,8 +197,6 @@ function Invoke-ToCodexBridge {
 
     $WinDir = $Paths.WinCoordinatorDir
     $CodexDir = $Paths.CodexCoordinatorDir
-    $TempDir = $Paths.TempDir
-
     Write-Host "Bridge Win -> CODEX"
     Write-Host "WinDir:   $WinDir"
     Write-Host "CodexDir: $CodexDir"
@@ -292,8 +215,6 @@ function Invoke-ToCodexBridge {
         New-Item -ItemType Directory -Path $LumenDestDir | Out-Null
     }
 
-    $script:labels = @()
-
     foreach ($file in $Files) {
         Copy-ToCodexFile -RelPath $file -WinDir $WinDir -DestRoot $CodexDir
     }
@@ -301,32 +222,6 @@ function Invoke-ToCodexBridge {
     foreach ($file in $LumenFiles) {
         Copy-ToCodexFile -RelPath $file -WinDir $WinDir -DestRoot $LumenDestDir
     }
-
-    if ($script:labels.Count -eq 0) {
-        Write-Host "No labels detected in any file."
-        return
-    }
-
-    $mostFrequent = $script:labels | Group-Object | Sort-Object Count -Descending | Select-Object -First 1
-    Write-Host "Most frequent label: $($mostFrequent.Name) (appeared $($mostFrequent.Count) times)"
-
-    $commitMsg = $mostFrequent.Name
-    $answer = Read-Host "Do you want to commit with this label? (y/n)"
-    if ($answer -imatch '^(n)$') {
-        Write-Host "Commit skipped."
-        New-CodebaseZip -Files ($Files + $LumenFiles) -WinDir $WinDir -TempDir $TempDir -ZipName $mostFrequent.Name
-        return
-    }
-
-    if (-not [string]::IsNullOrWhiteSpace($answer) -and $answer -inotmatch '^(y|yes)$') {
-        $commitMsg = $answer
-    }
-
-    Push-Location $CodexDir
-    git add .
-    git commit -m "$commitMsg"
-    git push
-    Pop-Location
 }
 
 function Invoke-ToWinBridge {
@@ -353,7 +248,6 @@ function Invoke-ToWinBridge {
 
     Assert-NoDuplicateFlatBasenames -Files $Files
 
-    $script:labels = @()
     $script:copied = 0
     $script:missing = 0
 
@@ -368,26 +262,6 @@ function Invoke-ToWinBridge {
 
     Write-Host ""
     Write-Host "Copied $script:copied file(s). Missing $script:missing file(s)."
-    Write-Host ""
-
-    if ($script:labels.Count -eq 0) {
-        Write-Host "No labels detected in any file."
-        return
-    }
-
-    $mostFrequent = $script:labels | Group-Object | Sort-Object Count -Descending | Select-Object -First 1
-    Write-Host "Grabbed from CODEX"
-    Write-Host "Most frequent label: $($mostFrequent.Name) (appeared $($mostFrequent.Count) times)"
-
-    $uniqueLabels = @($script:labels | Sort-Object -Unique)
-    if ($uniqueLabels.Count -gt 1) {
-        Write-Host ""
-        Write-Host "All detected labels:" -ForegroundColor Yellow
-        foreach ($l in $uniqueLabels) {
-            $count = @($script:labels | Where-Object { $_ -eq $l }).Count
-            Write-Host "  $l ($count)"
-        }
-    }
 }
 
 $BridgePaths = Get-BridgePaths

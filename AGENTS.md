@@ -72,14 +72,7 @@ Server → SCSession → HydraSample → User → Party → MMSession
 Do a brief sync before editing:
 
 1. List relevant files inspected.
-2. List their `#pragma message("... REV: ...")` stamps if present.
-3. Summarize current understanding.
-4. Propose the smallest patch.
-5. Then edit when the task is clear.
-
-Project ritual names:
-
-- `↔️G-sync`: confirm current files/revisions.
-- `⛓️G-rev`: review synced code.
-- `🔏G-lock`: accepted baseline.
+2. Summarize current understanding.
+3. Propose the smallest patch.
+4. Then edit when the task is clear.
 - `MD-up`: update `AGENTS.md`, `active.md`, and `md-files/*.md` with accumulated knowledge; keep `active.md` focused, move accepted/older ideas into history, then commit and push.

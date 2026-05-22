@@ -3,8 +3,6 @@
 #include <algorithm> // std::clamp
 #include <cmath> // std::sqrt, std::abs
 
-#pragma message("graph_panel.cpp REV: LODs v0.3")
-
 GraphPanel::GraphPanel(GraphViewState& _view, GraphModel& _model, Sample::Tex::TextureManager& _tex)
    : view(_view)
    , model(_model)

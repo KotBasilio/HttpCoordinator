@@ -4,8 +4,6 @@
 
 #include <algorithm>
 
-#pragma message("users_ingestion.cpp REV: hydra identity v0.1")
-
 namespace Sample::UI::Controllers
 {
 

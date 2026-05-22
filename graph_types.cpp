@@ -6,8 +6,6 @@
 #include <string>
 #include <string_view>
 
-#pragma message("graph_types.cpp REV: LODs v0.2")
-
 // -- Helpers --
 static Vec2f AnchorRightMid(const Vec2f& node_min, const Vec2f& node_size)
 {
