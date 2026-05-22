@@ -53,7 +53,7 @@ This repo may be worked on by more than one Codex instance.
 
 Current lanes:
 
-- **Forge:** primary graph/reducer/session/projector/Inspector behavior lane. Lane folder: `../Forge/`.
+- **Forge:** primary graph/reducer/session/projector behavior lane. Lane folder: `../Forge/`.
 - **Lumen:** ImGui texture, mipmap, icon, and visual asset handling lane. Lane folder: `../Lumen/`.
 
 ### Lane Ownership Table
@@ -62,7 +62,7 @@ Current lanes:
 |---|---|---|
 | reducers / `LiveState` / SessionControl | Forge | Lumen should not edit unless a task explicitly crosses lanes. |
 | projector / graph links / graph identity | Forge | Preserve reducer → `LiveState` → projector → `GraphModel` flow. |
-| `inspector_panel.*` | Forge | Lumen writes to `md-files/interlane.md` if a visual task needs Inspector changes. |
+| `inspector_panel.*` | Shared | Forge and Lumen both touch Inspector work; preserve graph/property semantics and note cross-lane behavior changes. |
 | textures / icons / mipmaps / `TextureManager` | Lumen | Preserve node semantics and graph identity. |
 | `graph_types.*` | Shared | Leave an interlane note if touched. |
 | bridge scripts / mirror scripts | Shared | Keep Forge/Lumen file arrays aligned. |
@@ -75,8 +75,8 @@ Durable lane rules:
 - Promote only stable coordination rules into durable docs; do not turn every task note into durable guidance.
 - Avoid overlapping file edits unless Archy explicitly asks for cross-lane work.
 - Forge should preserve Lumen-owned texture/icon/mipmap behavior unless graph behavior needs a small exposed surface.
-- Lumen should preserve Forge-owned reducer, `LiveState`, projector, graph identity, link, and Inspector behavior unless a visual task explicitly requires coordination.
-- Shared or cross-lane files such as `graph_types.*`, texture plumbing, and bridge scripts need extra care and a clear note in either the commit message or `md-files/interlane.md`.
+- Lumen should preserve Forge-owned reducer, `LiveState`, projector, graph identity, and link behavior unless a visual task explicitly requires coordination.
+- Shared or cross-lane files such as `graph_types.*`, `inspector_panel.*`, texture plumbing, and bridge scripts need extra care and a clear note in either the commit message or `md-files/interlane.md`.
 - Current bridge convention: Forge/core files mirror flat at repo root; Lumen visual/texture files mirror flat under `Lumen/`; bridge scripts should keep matching Lumen file arrays.
 
 ## Interlane Chalkboard

@@ -112,7 +112,7 @@ Forge and Lumen lane behavior is considered stable enough to live in durable/bac
 
 Current lanes:
 
-- **Forge:** graph/reducer/session/projector/Inspector behavior.
+- **Forge:** graph/reducer/session/projector behavior.
 - **Lumen:** ImGui texture, mipmap, icon, and visual asset handling.
 
 Durable lane rhythm:

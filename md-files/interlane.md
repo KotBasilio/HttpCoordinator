@@ -3,7 +3,7 @@
 Shared chalkboard for Codex instance lanes working in this repo.
 
 Current lanes:
-- **Forge**: graph/reducer/session/projector/Inspector behavior.
+- **Forge**: graph/reducer/session/projector behavior.
 - **Lumen**: ImGui texture, mipmap, icon, and visual asset handling.
 
 Use this file for live cross-lane handoffs, warnings, requests, and small design notes.
