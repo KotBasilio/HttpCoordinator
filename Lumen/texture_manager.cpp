@@ -22,44 +22,50 @@ namespace {
 
 const IconVariant kUnknownIcon[] = {
    { 24, AssetID::INFORMATION_24PX },
-   { 104, AssetID::INFORMATION_104PX },
-   { 184, AssetID::INFORMATION_184PX },
-   { 264, AssetID::INFORMATION_264PX },
-   { 344, AssetID::INFORMATION_344PX },
+   { 36, AssetID::INFORMATION_36PX },
+   { 56, AssetID::INFORMATION_56PX },
+   { 84, AssetID::INFORMATION_84PX },
+   { 128, AssetID::INFORMATION_128PX },
 };
 
 const IconVariant kUserIcon[] = {
    { 24, AssetID::USER_24PX },
-   { 104, AssetID::USER_104PX },
-   { 184, AssetID::USER_184PX },
-   { 264, AssetID::USER_264PX },
-   { 344, AssetID::USER_344PX },
+   { 36, AssetID::USER_36PX },
+   { 56, AssetID::USER_56PX },
+   { 84, AssetID::USER_84PX },
+   { 128, AssetID::USER_128PX },
 };
 
 const IconVariant kPartyIcon[] = {
    { 24, AssetID::PARTY_24PX },
-   { 104, AssetID::PARTY_104PX },
-   { 184, AssetID::PARTY_184PX },
-   { 264, AssetID::PARTY_264PX },
-   { 344, AssetID::PARTY_344PX },
+   { 36, AssetID::PARTY_36PX },
+   { 56, AssetID::PARTY_56PX },
+   { 84, AssetID::PARTY_84PX },
+   { 128, AssetID::PARTY_128PX },
 };
 
 const IconVariant kSCSessionIcon[] = {
    { 24, AssetID::SCSESSION_24PX },
-   { 104, AssetID::SCSESSION_104PX },
-   { 184, AssetID::SCSESSION_184PX },
-   { 264, AssetID::SCSESSION_264PX },
-   { 344, AssetID::SCSESSION_344PX },
+   { 36, AssetID::SCSESSION_36PX },
+   { 56, AssetID::SCSESSION_56PX },
+   { 84, AssetID::SCSESSION_84PX },
+   { 128, AssetID::SCSESSION_128PX },
 };
 
 const IconVariant kHeatedDSServerIcon[] = {
-   { 16, AssetID::IC_HEATEDDS_SERVER_16_PX },
-   { 32, AssetID::IC_HEATEDDS_SERVER_32_PX },
+   { 24, AssetID::HEATEDDS_DEVDSM_24PX },
+   { 36, AssetID::HEATEDDS_DEVDSM_36PX },
+   { 56, AssetID::HEATEDDS_DEVDSM_56PX },
+   { 84, AssetID::HEATEDDS_DEVDSM_84PX },
+   { 128, AssetID::HEATEDDS_DEVDSM_128PX },
 };
 
 const IconVariant kStandaloneServerIcon[] = {
-   { 16, AssetID::IC_STANDALONE_SERVER_16_PX },
-   { 32, AssetID::IC_STANDALONE_SERVER_32_PX },
+   { 24, AssetID::STANDALONE_24PX },
+   { 36, AssetID::STANDALONE_36PX },
+   { 56, AssetID::STANDALONE_56PX },
+   { 84, AssetID::STANDALONE_84PX },
+   { 128, AssetID::STANDALONE_128PX },
 };
 
 const IconVariant kHydraSampleIcon[] = {
@@ -77,15 +83,18 @@ const IconVariant kDSSessionIcon[] = {
 
 const IconVariant kMMSessionIcon[] = {
    { 24, AssetID::MMSESSION_24PX },
-   { 104, AssetID::MMSESSION_104PX },
-   { 184, AssetID::MMSESSION_184PX },
-   { 264, AssetID::MMSESSION_264PX },
-   { 344, AssetID::MMSESSION_344PX },
+   { 36, AssetID::MMSESSION_36PX },
+   { 56, AssetID::MMSESSION_56PX },
+   { 84, AssetID::MMSESSION_84PX },
+   { 128, AssetID::MMSESSION_128PX },
 };
 
 const IconVariant kMMFlowSampleIcon[] = {
-   { 16, AssetID::IC_PVE_16_PX_1 },
-   { 32, AssetID::IC_PVE_32_PX_1 },
+   { 24, AssetID::MMFLOWSAMPLE_24PX },
+   { 36, AssetID::MMFLOWSAMPLE_36PX },
+   { 56, AssetID::MMFLOWSAMPLE_56PX },
+   { 84, AssetID::MMFLOWSAMPLE_84PX },
+   { 128, AssetID::MMFLOWSAMPLE_128PX },
 };
 
 struct IconLODSet {
