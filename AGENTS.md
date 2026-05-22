@@ -47,7 +47,11 @@ Server → SCSession → HydraSample → User → Party → MMSession
 - Keep changes small, reviewable, and easy to explain.
 - Check `git status --short --branch` before editing.
 - Respect existing user or lane changes; do not revert work you did not make.
-- Commit and push small completed tasks unless Archy says otherwise.
+- This is a shared working repo for Codex and Archy. For completed tasks,
+  Codex may commit directly to the current branch and push to `origin` after
+  verifying the working tree, unless Archy says otherwise.
+- These commits are review/checkpoint artifacts for the WSL subset; they do not
+  directly change the Win11 production copy.
 
 ## Current Root Files
 
