@@ -3,7 +3,7 @@
 #include <algorithm> // std::clamp
 #include <cmath> // std::sqrt, std::abs
 
-#pragma message("graph_panel.cpp REV: LODs v0.2")
+#pragma message("graph_panel.cpp REV: LODs v0.3")
 
 GraphPanel::GraphPanel(GraphViewState& _view, GraphModel& _model, Sample::Tex::TextureManager& _tex)
    : view(_view)
@@ -52,6 +52,14 @@ static Vec2f NormalizeSafe(const Vec2f& v)
    if (len2 <= 1e-8f) return Vec2f(1.0f, 0.0f);
    const float inv = 1.0f / std::sqrt(len2);
    return Vec2f(v.x * inv, v.y * inv);
+}
+
+static float IconFrameRounding(float w, float h)
+{
+   // Artist-authored module icons are rounded squares. Keep the overlay corners
+   // screen-size aware so zoom does not turn them into pill-like corners.
+   const float shortSide = std::min(w, h);
+   return std::clamp(shortSide * 0.10f, 3.0f, 16.0f);
 }
 
 void GraphPanel::ProcessMouseCommands()
@@ -251,12 +259,12 @@ void GraphPanel::RenderIcons(ImDrawList* dl)
 
       // Selection border around ICON ONLY
       if (view.IsSelected(n.id)) {
-         const float rounding = 10.0f * view.zoom;
+         const float rounding = IconFrameRounding(w, h);
          const float thickness = std::clamp(3.0f * view.zoom, 1.0f, 4.0f);
          dl->AddRect(p.AsIm(), p_max.AsIm(), IM_COL32(0, 200, 255, 255), rounding, 0, thickness);
       } else if (hovered) {
          // Subtle hover border
-         const float rounding = 10.0f * view.zoom;
+         const float rounding = IconFrameRounding(w, h);
          dl->AddRect(p.AsIm(), p_max.AsIm(), IM_COL32(0, 200, 255, 90), rounding, 0, 2.0f);
       }
    }

@@ -52,10 +52,10 @@ const IconVariant kStandaloneServerIcon[] = {
 
 const IconVariant kHydraSampleIcon[] = {
    { 24, AssetID::HYDRASAMPLE_24PX },
-   { 104, AssetID::HYDRASAMPLE_104PX },
-   { 184, AssetID::HYDRASAMPLE_184PX },
-   { 264, AssetID::HYDRASAMPLE_264PX },
-   { 344, AssetID::HYDRASAMPLE_344PX },
+   { 36, AssetID::HYDRASAMPLE_36PX },
+   { 56, AssetID::HYDRASAMPLE_56PX },
+   { 84, AssetID::HYDRASAMPLE_84PX },
+   { 128, AssetID::HYDRASAMPLE_128PX },
 };
 
 const IconVariant kDSSessionIcon[] = {

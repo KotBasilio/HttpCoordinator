@@ -2,11 +2,11 @@
 #pragma once
 
 enum AssetID {
-    HYDRASAMPLE_104PX,
-    HYDRASAMPLE_184PX,
+    HYDRASAMPLE_128PX,
     HYDRASAMPLE_24PX,
-    HYDRASAMPLE_264PX,
-    HYDRASAMPLE_344PX,
+    HYDRASAMPLE_36PX,
+    HYDRASAMPLE_56PX,
+    HYDRASAMPLE_84PX,
     BG_PATTERN,
     BUTTON_1,
     BUTTON,
@@ -82,11 +82,11 @@ enum AssetID {
 
 #ifdef COORD_ASSET_MAP_IMPL
 static const char* AssetPaths[] = {
-    "./Assets/Module/Physical/hydraSample_104px.png",
-    "./Assets/Module/Physical/hydraSample_184px.png",
+    "./Assets/Module/Physical/hydraSample_128px.png",
     "./Assets/Module/Physical/hydraSample_24px.png",
-    "./Assets/Module/Physical/hydraSample_264px.png",
-    "./Assets/Module/Physical/hydraSample_344px.png",
+    "./Assets/Module/Physical/hydraSample_36px.png",
+    "./Assets/Module/Physical/hydraSample_56px.png",
+    "./Assets/Module/Physical/hydraSample_84px.png",
     "./Assets/worn/bg_pattern.png",
     "./Assets/worn/Button-1.png",
     "./Assets/worn/Button.png",
