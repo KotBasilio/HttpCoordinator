@@ -21,23 +21,35 @@ namespace Sample::Tex {
 namespace {
 
 const IconVariant kUnknownIcon[] = {
-   { 16, AssetID::IC_INFORMATION_16_PX },
-   { 32, AssetID::IC_INFORMATION_32_PX },
+   { 24, AssetID::INFORMATION_24PX },
+   { 104, AssetID::INFORMATION_104PX },
+   { 184, AssetID::INFORMATION_184PX },
+   { 264, AssetID::INFORMATION_264PX },
+   { 344, AssetID::INFORMATION_344PX },
 };
 
 const IconVariant kUserIcon[] = {
-   { 24, AssetID::VIRTUAL_24_PX_1 },
-   { 56, AssetID::VIRTUAL_56_PX_1 },
+   { 24, AssetID::USER_24PX },
+   { 104, AssetID::USER_104PX },
+   { 184, AssetID::USER_184PX },
+   { 264, AssetID::USER_264PX },
+   { 344, AssetID::USER_344PX },
 };
 
 const IconVariant kPartyIcon[] = {
-   { 24, AssetID::VIRTUAL_24_PX_2 },
-   { 56, AssetID::VIRTUAL_56_PX_2 },
+   { 24, AssetID::PARTY_24PX },
+   { 104, AssetID::PARTY_104PX },
+   { 184, AssetID::PARTY_184PX },
+   { 264, AssetID::PARTY_264PX },
+   { 344, AssetID::PARTY_344PX },
 };
 
 const IconVariant kSCSessionIcon[] = {
-   { 16, AssetID::IC_SCSESSION_16_PX },
-   { 56, AssetID::VIRTUAL_56_PX },
+   { 24, AssetID::SCSESSION_24PX },
+   { 104, AssetID::SCSESSION_104PX },
+   { 184, AssetID::SCSESSION_184PX },
+   { 264, AssetID::SCSESSION_264PX },
+   { 344, AssetID::SCSESSION_344PX },
 };
 
 const IconVariant kHeatedDSServerIcon[] = {
@@ -64,8 +76,11 @@ const IconVariant kDSSessionIcon[] = {
 };
 
 const IconVariant kMMSessionIcon[] = {
-   { 24, AssetID::VIRTUAL_24_PX_3 },
-   { 56, AssetID::VIRTUAL_56_PX_3 },
+   { 24, AssetID::MMSESSION_24PX },
+   { 104, AssetID::MMSESSION_104PX },
+   { 184, AssetID::MMSESSION_184PX },
+   { 264, AssetID::MMSESSION_264PX },
+   { 344, AssetID::MMSESSION_344PX },
 };
 
 const IconVariant kMMFlowSampleIcon[] = {

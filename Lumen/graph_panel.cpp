@@ -217,9 +217,6 @@ void GraphPanel::RenderLinks(ImDrawList* dl)
 // and updates view.selected for debug display
 void GraphPanel::RenderIcons(ImDrawList* dl)
 {
-   // --- icon draw ---
-   const Vec2f mouse = ImGui::GetIO().MousePos;
-   const bool canvas_hovered = ImGui::IsItemHovered();
    hovered_id = 0;
 
    for (const GraphNode& n : model.nodes) {
@@ -244,29 +241,46 @@ void GraphPanel::RenderIcons(ImDrawList* dl)
       const Vec2f p = GraphToScreen(n.pos.AsIm());
       const Vec2f p_max = Vec2f(p.x + w, p.y + h);
 
-      // Hit-test only if inside canvas
-      const bool in_canvas = PointInRect(mouse, canvas_pos, canvas_max);
-      const bool hovered = canvas_hovered && in_canvas && PointInRect(mouse, p, p_max);
-
-      if (hovered)
-         hovered_id = n.id;
-
       // Draw icon
       dl->AddImage(icon, p.AsIm(), p_max.AsIm());
 
       // All texts under icon
       RenderITexts(w, h, dl, n);
 
-      // Selection border around ICON ONLY
-      if (view.IsSelected(n.id)) {
-         const float rounding = IconFrameRounding(w, h);
-         const float thickness = std::clamp(3.0f * view.zoom, 1.0f, 4.0f);
-         dl->AddRect(p.AsIm(), p_max.AsIm(), IM_COL32(0, 200, 255, 255), rounding, 0, thickness);
-      } else if (hovered) {
-         // Subtle hover border
-         const float rounding = IconFrameRounding(w, h);
-         dl->AddRect(p.AsIm(), p_max.AsIm(), IM_COL32(0, 200, 255, 90), rounding, 0, 2.0f);
+      // selection visuals and hover hit-test
+      HandleHoveredSelected(p, p_max, n, w, h, dl);
+   }
+}
+
+void GraphPanel::HandleHoveredSelected(const Vec2f& p, const Vec2f& p_max, const GraphNode& n, const float w, const float h, ImDrawList* dl)
+{
+   // Hit-test only if inside canvas
+   const Vec2f mouse = ImGui::GetIO().MousePos;
+   const bool canvas_hovered = ImGui::IsItemHovered();
+   const bool in_canvas = PointInRect(mouse, canvas_pos, canvas_max);
+   const bool hovered = canvas_hovered && in_canvas && PointInRect(mouse, p, p_max);
+   if (hovered) {
+      hovered_id = n.id;
+   }
+
+   // Selection border around ICON ONLY
+   if (view.IsSelected(n.id)) {
+      const float rounding = IconFrameRounding(w, h);
+      const float thickness = std::clamp(3.0f * view.zoom, 1.0f, 5.3f);
+      auto rect_min = p.AsIm();
+      auto rect_max = p_max.AsIm();
+      auto step = 1.5f;
+      if (view.zoom > 1.7f) {
+         rect_min.x += step;
+         rect_min.y += step;
+         rect_max.x -= step;
+         rect_max.y -= step;
       }
+      dl->AddRect(rect_min, rect_max, IM_COL32(0, 200, 255, 255), rounding, 0, thickness);
+   } else if (hovered) {
+      // Subtle hover border
+      const float rounding = IconFrameRounding(w, h);
+      dl->AddRect(p.AsIm(), p_max.AsIm(), IM_COL32(0, 200, 255, 90), rounding, 0, 2.0f);
    }
 }
 

@@ -27,6 +27,7 @@ private:
    void RenderITexts(float w, float h, ImDrawList* dl, const GraphNode& n);
    void RenderLinks(ImDrawList* dl);
    void RenderClipOverlay();
+   void HandleHoveredSelected(const Vec2f& p, const Vec2f& p_max, const GraphNode& n, const float w, const float h, ImDrawList* dl);
 
    void EnsureModelPresence();
    void ProcessMouseCommands();
