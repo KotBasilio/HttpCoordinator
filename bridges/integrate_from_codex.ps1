@@ -8,8 +8,76 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$WinDir    = "C:\Users\miron\source\repos\ImGuiCoo\ImGui-Coordinator"
-$CodexDir  = "\\wsl.localhost\Ubuntu\home\miron\proj\HttpCoordinator"
+function Get-BridgePaths {
+    param(
+        [string]$ConfigPath = "D:\miron\wip\codex_paths_config.txt"
+    )
+
+    $paths = [ordered]@{
+        WinCoordinatorDir   = "C:\Users\miron\source\repos\ImGuiCoo\ImGui-Coordinator"
+        CodexCoordinatorDir = "\\wsl.localhost\Ubuntu\home\miron\proj\HttpCoordinator"
+        TempDir             = "D:\tmp"
+    }
+
+    if (-not (Test-Path $ConfigPath)) {
+        Write-Host "Bridge path config not found; using defaults: $ConfigPath"
+        return [pscustomobject]$paths
+    }
+
+    $overrides = @{}
+    $validConfig = $true
+    $lineNo = 0
+
+    foreach ($rawLine in Get-Content $ConfigPath) {
+        $lineNo++
+        $line = $rawLine.Trim()
+        if ([string]::IsNullOrWhiteSpace($line) -or $line.StartsWith("#")) {
+            continue
+        }
+
+        $parts = $line -split "=", 2
+        if ($parts.Count -ne 2) {
+            Write-Host "Ignoring bridge path config; malformed line ${lineNo}: $rawLine" -ForegroundColor Yellow
+            $validConfig = $false
+            break
+        }
+
+        $key = $parts[0].Trim()
+        $value = $parts[1].Trim()
+
+        if (-not $paths.Contains($key)) {
+            Write-Host "Ignoring bridge path config; unknown key on line ${lineNo}: $key" -ForegroundColor Yellow
+            $validConfig = $false
+            break
+        }
+
+        if ([string]::IsNullOrWhiteSpace($value)) {
+            Write-Host "Ignoring bridge path config; empty value on line ${lineNo}: $key" -ForegroundColor Yellow
+            $validConfig = $false
+            break
+        }
+
+        $overrides[$key] = $value
+    }
+
+    if ($validConfig) {
+        foreach ($key in $overrides.Keys) {
+            $paths[$key] = $overrides[$key]
+        }
+
+        if ($overrides.Count -gt 0) {
+            Write-Host "Bridge path config loaded: $ConfigPath"
+        }
+    } else {
+        Write-Host "Using built-in bridge path defaults." -ForegroundColor Yellow
+    }
+
+    return [pscustomobject]$paths
+}
+
+$BridgePaths = Get-BridgePaths
+$WinDir    = $BridgePaths.WinCoordinatorDir
+$CodexDir  = $BridgePaths.CodexCoordinatorDir
 
 # Keep the SAME $Files and $LumenFiles arrays from mirror_coord_to_codex.ps1 here.
 $Files = @(
