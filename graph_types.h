@@ -14,6 +14,7 @@ enum class NodeKind
    HeatedDSServer,
    SCSession,
    MMFlowSample,
+   ProsSample,
    User,
    Party,
    MMSession,

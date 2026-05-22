@@ -97,6 +97,14 @@ const IconVariant kMMFlowSampleIcon[] = {
    { 128, AssetID::MMFLOWSAMPLE_128PX },
 };
 
+const IconVariant kProsSampleIcon[] = {
+   { 24, AssetID::PROSSAMPLE_24PX },
+   { 36, AssetID::PROSSAMPLE_36PX },
+   { 56, AssetID::PROSSAMPLE_56PX },
+   { 84, AssetID::PROSSAMPLE_84PX },
+   { 128, AssetID::PROSSAMPLE_128PX },
+};
+
 struct IconLODSet {
    const IconVariant* variants = nullptr;
    size_t count = 0;
@@ -120,6 +128,7 @@ IconLODSet LODSetForKind(NodeKind kind)
       case NodeKind::DSSession:        return MakeIconLODSet(kDSSessionIcon);
       case NodeKind::MMSession:        return MakeIconLODSet(kMMSessionIcon);
       case NodeKind::MMFlowSample:     return MakeIconLODSet(kMMFlowSampleIcon);
+      case NodeKind::ProsSample:       return MakeIconLODSet(kProsSampleIcon);
       case NodeKind::Unknown:
       default:                         return MakeIconLODSet(kUnknownIcon);
    }

@@ -89,6 +89,7 @@ const char* InspectorPanel::ToString(NodeKind k)
       case NodeKind::HeatedDSServer:   return "HeatedDSServer";
       case NodeKind::SCSession:        return "SCSession";
       case NodeKind::MMFlowSample:     return "MMFlowSample";
+      case NodeKind::ProsSample:       return "ProsSample";
       case NodeKind::User:             return "User";
       case NodeKind::Party:            return "Party";
       case NodeKind::MMSession:        return "MMSession";
