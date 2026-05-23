@@ -130,7 +130,7 @@ static IconLODSet LODSetForKind(NodeKind kind)
 static IconLodInfo ChooseLOD(IconLODSet set, float desiredPx)
 {
    if (!set.variants || set.count == 0)
-      return IconLodInfo{ AssetID::IC_INFORMATION_32_PX, 32 };
+      return IconLodInfo{ AssetID::INFORMATION_36PX, 36 };
 
    if (!std::isfinite(desiredPx) || desiredPx <= 0.0f)
       desiredPx = 32.0f;

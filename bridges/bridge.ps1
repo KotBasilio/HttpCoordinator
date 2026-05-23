@@ -92,7 +92,6 @@ $Files = @(
     "ui\proj\projector_links.cpp",
     "ui\proj\projector_nodes.cpp",
     "ui\utils\coordinator_http_server.cpp",
-#   "ui\utils\stubs.cpp",
     "ui\controllers\live_state.cpp",
     "ui\controllers\live_state.h",
     "ui\models\ReqNamesEnum.h",
@@ -110,6 +109,7 @@ $LumenFiles = @(
     "ui\utils\zoom_control_widget.cpp",
     "ui\utils\graph_panel.h",
     "ui\utils\graph_panel.cpp",
+    "ui\utils\stubs.cpp",
     "Assets\gen_assets_enum.py"
 )
 
