@@ -74,6 +74,20 @@ Copies files from the Codex subset back into their detailed paths under
 
 ## Codex Usage Rule
 
-Codex may parse-check and path-check bridge scripts, but should not run a bridge
-direction unless Archy explicitly asks for it. The bridge can overwrite files in
-the Win11 production repository and can commit/push from the Codex subset.
+The bridge is an Archy-operated Windows/PowerShell tool. Codex may inspect,
+edit, and reason about these scripts from WSL, but should not run bridge
+directions by default.
+
+Run a bridge direction only when Archy explicitly asks for that operation and
+the current environment can actually run it. This WSL subset intentionally may
+not have `pwsh`; that is fine. Do not invent a Linux workaround for bridge
+execution.
+
+Risk profile:
+- `ToCodex` overwrites selected files in this Codex subset from the Win11
+  production repository, then may commit, push, and create a zip when Archy
+  enters a label.
+- `ToWin` overwrites selected files in the Win11 production repository.
+
+When Codex changes bridge behavior, update this README and keep the `$Files` /
+`$LumenFiles` lists aligned across bridge scripts.
