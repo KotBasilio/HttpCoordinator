@@ -72,7 +72,7 @@ Copies files from the Codex subset back into their detailed paths under
 - Missing Codex files are reported and skipped.
 - No Git commit is made in the Win11 production repository.
 
-## Codex Usage Rule
+## Bridge Scripts Usage Rule and Reasons
 
 The bridge is an Archy-operated Windows/PowerShell tool. Codex may inspect,
 edit, and reason about these scripts from WSL, but should not run bridge
@@ -82,6 +82,16 @@ Run a bridge direction only when Archy explicitly asks for that operation and
 the current environment can actually run it. This WSL subset intentionally may
 not have `pwsh`; that is fine. Do not invent a Linux workaround for bridge
 execution.
+
+The subset is intentionally smaller than the Win11 production project. This is
+not only an ownership boundary; it is an operating constraint:
+
+- the full production tree is much larger and includes many files that are not
+  needed for the current reducer/projector/UI task;
+- a smaller subset preserves Codex context window for reasoning, design, review,
+  and collaboration instead of spending it on unrelated code volume;
+- the subset gives Forge/Lumen the project gist while keeping patches focused
+  and easy for Archy to bridge, inspect, compile, and test in the full project.
 
 Risk profile:
 - `ToCodex` overwrites selected files in this Codex subset from the Win11
