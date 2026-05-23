@@ -224,7 +224,7 @@ void GraphPanel::RenderIcons(ImDrawList* dl)
       const float h = base_h * view.zoom;
       const float desiredPx = std::max(w, h);
 
-      auto lod = tex.IconLodInfoForKind(n.kind, desiredPx);
+      auto lod = tex.LodInfoForKind(n.kind, desiredPx);
       ImTextureID icon = tex.Access(lod.asset);
       if (!icon) continue;
 

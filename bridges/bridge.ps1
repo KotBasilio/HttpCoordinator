@@ -137,6 +137,48 @@ function Assert-NoDuplicateFlatBasenames {
     throw "Cannot safely copy from flat CodexDir with duplicate basenames."
 }
 
+function New-CodebaseZip {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$Files,
+
+        [Parameter(Mandatory = $true)]
+        [string]$WinDir,
+
+        [Parameter(Mandatory = $true)]
+        [string]$TempDir,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Label
+    )
+
+    $tmpDir = Join-Path $TempDir "Codebase"
+
+    if (Test-Path $tmpDir) {
+        Remove-Item $tmpDir -Recurse -Force
+    }
+    New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null
+
+    foreach ($file in $Files) {
+        $srcPath = Join-Path $WinDir $file
+        $destPath = Join-Path $tmpDir (Split-Path $file -Leaf)
+        Copy-Item $srcPath $destPath -Force
+    }
+
+    $zipBaseName = ($Label -replace '[\\/:*?"<>|]', '_') -replace '\s+', ''
+    if ([string]::IsNullOrWhiteSpace($zipBaseName)) {
+        $zipBaseName = "Codebase"
+    }
+
+    $zipPath = Join-Path $TempDir "$zipBaseName.zip"
+    if (Test-Path $zipPath) {
+        Remove-Item $zipPath -Force
+    }
+
+    Compress-Archive -Path "$tmpDir\*" -DestinationPath $zipPath
+    Write-Host "Codebase zipped to $zipPath"
+}
+
 function Copy-ToCodexFile {
     param(
         [Parameter(Mandatory = $true)]
@@ -198,6 +240,7 @@ function Invoke-ToCodexBridge {
 
     $WinDir = $Paths.WinCoordinatorDir
     $CodexDir = $Paths.CodexCoordinatorDir
+    $TempDir = $Paths.TempDir
     Write-Host "Bridge Win -> CODEX"
     Write-Host "WinDir:   $WinDir"
     Write-Host "CodexDir: $CodexDir"
@@ -223,6 +266,43 @@ function Invoke-ToCodexBridge {
     foreach ($file in $LumenFiles) {
         Copy-ToCodexFile -RelPath $file -WinDir $WinDir -DestRoot $LumenDestDir
     }
+
+    Write-Host ""
+    $answer = Read-Host "Enter a label if you want to commit and zip"
+    if ([string]::IsNullOrWhiteSpace($answer)) {
+        Write-Host "No label entered; commit and zip skipped."
+        return
+    }
+
+    Push-Location $CodexDir
+    try {
+        git add .
+        if ($LASTEXITCODE -ne 0) {
+            throw "git add failed."
+        }
+
+        git diff --cached --quiet
+        $diffExit = $LASTEXITCODE
+        if ($diffExit -eq 0) {
+            Write-Host "No Codex changes to commit."
+        } elseif ($diffExit -eq 1) {
+            git commit -m "$answer"
+            if ($LASTEXITCODE -ne 0) {
+                throw "git commit failed."
+            }
+        } else {
+            throw "git diff --cached failed."
+        }
+
+        git push
+        if ($LASTEXITCODE -ne 0) {
+            throw "git push failed."
+        }
+    } finally {
+        Pop-Location
+    }
+
+    New-CodebaseZip -Files ($Files + $LumenFiles) -WinDir $WinDir -TempDir $TempDir -Label $answer
 }
 
 function Invoke-ToWinBridge {

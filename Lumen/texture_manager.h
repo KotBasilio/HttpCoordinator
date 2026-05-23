@@ -31,18 +31,16 @@ public:
    // Get prefetched texture. Returns ImTextureID_Invalid on failure.
    ImTextureID Access(AssetID id);
    ImTextureID IconForKind(NodeKind kind);
-   ImTextureID IconForKind(NodeKind kind, float desiredPx);
-   AssetID IconAssetForKind(NodeKind kind, float desiredPx) const;
-   IconLodInfo IconLodInfoForKind(NodeKind kind, float desiredPx) const;
-
-   // Remove a single texture (optional convenience).
-   void Unload(const std::string& relativePath);
+   IconLodInfo LodInfoForKind(NodeKind kind, float desiredPx) const;
 
    // Small introspection helpers
    size_t LoadedCount() const { return m_cache.size(); }
 
 private:
    void ValidateAssetPipeline();
+   ImTextureID IconForKind(NodeKind kind, float desiredPx);
+   AssetID IconAssetForKind(NodeKind kind, float desiredPx) const;
+   void Unload(const std::string& relativePath);
    void Shutdown();
 
    struct Entry {

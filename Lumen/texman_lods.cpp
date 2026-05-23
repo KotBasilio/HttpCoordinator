@@ -109,7 +109,7 @@ IconLODSet MakeIconLODSet(const IconVariant (&variants)[N])
    return IconLODSet{ variants, N };
 }
 
-IconLODSet LODSetForKind(NodeKind kind)
+static IconLODSet LODSetForKind(NodeKind kind)
 {
    switch (kind) {
       case NodeKind::User:             return MakeIconLODSet(kUserIcon);
@@ -127,7 +127,7 @@ IconLODSet LODSetForKind(NodeKind kind)
    }
 }
 
-IconLodInfo ChooseLOD(IconLODSet set, float desiredPx)
+static IconLodInfo ChooseLOD(IconLODSet set, float desiredPx)
 {
    if (!set.variants || set.count == 0)
       return IconLodInfo{ AssetID::IC_INFORMATION_32_PX, 32 };
@@ -148,10 +148,10 @@ IconLodInfo ChooseLOD(IconLODSet set, float desiredPx)
 
 AssetID TextureManager::IconAssetForKind(NodeKind kind, float desiredPx) const
 {
-   return IconLodInfoForKind(kind, desiredPx).asset;
+   return LodInfoForKind(kind, desiredPx).asset;
 }
 
-IconLodInfo TextureManager::IconLodInfoForKind(NodeKind kind, float desiredPx) const
+IconLodInfo TextureManager::LodInfoForKind(NodeKind kind, float desiredPx) const
 {
    return ChooseLOD(LODSetForKind(kind), desiredPx);
 }
