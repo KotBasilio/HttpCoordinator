@@ -110,6 +110,8 @@ $LumenFiles = @(
     "ui\utils\graph_panel.h",
     "ui\utils\graph_panel.cpp",
     "ui\utils\stubs.cpp",
+    "ui\utils\units_panel.cpp",
+    "ui\utils\units_panel.h",
     "Assets\gen_assets_enum.py"
 )
 

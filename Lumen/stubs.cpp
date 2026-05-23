@@ -55,7 +55,7 @@ void GraphPanel::EnsureModelPresence()
    model.nodes.push_back(GraphNode{ N_DSSESS,     NodeKind::DSSession,        "DS Session",      "DSSession#7",    Vec2f{x1, y0}, s32 });
    model.nodes.push_back(GraphNode{ N_MMFLOW,     NodeKind::MMFlowSample,     "MM Flow",         "FlowSample",     Vec2f{x1, y1}, s32 });
    model.nodes.push_back(GraphNode{ N_MMSESS,     NodeKind::MMSession,        "MM Session",      "MMSession#2",    Vec2f{x1, y2}, s32 });
-   model.nodes.push_back(GraphNode{ N_PROS,       NodeKind::ProsSample,       "Pros",            "ProsSample",     Vec2f{x1, y3}, s32 });
+   model.nodes.push_back(GraphNode{ N_PROS,       NodeKind::ProsSample,       "Pros",            "ProsSample",     Vec2f{x2, y1}, s32 });
 
    model.nodes.push_back(GraphNode{ N_HEATED,     NodeKind::HeatedDSServer,   "Heated DS",       "Server A",       Vec2f{x2, yH}, s32 });
    model.nodes.push_back(GraphNode{ N_STANDALONE, NodeKind::StandaloneServer, "Standalone",      "Server B",       Vec2f{x2, y2}, s32 });

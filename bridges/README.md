@@ -10,8 +10,6 @@ Preferred entry point:
 .\bridge.ps1 -Direction ToWin
 ```
 
-Older one-way scripts remain for compatibility while `bridge.ps1` is tested.
-
 ## Paths
 
 `bridge.ps1` has built-in defaults, then optionally reads:
