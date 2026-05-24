@@ -6,7 +6,8 @@
 #include <string>
 #include <string_view>
 
-#define COPY_BUTTON_LABEL "[  ]"
+static constexpr float kCopyIconPx = 16.0f;
+static constexpr float kCopyButtonWidth = kCopyIconPx * 2.0f;
 
 // -- Helpers --
 static bool IsReorderable(NodeKind k)
@@ -253,10 +254,28 @@ void InspectorPanel::DrawMaybeClickableKvValue(const std::string& value)
 void InspectorPanel::DrawKvCopyButton(int rowIndex, const std::string& key, const std::string& value)
 {
    const std::string copyText = BuildKvCopyText(key, value);
+   const float buttonHeight = ImGui::GetTextLineHeightWithSpacing();
+   const ImVec2 buttonSize(kCopyButtonWidth, buttonHeight);
 
    ImGui::PushID(rowIndex);
-   if (ImGui::SmallButton(COPY_BUTTON_LABEL)) {
+   if (ImGui::InvisibleButton("copy", buttonSize)) {
       ImGui::SetClipboardText(copyText.c_str());
+   }
+
+   const ImVec2 buttonMin = ImGui::GetItemRectMin();
+   const ImVec2 buttonMax = ImGui::GetItemRectMax();
+   ImDrawList* dl = ImGui::GetWindowDrawList();
+   if (ImGui::IsItemHovered()) {
+      dl->AddRectFilled(buttonMin, buttonMax, ImGui::GetColorU32(ImGuiCol_ButtonHovered), ImGui::GetStyle().FrameRounding);
+   }
+
+   ImTextureID copyIcon = tex.Access(AssetID::IC_COPY_16PX);
+   if (copyIcon != ImTextureID_Invalid) {
+      const ImVec2 iconPos(
+         buttonMin.x + (buttonSize.x - kCopyIconPx) * 0.5f,
+         buttonMin.y + (buttonSize.y - kCopyIconPx) * 0.5f
+      );
+      dl->AddImage(copyIcon, iconPos, ImVec2(iconPos.x + kCopyIconPx, iconPos.y + kCopyIconPx));
    }
    ImGui::PopID();
 
@@ -278,7 +297,7 @@ void InspectorPanel::DrawKeyValTable(const GraphNode& n)
       float propNameWidth = CalcPropNameColumnWidth(n.kv);
       ImGui::TableSetupColumn("propName", ImGuiTableColumnFlags_WidthFixed, propNameWidth);
       ImGui::TableSetupColumn("propValue", ImGuiTableColumnFlags_WidthStretch);
-      ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, ImGui::CalcTextSize(COPY_BUTTON_LABEL).x + ImGui::GetStyle().FramePadding.x * 2.0f);
+      ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, kCopyButtonWidth);
       ImGui::TableHeadersRow();
 
       int rowIndex = 0;
