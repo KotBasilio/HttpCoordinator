@@ -30,7 +30,7 @@ Scope:
 Scope: generated IDs whose paths are not under `./Assets/worn/` and that are not
 referenced outside `Lumen/AssetsEnum.h`, except by the mock preview in `Lumen/stubs.cpp`.
 
-This list is intended to stay visually connected to `GraphPanel::RenderMockAssetPreview()`.
+This list is intended to stay visually connected to `GraphPanel::RenderHangingAssetPreview()`.
 When IDs are added or removed here, update the mock preview shelf in `Lumen/stubs.cpp`
 so the demo graph can show the current hanging texture set before real packets arrive.
 

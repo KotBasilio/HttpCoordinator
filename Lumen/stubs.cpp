@@ -61,8 +61,6 @@ void GraphPanel::EnsureModelPresence()
       return;
    }
 
-   mockModel = true;
-
    // Demo nodes if model empty
    model.links.clear();
 
@@ -143,18 +141,22 @@ void GraphPanel::EnsureModelPresence()
    model.RebuildIndex();
 }
 
-void GraphPanel::RenderMockAssetPreview(ImDrawList* dl)
+void GraphPanel::RenderHangingAssetPreview(ImDrawList* dl)
 {
+   if (model.projectionGeneration > 0) {
+      return;
+   }
+
    const float icon = 20.0f;
    const float cell = 28.0f;
    const float pad = 8.0f;
    const int count = (int)(sizeof(kHangingTexturePreview) / sizeof(kHangingTexturePreview[0]));
-   const float availableW = std::max(80.0f, canvas_size.x - pad * 2.0f);
+   const float availableW = std::max(80.0f, canvas_size.x - pad * 2.0f - 50.f);
    const int columns = std::max(1, (int)(availableW / cell));
    const int rows = (count + columns - 1) / columns;
    const ImVec2 titleSize = ImGui::CalcTextSize("Hanging textures");
    const ImVec2 boxMin(canvas_pos.x + pad, canvas_max.y - pad - titleSize.y - 6.0f - rows * cell);
-   const ImVec2 boxMax(canvas_max.x - pad, canvas_max.y - pad);
+   const ImVec2 boxMax(canvas_max.x - pad - 45.f, canvas_max.y - pad);
 
    dl->AddRectFilled(boxMin, boxMax, IM_COL32(18, 18, 18, 220), 4.0f);
    dl->AddRect(boxMin, boxMax, IM_COL32(80, 80, 80, 180), 4.0f);

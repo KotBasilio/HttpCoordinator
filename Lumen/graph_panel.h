@@ -20,16 +20,15 @@ private:
    ImVec2 canvas_max{};
    NodeId hovered_id = 0;
    uint64_t lastSeenProjectionGeneration = 0;
-   bool mockModel = false;
 
    void RenderGrid (ImDrawList* dl);
    void RenderModel(ImDrawList* dl);
-   void RenderMockAssetPreview(ImDrawList* dl);
    void RenderIcons(ImDrawList* dl);
    void RenderITexts(float w, float h, ImDrawList* dl, const GraphNode& n);
    void RenderLinks(ImDrawList* dl);
    void RenderClipOverlay();
    void HandleHoveredSelected(const Vec2f& p, const Vec2f& p_max, const GraphNode& n, const float w, const float h, ImDrawList* dl);
+   void RenderHangingAssetPreview(ImDrawList* dl);
 
    void EnsureModelPresence();
    void ProcessMouseCommands();

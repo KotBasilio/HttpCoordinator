@@ -70,8 +70,11 @@ const IconVariant kHydraSampleIcon[] = {
 };
 
 const IconVariant kDSSessionIcon[] = {
-   { 24, AssetID::VIRTUAL_24_PX },
-   { 56, AssetID::VIRTUAL_56_PX },
+   { 24, AssetID::HEATEDDS_DEVDSM_24PX },
+   { 36, AssetID::HEATEDDS_DEVDSM_36PX },
+   { 56, AssetID::HEATEDDS_DEVDSM_56PX },
+   { 84, AssetID::HEATEDDS_DEVDSM_84PX },
+   { 128, AssetID::HEATEDDS_DEVDSM_128PX },
 };
 
 const IconVariant kMMSessionIcon[] = {
