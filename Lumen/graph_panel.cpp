@@ -317,6 +317,9 @@ void GraphPanel::RenderModel(ImDrawList* dl)
 {
    RenderLinks(dl);
    RenderIcons(dl);
+   if (mockModel && model.projectionGeneration == 0) {
+      RenderMockAssetPreview(dl);
+   }
 }
 
 void GraphPanel::RenderClipOverlay()

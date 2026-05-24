@@ -1,10 +1,67 @@
 #include "graph_panel.h"
 
+#include <algorithm>
+
+namespace {
+
+struct MockAssetPreview {
+   AssetID asset = ASSET_COUNT;
+};
+
+// Visual shelf for IDs listed under Hanging Texture IDs in md-files/obsolete_tex.md.
+static const MockAssetPreview kHangingTexturePreview[] = {
+   { AssetID::IC_ADD },
+   { AssetID::IC_ARROW_BOTTOM },
+   { AssetID::IC_ARROW_RATING_DECREASE },
+   { AssetID::IC_ARROW_RATING_INCREASE },
+   { AssetID::IC_ARROW_TOP },
+   { AssetID::IC_ERROR_16_PX },
+   { AssetID::IC_HISTORY_16PX },
+   { AssetID::IC_INFORMATION_16_PX },
+   { AssetID::IC_LOGS_16_PX },
+   { AssetID::IC_RUN },
+   { AssetID::IC_WARNING_16_PX },
+   { AssetID::LOCALSAMPLE_10PX },
+   { AssetID::LOCALSAMPLE_16PX },
+   { AssetID::LOCALSAMPLE_24PX },
+   { AssetID::LOCALSAMPLE_36PX },
+   { AssetID::LOCALSAMPLE_7PX },
+   { AssetID::LOCALSERVER_10PX },
+   { AssetID::LOCALSERVER_16PX },
+   { AssetID::LOCALSERVER_24PX },
+   { AssetID::LOCALSERVER_36PX },
+   { AssetID::LOCALSERVER_7PX },
+   { AssetID::LOCALUSER_10PX },
+   { AssetID::LOCALUSER_16PX },
+   { AssetID::LOCALUSER_24PX },
+   { AssetID::LOCALUSER_36PX },
+   { AssetID::LOCALUSER_7PX },
+   { AssetID::OFFLINE_11PX },
+   { AssetID::OFFLINE_17PX },
+   { AssetID::OFFLINE_26PX },
+   { AssetID::OFFLINE_5PX },
+   { AssetID::OFFLINE_7PX },
+   { AssetID::ONLINE_11PX },
+   { AssetID::ONLINE_17PX },
+   { AssetID::ONLINE_26PX },
+   { AssetID::ONLINE_5PX },
+   { AssetID::ONLINE_7PX },
+   { AssetID::PARTYLEADER_13PX },
+   { AssetID::PARTYLEADER_20PX },
+   { AssetID::PARTYLEADER_30PX },
+   { AssetID::PARTYLEADER_46PX },
+   { AssetID::PARTYLEADER_8PX },
+};
+
+} // namespace
+
 void GraphPanel::EnsureModelPresence()
 {
    if (!model.nodes.empty()) {
       return;
    }
+
+   mockModel = true;
 
    // Demo nodes if model empty
    model.links.clear();
@@ -84,4 +141,37 @@ void GraphPanel::EnsureModelPresence()
    model.links.push_back(GraphLink{ N_PROS, N_HYDRA });
 
    model.RebuildIndex();
+}
+
+void GraphPanel::RenderMockAssetPreview(ImDrawList* dl)
+{
+   const float icon = 20.0f;
+   const float cell = 28.0f;
+   const float pad = 8.0f;
+   const int count = (int)(sizeof(kHangingTexturePreview) / sizeof(kHangingTexturePreview[0]));
+   const float availableW = std::max(80.0f, canvas_size.x - pad * 2.0f);
+   const int columns = std::max(1, (int)(availableW / cell));
+   const int rows = (count + columns - 1) / columns;
+   const ImVec2 titleSize = ImGui::CalcTextSize("Hanging textures");
+   const ImVec2 boxMin(canvas_pos.x + pad, canvas_max.y - pad - titleSize.y - 6.0f - rows * cell);
+   const ImVec2 boxMax(canvas_max.x - pad, canvas_max.y - pad);
+
+   dl->AddRectFilled(boxMin, boxMax, IM_COL32(18, 18, 18, 220), 4.0f);
+   dl->AddRect(boxMin, boxMax, IM_COL32(80, 80, 80, 180), 4.0f);
+   dl->AddText(ImVec2(boxMin.x + 6.0f, boxMin.y + 4.0f), IM_COL32(190, 205, 220, 255), "Hanging textures");
+
+   const float startX = boxMin.x + 6.0f;
+   const float startY = boxMin.y + titleSize.y + 8.0f;
+   for (int i = 0; i < count; ++i) {
+      const int col = i % columns;
+      const int row = i / columns;
+      const ImVec2 p(startX + (float)col * cell, startY + (float)row * cell);
+      ImTextureID texId = tex.Access(kHangingTexturePreview[i].asset);
+      if (texId == ImTextureID_Invalid) {
+         dl->AddRect(p, ImVec2(p.x + icon, p.y + icon), IM_COL32(180, 60, 60, 180), 2.0f);
+         continue;
+      }
+
+      dl->AddImage(texId, p, ImVec2(p.x + icon, p.y + icon));
+   }
 }

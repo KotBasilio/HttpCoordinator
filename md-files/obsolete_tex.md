@@ -6,6 +6,7 @@ This list records generated worn `AssetID`s that are not referenced outside
 Scope:
 - only paths under `./Assets/worn/`;
 - generated enum/path entries do not count as usage;
+- mock hanging-texture preview references in `Lumen/stubs.cpp` do not count as product usage;
 - currently used worn IDs are omitted from the obsolete list.
 
 ## Unused worn icon IDs
@@ -23,28 +24,11 @@ Scope:
 - `CONNECTOR_START`
 - `DRAG_IN_LIST_HOVER`
 - `SCALE_CONTROL`
-- `FOCUS_FRAME`
-- `PHYSICAL_24_PX_1`
-- `PHYSICAL_24_PX`
-- `PHYSICAL_56_PX_1`
-- `PHYSICAL_56_PX`
-- `VIRTUAL_24_PX_1`
-- `VIRTUAL_24_PX_2`
-- `VIRTUAL_24_PX_3`
-- `VIRTUAL_56_PX_1`
-- `VIRTUAL_56_PX_2`
-- `VIRTUAL_56_PX_3`
-- `LEADER`
-- `LOCAL`
-- `NETWORK_12_PX_1`
-- `NETWORK_12_PX`
-- `NETWORK_8_PX_1`
-- `NETWORK_8_PX`
 
 ## Hanging Texture IDs
 
 Scope: generated IDs whose paths are not under `./Assets/worn/` and that are not
-referenced outside `Lumen/AssetsEnum.h`.
+referenced outside `Lumen/AssetsEnum.h`, except by the mock preview in `Lumen/stubs.cpp`.
 
 - `IC_ADD`
 - `IC_ARROW_BOTTOM`
@@ -57,3 +41,33 @@ referenced outside `Lumen/AssetsEnum.h`.
 - `IC_LOGS_16_PX`
 - `IC_RUN`
 - `IC_WARNING_16_PX`
+- `LOCALSAMPLE_10PX`
+- `LOCALSAMPLE_16PX`
+- `LOCALSAMPLE_24PX`
+- `LOCALSAMPLE_36PX`
+- `LOCALSAMPLE_7PX`
+- `LOCALSERVER_10PX`
+- `LOCALSERVER_16PX`
+- `LOCALSERVER_24PX`
+- `LOCALSERVER_36PX`
+- `LOCALSERVER_7PX`
+- `LOCALUSER_10PX`
+- `LOCALUSER_16PX`
+- `LOCALUSER_24PX`
+- `LOCALUSER_36PX`
+- `LOCALUSER_7PX`
+- `OFFLINE_11PX`
+- `OFFLINE_17PX`
+- `OFFLINE_26PX`
+- `OFFLINE_5PX`
+- `OFFLINE_7PX`
+- `ONLINE_11PX`
+- `ONLINE_17PX`
+- `ONLINE_26PX`
+- `ONLINE_5PX`
+- `ONLINE_7PX`
+- `PARTYLEADER_13PX`
+- `PARTYLEADER_20PX`
+- `PARTYLEADER_30PX`
+- `PARTYLEADER_46PX`
+- `PARTYLEADER_8PX`
