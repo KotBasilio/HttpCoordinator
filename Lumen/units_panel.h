@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 #include "graph_types.h"
 #include "texture_manager.h"
 
@@ -9,15 +10,20 @@ public:
    void Draw();
 
 private:
+   struct SectionSpec {
+      const char* label = "";
+      const NodeKind* kinds = nullptr;
+      std::size_t kindCount = 0;
+   };
+
    GraphViewState& view;
    GraphModel& model;
    Sample::Tex::TextureManager& tex;
 
    // UI helpers
-   static const char* KindLabel(NodeKind k);
    static ImU32 StatusColorFor(const GraphNode& n);
 
-   bool DrawHeader(NodeKind kind, int count);
-   void DrawKindSection(NodeKind kind);
+   bool DrawHeader(const char* label, int count);
+   void DrawSection(const SectionSpec& section);
    void DrawNodeRow(const GraphNode& n);
 };

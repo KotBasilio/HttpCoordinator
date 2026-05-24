@@ -10,24 +10,6 @@ UnitsPanel::UnitsPanel(GraphViewState& view_, GraphModel& model_, Sample::Tex::T
 {
 }
 
-const char* UnitsPanel::KindLabel(NodeKind k)
-{
-   switch (k) {
-      case NodeKind::User:             return "Users";
-      case NodeKind::Party:            return "Parties";
-      case NodeKind::SCSession:        return "SC Sessions";
-      case NodeKind::MMSession:        return "MM Sessions";
-      case NodeKind::MMFlowSample:     return "MM Flow Samples";
-      case NodeKind::ProsSample:       return "Pros Samples";
-      case NodeKind::DSSession:        return "DS Sessions";
-      case NodeKind::HeatedDSServer:   return "Heated DS Servers";
-      case NodeKind::StandaloneServer: return "Standalone Servers";
-      case NodeKind::HydraSample:      return "Samples";
-      case NodeKind::Unknown:          return "Other";
-      default:                         return "Other";
-   }
-}
-
 // Prototype "status dot" logic.
 // Later: drive from real runtime state (online/starting/offline/etc).
 ImU32 UnitsPanel::StatusColorFor(const GraphNode& n)
@@ -63,30 +45,37 @@ void UnitsPanel::Draw()
    // ImGui::TextUnformatted("Units");
    // ImGui::Separator();
 
-   // Render sections in a stable, intentional order:
-   static const NodeKind order[] = {
-       NodeKind::StandaloneServer,
-       NodeKind::HeatedDSServer,
-       NodeKind::DSSession,
-       NodeKind::SCSession,
-       NodeKind::MMFlowSample,
-       NodeKind::ProsSample,
-       NodeKind::HydraSample,
-       NodeKind::User,
-       NodeKind::Party,
-       NodeKind::MMSession,
-       NodeKind::Unknown,
+   static const NodeKind standaloneKinds[] = { NodeKind::StandaloneServer };
+   static const NodeKind heatedKinds[] = { NodeKind::HeatedDSServer };
+   static const NodeKind dsKinds[] = { NodeKind::DSSession };
+   static const NodeKind scKinds[] = { NodeKind::SCSession };
+   static const NodeKind sampleKinds[] = { NodeKind::HydraSample, NodeKind::ProsSample, NodeKind::MMFlowSample };
+   static const NodeKind userKinds[] = { NodeKind::User };
+   static const NodeKind partyKinds[] = { NodeKind::Party };
+   static const NodeKind mmKinds[] = { NodeKind::MMSession };
+   static const NodeKind otherKinds[] = { NodeKind::Unknown };
+
+   static const SectionSpec sections[] = {
+      { "Standalone Servers", standaloneKinds, sizeof(standaloneKinds) / sizeof(standaloneKinds[0]) },
+      { "Heated DS Servers", heatedKinds, sizeof(heatedKinds) / sizeof(heatedKinds[0]) },
+      { "DS Sessions", dsKinds, sizeof(dsKinds) / sizeof(dsKinds[0]) },
+      { "SC Sessions", scKinds, sizeof(scKinds) / sizeof(scKinds[0]) },
+      { "Samples", sampleKinds, sizeof(sampleKinds) / sizeof(sampleKinds[0]) },
+      { "Users", userKinds, sizeof(userKinds) / sizeof(userKinds[0]) },
+      { "Parties", partyKinds, sizeof(partyKinds) / sizeof(partyKinds[0]) },
+      { "MM Sessions", mmKinds, sizeof(mmKinds) / sizeof(mmKinds[0]) },
+      { "Other", otherKinds, sizeof(otherKinds) / sizeof(otherKinds[0]) },
    };
 
-   for (NodeKind k : order)
-      DrawKindSection(k);
+   for (const SectionSpec& section : sections)
+      DrawSection(section);
 }
 
-bool UnitsPanel::DrawHeader(NodeKind kind, int count)
+bool UnitsPanel::DrawHeader(const char* label, int count)
 {
    // Header label "Users (2)" etc
    char header[64];
-   snprintf(header, sizeof(header), "%s (%d)", KindLabel(kind), count);
+   snprintf(header, sizeof(header), "%s (%d)", label, count);
 
    // Default open for all groups
    // can check (kind == NodeKind::MMFlowSample || kind == NodeKind::User || kind == NodeKind::HeatedDSServer)
@@ -111,28 +100,37 @@ bool UnitsPanel::DrawHeader(NodeKind kind, int count)
    return open;
 }
 
-void UnitsPanel::DrawKindSection(NodeKind kind)
+void UnitsPanel::DrawSection(const SectionSpec& section)
 {
-   // Count nodes of this kind
    int count = 0;
-   for (const GraphNode& n : model.nodes)
-      if (n.kind == kind)
-         ++count;
+   for (const GraphNode& n : model.nodes) {
+      for (std::size_t i = 0; i < section.kindCount; ++i) {
+         if (n.kind == section.kinds[i]) {
+            ++count;
+            break;
+         }
+      }
+   }
 
    // hide empty collections
    if (count == 0)
       return;
 
    // collapsible
-   if (!DrawHeader(kind, count))
+   if (!DrawHeader(section.label, count))
       return;
 
    // Build a list of pointers so we can sort by title without moving model data
    ImVector<const GraphNode*> items;
    items.reserve(count);
-   for (const GraphNode& n : model.nodes)
-      if (n.kind == kind)
-         items.push_back(&n);
+   for (const GraphNode& n : model.nodes) {
+      for (std::size_t i = 0; i < section.kindCount; ++i) {
+         if (n.kind == section.kinds[i]) {
+            items.push_back(&n);
+            break;
+         }
+      }
+   }
 
    std::sort(items.begin(), items.end(),
       [](const GraphNode* a, const GraphNode* b) {
