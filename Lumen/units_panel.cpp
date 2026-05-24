@@ -39,32 +39,30 @@ ImU32 UnitsPanel::StatusColorFor(const GraphNode& n)
    }
 }
 
+
 void UnitsPanel::Draw()
 {
+   #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+   #define SECTION_RECORD(arr) arr , ARRAY_SIZE(arr)
+
    // Optional: tiny hint line, can remove anytime
    // ImGui::TextUnformatted("Units");
    // ImGui::Separator();
 
-   static const NodeKind standaloneKinds[] = { NodeKind::StandaloneServer };
-   static const NodeKind heatedKinds[] = { NodeKind::HeatedDSServer };
-   static const NodeKind dsKinds[] = { NodeKind::DSSession };
-   static const NodeKind scKinds[] = { NodeKind::SCSession };
+   static const NodeKind serverKinds[] = { NodeKind::StandaloneServer, NodeKind::HeatedDSServer };
+   static const NodeKind sessionKinds[] = { NodeKind::DSSession, NodeKind::MMSession, NodeKind::SCSession };
    static const NodeKind sampleKinds[] = { NodeKind::HydraSample, NodeKind::ProsSample, NodeKind::MMFlowSample };
    static const NodeKind userKinds[] = { NodeKind::User };
    static const NodeKind partyKinds[] = { NodeKind::Party };
-   static const NodeKind mmKinds[] = { NodeKind::MMSession };
    static const NodeKind otherKinds[] = { NodeKind::Unknown };
 
    static const SectionSpec sections[] = {
-      { "Standalone Servers", standaloneKinds, sizeof(standaloneKinds) / sizeof(standaloneKinds[0]) },
-      { "Heated DS Servers", heatedKinds, sizeof(heatedKinds) / sizeof(heatedKinds[0]) },
-      { "DS Sessions", dsKinds, sizeof(dsKinds) / sizeof(dsKinds[0]) },
-      { "SC Sessions", scKinds, sizeof(scKinds) / sizeof(scKinds[0]) },
-      { "Samples", sampleKinds, sizeof(sampleKinds) / sizeof(sampleKinds[0]) },
-      { "Users", userKinds, sizeof(userKinds) / sizeof(userKinds[0]) },
-      { "Parties", partyKinds, sizeof(partyKinds) / sizeof(partyKinds[0]) },
-      { "MM Sessions", mmKinds, sizeof(mmKinds) / sizeof(mmKinds[0]) },
-      { "Other", otherKinds, sizeof(otherKinds) / sizeof(otherKinds[0]) },
+      { "Servers",  SECTION_RECORD(serverKinds) },
+      { "Samples",  SECTION_RECORD(sampleKinds) },
+      { "Users",    SECTION_RECORD(userKinds) },
+      { "Sessions", SECTION_RECORD(sessionKinds) },
+      { "Parties",  SECTION_RECORD(partyKinds) },
+      { "Other",    SECTION_RECORD(otherKinds) },
    };
 
    for (const SectionSpec& section : sections)
