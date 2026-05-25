@@ -30,6 +30,7 @@ public:
 
    // Get prefetched texture. Returns ImTextureID_Invalid on failure.
    ImTextureID Access(AssetID id);
+   bool TextureSize(AssetID id, int* outW, int* outH);
    ImTextureID IconForKind(NodeKind kind);
    ImTextureID IconForKind(NodeKind kind, float desiredPx);
    IconLodInfo LodInfoForKind(NodeKind kind, float desiredPx) const;

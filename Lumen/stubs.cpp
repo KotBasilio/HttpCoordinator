@@ -1,6 +1,7 @@
 #include "graph_panel.h"
 
 #include <algorithm>
+#include <vector>
 
 namespace {
 
@@ -170,15 +171,52 @@ void GraphPanel::RenderHangingAssetPreview(ImDrawList* dl)
       return;
    }
 
-   const float icon = 20.0f;
-   const float cell = 28.0f;
+   struct PreviewDrawItem {
+      ImTextureID texId = ImTextureID_Invalid;
+      ImVec2 size = ImVec2(20.0f, 20.0f);
+      ImVec2 pos = ImVec2(0.0f, 0.0f);
+   };
+
+   const float minIcon = 20.0f;
+   const float gap = 8.0f;
    const float pad = 8.0f;
    const int count = (int)(sizeof(kHangingTexturePreview) / sizeof(kHangingTexturePreview[0]));
    const float availableW = std::max(80.0f, canvas_size.x - pad * 2.0f - 50.f);
-   const int columns = std::max(1, (int)(availableW / cell));
-   const int rows = (count + columns - 1) / columns;
    const ImVec2 titleSize = ImGui::CalcTextSize("Hanging textures");
-   const ImVec2 boxMin(canvas_pos.x + pad, canvas_max.y - pad - titleSize.y - 6.0f - rows * cell);
+
+   std::vector<PreviewDrawItem> items;
+   items.reserve(count);
+
+   float x = 0.0f;
+   float y = 0.0f;
+   float rowH = 0.0f;
+   float contentH = 0.0f;
+
+   for (int i = 0; i < count; ++i) {
+      PreviewDrawItem item;
+      item.texId = tex.Access(kHangingTexturePreview[i].asset);
+
+      int texW = 0;
+      int texH = 0;
+      if (item.texId != ImTextureID_Invalid && tex.TextureSize(kHangingTexturePreview[i].asset, &texW, &texH)) {
+         item.size.x = std::max(minIcon, (float)texW);
+         item.size.y = std::max(minIcon, (float)texH);
+      }
+
+      if (x > 0.0f && x + item.size.x > availableW) {
+         y += rowH + gap;
+         x = 0.0f;
+         rowH = 0.0f;
+      }
+
+      item.pos = ImVec2(x, y);
+      x += item.size.x + gap;
+      rowH = std::max(rowH, item.size.y);
+      contentH = std::max(contentH, y + rowH);
+      items.push_back(item);
+   }
+
+   const ImVec2 boxMin(canvas_pos.x + pad, canvas_max.y - pad - titleSize.y - 14.0f - contentH);
    const ImVec2 boxMax(canvas_max.x - pad - 45.f, canvas_max.y - pad);
 
    dl->AddRectFilled(boxMin, boxMax, IM_COL32(18, 18, 18, 220), 4.0f);
@@ -187,16 +225,14 @@ void GraphPanel::RenderHangingAssetPreview(ImDrawList* dl)
 
    const float startX = boxMin.x + 6.0f;
    const float startY = boxMin.y + titleSize.y + 8.0f;
-   for (int i = 0; i < count; ++i) {
-      const int col = i % columns;
-      const int row = i / columns;
-      const ImVec2 p(startX + (float)col * cell, startY + (float)row * cell);
-      ImTextureID texId = tex.Access(kHangingTexturePreview[i].asset);
-      if (texId == ImTextureID_Invalid) {
-         dl->AddRect(p, ImVec2(p.x + icon, p.y + icon), IM_COL32(180, 60, 60, 180), 2.0f);
+   for (const PreviewDrawItem& item : items) {
+      const ImVec2 p(startX + item.pos.x, startY + item.pos.y);
+      const ImVec2 pMax(p.x + item.size.x, p.y + item.size.y);
+      if (item.texId == ImTextureID_Invalid) {
+         dl->AddRect(p, pMax, IM_COL32(180, 60, 60, 180), 2.0f);
          continue;
       }
 
-      dl->AddImage(texId, p, ImVec2(p.x + icon, p.y + icon));
+      dl->AddImage(item.texId, p, pMax);
    }
 }

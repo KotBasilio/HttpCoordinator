@@ -67,6 +67,27 @@ ImTextureID TextureManager::Access(AssetID id)
    return GetOrLoad(AssetPaths[id]);
 }
 
+bool TextureManager::TextureSize(AssetID id, int* outW, int* outH)
+{
+   if (!outW || !outH || id >= ASSET_COUNT)
+      return false;
+
+   const std::string key = NormalizeKey(AssetPaths[id]);
+   auto it = m_cache.find(key);
+   if (it == m_cache.end()) {
+      if (Access(id) == ImTextureID_Invalid)
+         return false;
+
+      it = m_cache.find(key);
+      if (it == m_cache.end())
+         return false;
+   }
+
+   *outW = it->second.width;
+   *outH = it->second.height;
+   return true;
+}
+
 // Self-test function to validate enum <-> array mapping and basic bounds behavior.
 void TextureManager::ValidateAssetPipeline()
 {
