@@ -1,7 +1,7 @@
 # Obsolete Texture IDs
 
 This list records generated worn `AssetID`s that are not referenced outside
-`Lumen/AssetsEnum.h` as of 2026-05-24.
+`Lumen/AssetsEnum.h` as of 2026-05-25.
 
 Scope:
 - only paths under `./Assets/worn/`;
@@ -11,19 +11,7 @@ Scope:
 
 ## Unused worn icon IDs
 
-- `BG_PATTERN`
-- `BUTTON_1`
-- `BUTTON`
-- `BUTTON_ARROW_LEFT`
-- `BUTTON_ARROW_LEFT_OVERLAY_SHADOW`
-- `BUTTON_ARROW_RIGHT`
-- `BUTTON_ARROW_RIGHT_OVERLAY_SHADOW`
-- `CONNECTOR_BODY`
-- `CONNECTOR_CROSS_DOT`
-- `CONNECTOR_END`
-- `CONNECTOR_START`
-- `DRAG_IN_LIST_HOVER`
-- `SCALE_CONTROL`
+- None. `AssetsEnum.h` currently has no generated paths under `./Assets/worn/`.
 
 ## Hanging Texture IDs
 
@@ -34,6 +22,29 @@ This list is intended to stay visually connected to `GraphPanel::RenderHangingAs
 When IDs are added or removed here, update the mock preview shelf in `Lumen/stubs.cpp`
 so the demo graph can show the current hanging texture set before real packets arrive.
 
+- `BGPATTERN`
+- `SCALECONTROL`
+- `ARROWLEFT`
+- `ARROWLEFT_OVERLAYSHADOW`
+- `ARROWRIGHT`
+- `ARROWRIGHT_OVERLAYSHADOW`
+- `CLEARLOG`
+- `DRAGLISTHOVER`
+- `FILTER`
+- `CONNECTORCROSS_2PX`
+- `CONNECTORCROSS_4PX`
+- `CONNECTORCROSS_5PX`
+- `CONNECTORCROSS_8PX`
+- `CONNECTOREND_24PX`
+- `CONNECTOREND_2PX`
+- `CONNECTOREND_4PX`
+- `CONNECTOREND_5PX`
+- `CONNECTOREND_8PX`
+- `CONNECTORSTART_24PX`
+- `CONNECTORSTART_2PX`
+- `CONNECTORSTART_4PX`
+- `CONNECTORSTART_5PX`
+- `CONNECTORSTART_8PX`
 - `IC_ADD`
 - `IC_ARROW_BOTTOM`
 - `IC_ARROW_RATING_DECREASE`
