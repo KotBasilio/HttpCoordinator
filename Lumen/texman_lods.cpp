@@ -101,6 +101,77 @@ const IconVariant kProsSampleIcon[] = {
    { 128, AssetID::PROSSAMPLE_128PX },
 };
 
+const IconVariant kConnectorCrossIcon[] = {
+   { 2, AssetID::CONNECTORCROSS_2PX },
+   { 4, AssetID::CONNECTORCROSS_4PX },
+   { 5, AssetID::CONNECTORCROSS_5PX },
+   { 8, AssetID::CONNECTORCROSS_8PX },
+};
+
+const IconVariant kConnectorEndIcon[] = {
+   { 2, AssetID::CONNECTOREND_2PX },
+   { 4, AssetID::CONNECTOREND_4PX },
+   { 5, AssetID::CONNECTOREND_5PX },
+   { 8, AssetID::CONNECTOREND_8PX },
+   { 24, AssetID::CONNECTOREND_24PX },
+};
+
+const IconVariant kConnectorStartIcon[] = {
+   { 2, AssetID::CONNECTORSTART_2PX },
+   { 4, AssetID::CONNECTORSTART_4PX },
+   { 5, AssetID::CONNECTORSTART_5PX },
+   { 8, AssetID::CONNECTORSTART_8PX },
+   { 24, AssetID::CONNECTORSTART_24PX },
+};
+
+const IconVariant kLocalSampleIcon[] = {
+   { 7, AssetID::LOCALSAMPLE_7PX },
+   { 10, AssetID::LOCALSAMPLE_10PX },
+   { 16, AssetID::LOCALSAMPLE_16PX },
+   { 24, AssetID::LOCALSAMPLE_24PX },
+   { 36, AssetID::LOCALSAMPLE_36PX },
+};
+
+const IconVariant kLocalServerIcon[] = {
+   { 7, AssetID::LOCALSERVER_7PX },
+   { 10, AssetID::LOCALSERVER_10PX },
+   { 16, AssetID::LOCALSERVER_16PX },
+   { 24, AssetID::LOCALSERVER_24PX },
+   { 36, AssetID::LOCALSERVER_36PX },
+};
+
+const IconVariant kLocalUserIcon[] = {
+   { 7, AssetID::LOCALUSER_7PX },
+   { 10, AssetID::LOCALUSER_10PX },
+   { 16, AssetID::LOCALUSER_16PX },
+   { 24, AssetID::LOCALUSER_24PX },
+   { 36, AssetID::LOCALUSER_36PX },
+};
+
+const IconVariant kOfflineIcon[] = {
+   { 5, AssetID::OFFLINE_5PX },
+   { 7, AssetID::OFFLINE_7PX },
+   { 11, AssetID::OFFLINE_11PX },
+   { 17, AssetID::OFFLINE_17PX },
+   { 26, AssetID::OFFLINE_26PX },
+};
+
+const IconVariant kOnlineIcon[] = {
+   { 5, AssetID::ONLINE_5PX },
+   { 7, AssetID::ONLINE_7PX },
+   { 11, AssetID::ONLINE_11PX },
+   { 17, AssetID::ONLINE_17PX },
+   { 26, AssetID::ONLINE_26PX },
+};
+
+const IconVariant kPartyLeaderIcon[] = {
+   { 8, AssetID::PARTYLEADER_8PX },
+   { 13, AssetID::PARTYLEADER_13PX },
+   { 20, AssetID::PARTYLEADER_20PX },
+   { 30, AssetID::PARTYLEADER_30PX },
+   { 46, AssetID::PARTYLEADER_46PX },
+};
+
 struct IconLODSet {
    const IconVariant* variants = nullptr;
    size_t count = 0;
@@ -130,6 +201,22 @@ static IconLODSet LODSetForKind(NodeKind kind)
    }
 }
 
+static IconLODSet LODSetForKind(TextureLODKind kind)
+{
+   switch (kind) {
+      case TextureLODKind::ConnectorCross: return MakeIconLODSet(kConnectorCrossIcon);
+      case TextureLODKind::ConnectorEnd:   return MakeIconLODSet(kConnectorEndIcon);
+      case TextureLODKind::ConnectorStart: return MakeIconLODSet(kConnectorStartIcon);
+      case TextureLODKind::LocalSample:    return MakeIconLODSet(kLocalSampleIcon);
+      case TextureLODKind::LocalServer:    return MakeIconLODSet(kLocalServerIcon);
+      case TextureLODKind::LocalUser:      return MakeIconLODSet(kLocalUserIcon);
+      case TextureLODKind::Offline:        return MakeIconLODSet(kOfflineIcon);
+      case TextureLODKind::Online:         return MakeIconLODSet(kOnlineIcon);
+      case TextureLODKind::PartyLeader:    return MakeIconLODSet(kPartyLeaderIcon);
+      default:                             return IconLODSet{};
+   }
+}
+
 static IconLodInfo ChooseLOD(IconLODSet set, float desiredPx)
 {
    if (!set.variants || set.count == 0)
@@ -154,7 +241,17 @@ AssetID TextureManager::IconAssetForKind(NodeKind kind, float desiredPx) const
    return LodInfoForKind(kind, desiredPx).asset;
 }
 
+AssetID TextureManager::TextureAssetForKind(TextureLODKind kind, float desiredPx) const
+{
+   return LodInfoForKind(kind, desiredPx).asset;
+}
+
 IconLodInfo TextureManager::LodInfoForKind(NodeKind kind, float desiredPx) const
+{
+   return ChooseLOD(LODSetForKind(kind), desiredPx);
+}
+
+IconLodInfo TextureManager::LodInfoForKind(TextureLODKind kind, float desiredPx) const
 {
    return ChooseLOD(LODSetForKind(kind), desiredPx);
 }
@@ -162,6 +259,11 @@ IconLodInfo TextureManager::LodInfoForKind(NodeKind kind, float desiredPx) const
 ImTextureID TextureManager::IconForKind(NodeKind kind, float desiredPx)
 {
    return Access(IconAssetForKind(kind, desiredPx));
+}
+
+ImTextureID TextureManager::TextureForKind(TextureLODKind kind, float desiredPx)
+{
+   return Access(TextureAssetForKind(kind, desiredPx));
 }
 
 ImTextureID TextureManager::IconForKind(NodeKind kind)

@@ -3,7 +3,6 @@
 
 enum AssetID {
     BGPATTERN,
-    SCALECONTROL,
     ARROWLEFT,
     ARROWLEFT_OVERLAYSHADOW,
     ARROWRIGHT,
@@ -126,7 +125,6 @@ enum AssetID {
 #ifdef COORD_ASSET_MAP_IMPL
 static const char* AssetPaths[] = {
     "./Assets/Background/bgPattern.png",
-    "./Assets/Background/scaleControl.png",
     "./Assets/Button/arrowLeft.png",
     "./Assets/Button/arrowLeft_overlayShadow.png",
     "./Assets/Button/arrowRight.png",
