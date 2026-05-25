@@ -20,8 +20,9 @@ static bool IsReorderable(NodeKind k)
       case NodeKind::StandaloneServer:
       case NodeKind::HeatedDSServer:
          return true;
+      default:
+         return false;
    }
-   return false;
 }
 
 static bool IsHexDigit(char c)
@@ -96,6 +97,15 @@ const char* InspectorPanel::ToString(NodeKind k)
       case NodeKind::MMSession:        return "MMSession";
       case NodeKind::StandaloneServer: return "StandaloneServer";
       case NodeKind::HydraSample:      return "HydraSample";
+      case NodeKind::ConnectorCross:   return "ConnectorCross";
+      case NodeKind::ConnectorEnd:     return "ConnectorEnd";
+      case NodeKind::ConnectorStart:   return "ConnectorStart";
+      case NodeKind::LocalSample:      return "LocalSample";
+      case NodeKind::LocalServer:      return "LocalServer";
+      case NodeKind::LocalUser:        return "LocalUser";
+      case NodeKind::Offline:          return "Offline";
+      case NodeKind::Online:           return "Online";
+      case NodeKind::PartyLeader:      return "PartyLeader";
       default:                         return "<?>"; // future-proof
    }
 }

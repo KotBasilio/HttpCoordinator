@@ -244,14 +244,12 @@ Logs are part of the development workflow.
 ## Texture LODs
 
 Graph node icons use `TextureManager::IconForKind(NodeKind, desiredPx)`.
-Keep `NodeKind` reserved for graph semantics such as User, Party, Session, and
-sample/server nodes.
 
-Non-graph visual texture families use `TextureLODKind` instead. This covers UI
-and status/control families such as connector caps/crosses, local/offline/online
-status markers, and party leader markers. Use `TextureManager::TextureForKind`
-or `LodInfoForKind(TextureLODKind, desiredPx)` when a UI surface needs one of
-these LOD-aware assets.
+Some `NodeKind` values are pure visual LOD keys rather than graph entities. This
+covers UI and status/control families such as connector caps/crosses,
+local/offline/online status markers, and party leader markers. These keys may be
+used with `IconForKind` / `LodInfoForKind(NodeKind, desiredPx)`, but should not
+be projected as graph nodes unless a product task explicitly asks for that.
 
 ## Bridge Workflow
 

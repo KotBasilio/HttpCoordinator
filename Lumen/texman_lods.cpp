@@ -196,24 +196,17 @@ static IconLODSet LODSetForKind(NodeKind kind)
       case NodeKind::MMSession:        return MakeIconLODSet(kMMSessionIcon);
       case NodeKind::MMFlowSample:     return MakeIconLODSet(kMMFlowSampleIcon);
       case NodeKind::ProsSample:       return MakeIconLODSet(kProsSampleIcon);
+      case NodeKind::ConnectorCross:   return MakeIconLODSet(kConnectorCrossIcon);
+      case NodeKind::ConnectorEnd:     return MakeIconLODSet(kConnectorEndIcon);
+      case NodeKind::ConnectorStart:   return MakeIconLODSet(kConnectorStartIcon);
+      case NodeKind::LocalSample:      return MakeIconLODSet(kLocalSampleIcon);
+      case NodeKind::LocalServer:      return MakeIconLODSet(kLocalServerIcon);
+      case NodeKind::LocalUser:        return MakeIconLODSet(kLocalUserIcon);
+      case NodeKind::Offline:          return MakeIconLODSet(kOfflineIcon);
+      case NodeKind::Online:           return MakeIconLODSet(kOnlineIcon);
+      case NodeKind::PartyLeader:      return MakeIconLODSet(kPartyLeaderIcon);
       case NodeKind::Unknown:
       default:                         return MakeIconLODSet(kUnknownIcon);
-   }
-}
-
-static IconLODSet LODSetForKind(TextureLODKind kind)
-{
-   switch (kind) {
-      case TextureLODKind::ConnectorCross: return MakeIconLODSet(kConnectorCrossIcon);
-      case TextureLODKind::ConnectorEnd:   return MakeIconLODSet(kConnectorEndIcon);
-      case TextureLODKind::ConnectorStart: return MakeIconLODSet(kConnectorStartIcon);
-      case TextureLODKind::LocalSample:    return MakeIconLODSet(kLocalSampleIcon);
-      case TextureLODKind::LocalServer:    return MakeIconLODSet(kLocalServerIcon);
-      case TextureLODKind::LocalUser:      return MakeIconLODSet(kLocalUserIcon);
-      case TextureLODKind::Offline:        return MakeIconLODSet(kOfflineIcon);
-      case TextureLODKind::Online:         return MakeIconLODSet(kOnlineIcon);
-      case TextureLODKind::PartyLeader:    return MakeIconLODSet(kPartyLeaderIcon);
-      default:                             return IconLODSet{};
    }
 }
 
@@ -241,17 +234,7 @@ AssetID TextureManager::IconAssetForKind(NodeKind kind, float desiredPx) const
    return LodInfoForKind(kind, desiredPx).asset;
 }
 
-AssetID TextureManager::TextureAssetForKind(TextureLODKind kind, float desiredPx) const
-{
-   return LodInfoForKind(kind, desiredPx).asset;
-}
-
 IconLodInfo TextureManager::LodInfoForKind(NodeKind kind, float desiredPx) const
-{
-   return ChooseLOD(LODSetForKind(kind), desiredPx);
-}
-
-IconLodInfo TextureManager::LodInfoForKind(TextureLODKind kind, float desiredPx) const
 {
    return ChooseLOD(LODSetForKind(kind), desiredPx);
 }
@@ -259,11 +242,6 @@ IconLodInfo TextureManager::LodInfoForKind(TextureLODKind kind, float desiredPx)
 ImTextureID TextureManager::IconForKind(NodeKind kind, float desiredPx)
 {
    return Access(IconAssetForKind(kind, desiredPx));
-}
-
-ImTextureID TextureManager::TextureForKind(TextureLODKind kind, float desiredPx)
-{
-   return Access(TextureAssetForKind(kind, desiredPx));
 }
 
 ImTextureID TextureManager::IconForKind(NodeKind kind)

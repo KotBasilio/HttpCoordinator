@@ -17,18 +17,6 @@ struct IconLodInfo {
    int variantPx = 0;
 };
 
-enum class TextureLODKind {
-   ConnectorCross,
-   ConnectorEnd,
-   ConnectorStart,
-   LocalSample,
-   LocalServer,
-   LocalUser,
-   Offline,
-   Online,
-   PartyLeader,
-};
-
 // Small, shared texture cache for ImGui/OpenGL.
 // Loads images from disk using stb_image and uploads to OpenGL as GL_TEXTURE_2D.
 class TextureManager {
@@ -46,8 +34,6 @@ public:
    ImTextureID IconForKind(NodeKind kind);
    ImTextureID IconForKind(NodeKind kind, float desiredPx);
    IconLodInfo LodInfoForKind(NodeKind kind, float desiredPx) const;
-   ImTextureID TextureForKind(TextureLODKind kind, float desiredPx);
-   IconLodInfo LodInfoForKind(TextureLODKind kind, float desiredPx) const;
 
    // Small introspection helpers
    size_t LoadedCount() const { return m_cache.size(); }
@@ -55,7 +41,6 @@ public:
 private:
    void ValidateAssetPipeline();
    AssetID IconAssetForKind(NodeKind kind, float desiredPx) const;
-   AssetID TextureAssetForKind(TextureLODKind kind, float desiredPx) const;
    void Unload(const std::string& relativePath);
    void Shutdown();
 

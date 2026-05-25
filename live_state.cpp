@@ -72,8 +72,9 @@ bool LiveState::MoveEntityInOrder(NodeKind kind, std::string_view entityKey, int
       case NodeKind::HeatedDSServer:
       case NodeKind::StandaloneServer:
          return MoveAdjacent(serverOrder, StripPrefix(entityKey, "server:"), delta);
+      default:
+         return false;
    }
-   return false;
 }
    
 void LiveState::TouchUser(const std::string& uid)

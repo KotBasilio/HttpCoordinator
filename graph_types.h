@@ -20,6 +20,18 @@ enum class NodeKind
    MMSession,
    StandaloneServer,
    HydraSample,
+
+   // Pure visual LOD keys. These are not graph entities by default, but they
+   // share the same texture lookup path as graph node icons.
+   ConnectorCross,
+   ConnectorEnd,
+   ConnectorStart,
+   LocalSample,
+   LocalServer,
+   LocalUser,
+   Offline,
+   Online,
+   PartyLeader,
    // extendable as needed
 };
 
