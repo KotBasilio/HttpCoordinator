@@ -60,6 +60,11 @@ static float IconFrameRounding(float w, float h)
    return std::clamp(shortSide * 0.10f, 3.0f, 16.0f);
 }
 
+static bool HasBadge(const GraphNode& n, NodeKind badge)
+{
+   return std::find(n.badges.begin(), n.badges.end(), badge) != n.badges.end();
+}
+
 void GraphPanel::ProcessMouseCommands()
 {
    // Only when the canvas item is hovered
@@ -241,6 +246,7 @@ void GraphPanel::RenderIcons(ImDrawList* dl)
 
       // Draw icon
       dl->AddImage(icon, p.AsIm(), p_max.AsIm());
+      RenderBadges(dl, n, p, w, h);
 
       // All texts under icon
       RenderITexts(w, h, dl, n);
@@ -248,6 +254,38 @@ void GraphPanel::RenderIcons(ImDrawList* dl)
       // selection visuals and hover hit-test
       HandleHoveredSelected(p, p_max, n, w, h, dl);
    }
+}
+
+void GraphPanel::RenderBadges(ImDrawList* dl, const GraphNode& n, const Vec2f& p, float w, float h)
+{
+   if (n.badges.empty())
+      return;
+
+   const float badgePx = std::clamp(std::max(w, h) * 0.42f, 10.0f, 32.0f);
+   const float inset = std::clamp(std::max(w, h) * -0.08f, -4.0f, -1.0f);
+   const float maxX = p.x + w - badgePx - inset;
+   const float maxY = p.y + h - badgePx - inset;
+
+   auto drawBadge = [&](NodeKind badge, const Vec2f& pos) {
+      ImTextureID badgeIcon = tex.IconForKind(badge, badgePx);
+      if (badgeIcon == ImTextureID_Invalid)
+         return;
+
+      dl->AddImage(badgeIcon,
+         pos.AsIm(),
+         ImVec2(pos.x + badgePx, pos.y + badgePx));
+   };
+
+   if (HasBadge(n, NodeKind::Online))
+      drawBadge(NodeKind::Online, Vec2f(p.x + inset, p.y + inset));
+   else if (HasBadge(n, NodeKind::Offline))
+      drawBadge(NodeKind::Offline, Vec2f(p.x + inset, p.y + inset));
+
+   if (HasBadge(n, NodeKind::PartyLeader))
+      drawBadge(NodeKind::PartyLeader, Vec2f(maxX, p.y + inset));
+
+   if (HasBadge(n, NodeKind::LocalUser))
+      drawBadge(NodeKind::LocalUser, Vec2f(p.x + inset, maxY));
 }
 
 void GraphPanel::HandleHoveredSelected(const Vec2f& p, const Vec2f& p_max, const GraphNode& n, const float w, const float h, ImDrawList* dl)

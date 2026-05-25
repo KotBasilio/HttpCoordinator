@@ -25,6 +25,7 @@ GraphNode& UpsertNode(GraphModel& g, NodeId id)
    n.subtitle.clear();
    n.entityKey.clear();
    n.kv.clear();
+   n.badges.clear();
    n.pos = Vec2f(0, 0);
    n.size = Vec2f(160, 70);
    return n;

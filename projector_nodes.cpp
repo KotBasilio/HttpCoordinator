@@ -145,6 +145,12 @@ void StartServerController::ProjectHydraUsers()
          n.subtitle = sub;
          n.entityKey = "user:" + uid;
          FillUserKv(n, u);
+         n.badges.clear();
+         n.badges.push_back(u.online ? NodeKind::Online : NodeKind::Offline);
+         if (u.isOwnerAny)
+            n.badges.push_back(NodeKind::PartyLeader);
+         if (u.isLocal)
+            n.badges.push_back(NodeKind::LocalUser);
          n.pos = Vec2f(lay.xUser, y);
          n.size = lay.s32;
       }

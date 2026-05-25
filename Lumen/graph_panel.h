@@ -24,6 +24,7 @@ private:
    void RenderGrid (ImDrawList* dl);
    void RenderModel(ImDrawList* dl);
    void RenderIcons(ImDrawList* dl);
+   void RenderBadges(ImDrawList* dl, const GraphNode& n, const Vec2f& p, float w, float h);
    void RenderITexts(float w, float h, ImDrawList* dl, const GraphNode& n);
    void RenderLinks(ImDrawList* dl);
    void RenderClipOverlay();

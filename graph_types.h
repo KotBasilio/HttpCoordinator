@@ -74,6 +74,10 @@ struct GraphNode
    std::string entityKey;
    // facts, context pairs, etc.
    std::vector<std::pair<std::string, std::string>> kv;
+
+   // Visual marker keys drawn as small overlays on the primary icon.
+   // These are texture/LOD keys only; they do not create graph entities.
+   std::vector<NodeKind> badges;
 };
 
 enum class LinkStyle : uint8_t

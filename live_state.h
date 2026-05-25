@@ -22,6 +22,7 @@ struct UserState
    std::string providerId;
    std::string userIdentityType;
    bool online = false;
+   bool isLocal = true; // placeholder until Forge wires concrete local-user evidence
 
    // propertyName/propertyValue
    std::vector<std::pair<std::string, std::string>> facts; 

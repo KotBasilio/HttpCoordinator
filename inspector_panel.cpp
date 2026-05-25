@@ -75,6 +75,17 @@ static bool IsBooleanLikeKvValue(std::string_view value)
    return lowerValue == "true" || lowerValue == "false" || lowerValue == "yes" || lowerValue == "no" || lowerValue == "1" || lowerValue == "0";
 }
 
+static const char* BadgeExplanation(NodeKind k)
+{
+   switch (k) {
+      case NodeKind::Online:      return "Online";
+      case NodeKind::Offline:     return "Offline or not proven online";
+      case NodeKind::PartyLeader: return "Owner / leader role";
+      case NodeKind::LocalUser:   return "Local user";
+      default:                    return nullptr;
+   }
+}
+
 // -- Implementation --
 InspectorPanel::InspectorPanel(GraphViewState& view_, GraphModel& model_, Sample::Tex::TextureManager& tex_)
    : view(view_)
@@ -151,6 +162,7 @@ void InspectorPanel::DrawNode(const GraphNode& n)
 
    // move up/down
    DrawUpDownButtons(n, fieldsStart);
+   DrawBadges(n);
 
    // links
    DrawLinksIn(n.id);
@@ -197,6 +209,29 @@ void InspectorPanel::DrawUpDownButtons(const GraphNode& n, const ImVec2& fieldsS
 
    // restore cursor so layout continues normally under the fields
    ImGui::SetCursorPos(fieldsEnd);
+}
+
+void InspectorPanel::DrawBadges(const GraphNode& n)
+{
+   if (n.badges.empty())
+      return;
+
+   ImGui::Separator();
+   ImGui::TextUnformatted("Badges:");
+
+   for (NodeKind badge : n.badges) {
+      const char* explanation = BadgeExplanation(badge);
+      if (!explanation)
+         continue;
+
+      ImTextureID icon = tex.IconForKind(badge, 20.0f);
+      if (icon != ImTextureID_Invalid) {
+         ImGui::Image(icon, ImVec2(16.0f, 16.0f));
+         ImGui::SameLine();
+      }
+
+      ImGui::Text("%s - %s", ToString(badge), explanation);
+   }
 }
 
 static float ClampFloat(float lo, float v, float hi)

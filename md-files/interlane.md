@@ -31,4 +31,9 @@ Optional format for new notes:
 
 ## Open Notes
 
-No open cross-lane notes.
+### 2026-05-25 - Lumen - Local user badge evidence
+- Touching: `UserState::isLocal`, User badge projection/rendering.
+- Needs from other lane: Forge should replace the temporary `isLocal = true`
+  default with real local-user evidence when the reducer identity path exposes it.
+- Risk: Until then every User gets the LocalUser badge by design placeholder.
+- Status: Open.
