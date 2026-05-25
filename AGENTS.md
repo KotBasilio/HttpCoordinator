@@ -53,6 +53,12 @@ Server → SCSession → HydraSample → User → Party → MMSession
 - These commits are review/checkpoint artifacts for the WSL subset; they do not
   directly change the Win11 production copy.
 
+## Abbreviations, acronyms
+
+- RWAIU = “Reason why, ask if unclear.”
+- ACAW = “Any comments are welcome. Questions are welcome as well.”
+- MD-up = “Please update `AGENTS.md`, `active.md`, and `md-files/*.md` with accumulated knowledge”
+
 ## Current Root Files
 
 - `AGENTS.md`: durable entry point and read map.
@@ -63,7 +69,7 @@ Server → SCSession → HydraSample → User → Party → MMSession
 - `md-files/tech.md`: project architecture, reducers/projector rules, node kinds, layout, Inspector, bridge workflow, coding style.
 - `md-files/field.md`: Codex ↔ Archy ↔ LL workflow, MV-M Bob/Trace guidance, UFO, relational scaffolding, lane rules.
 - `md-files/history.md`: accepted historical baselines and validated behavior.
-- `md-files/tickets.md`: small Jira-style task list for valid blocked/queued work that should not crowd `active.md`.
+- `md-files/tickets.md`: small Jira-style task list for valid blocked/queued/deferred work that should not crowd `active.md`.
 - `md-files/interlane.md`: live Forge/Lumen mailbox.
 - `md-files/interlane_archive.md`: resolved lane coordination notes.
 
@@ -75,4 +81,5 @@ Do a brief sync before editing:
 2. Summarize current understanding.
 3. Propose the smallest patch.
 4. Then edit when the task is clear.
-- `MD-up`: update `AGENTS.md`, `active.md`, and `md-files/*.md` with accumulated knowledge; keep `active.md` focused, move accepted/older ideas into history, then commit and push.
+5. Then commit and push.
+
