@@ -261,13 +261,20 @@ void GraphPanel::RenderIcons(ImDrawList* dl)
 
 void GraphPanel::RenderBadges(ImDrawList* dl, const GraphNode& n, const Vec2f& p, float w, float h)
 {
-   if (n.badges.empty())
+   if (n.badges.empty()) {
       return;
+   }
 
    const float iconPx = std::max(w, h);
+   if (iconPx < 10.f) {
+      return;
+   }
+
    const float zoomT = std::clamp((view.zoom - 0.65f) / (3.48f - 0.65f), 0.0f, 1.0f);
    const float zoomEase = zoomT * zoomT * (3.0f - 2.0f * zoomT);
-   const float badgePx = 5.0f + (30.0f - 5.0f) * zoomEase;
+   constexpr float minBadge = 5.0f;
+   constexpr float maxBadge = 30.0f;
+   const float badgePx = minBadge + (maxBadge - minBadge) * zoomEase;
 
    const float inset = std::clamp(iconPx * -0.08f, -4.0f, -1.0f);
    const float rightBadgeX = p.x + w - badgePx - inset;
@@ -288,9 +295,12 @@ void GraphPanel::RenderBadges(ImDrawList* dl, const GraphNode& n, const Vec2f& p
    else if (HasBadge(n, NodeKind::Offline))
       drawBadge(NodeKind::Offline, Vec2f(p.x + inset, p.y + inset));
 
-   const float crownLift = std::clamp(iconPx * 0.10f, 2.0f, 7.0f);
-   if (HasBadge(n, NodeKind::PartyLeader))
+   const float crownLift = std::clamp((badgePx - minBadge) * 0.28f, 1.f, 7.0f);
+   if (HasBadge(n, NodeKind::PartyLeader)) {
       drawBadge(NodeKind::PartyLeader, Vec2f(rightBadgeX, p.y + inset - crownLift));
+      view.selected.badgeDbg1 = badgePx;
+      view.selected.badgeDbg2 = crownLift;
+   }
 
    if (HasBadge(n, NodeKind::LocalUser))
       drawBadge(NodeKind::LocalUser, Vec2f(p.x + inset, bottomBadgeY));

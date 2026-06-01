@@ -9,6 +9,8 @@
 static constexpr float kCopyIconPx = 16.0f;
 static constexpr float kCopyButtonWidth = kCopyIconPx * 2.0f;
 
+// #define DBG_BADGES
+
 // -- Helpers --
 static bool IsReorderable(NodeKind k)
 {
@@ -79,9 +81,9 @@ static const char* BadgeExplanation(NodeKind k)
 {
    switch (k) {
       case NodeKind::Online:      return "Online";
-      case NodeKind::Offline:     return "Offline or not proven online";
-      case NodeKind::PartyLeader: return "Owner / leader role";
-      case NodeKind::LocalUser:   return "Local user";
+      case NodeKind::Offline:     return "Offline";
+      case NodeKind::PartyLeader: return "Owner/leader role";
+      case NodeKind::LocalUser:   return "Local";
       default:                    return nullptr;
    }
 }
@@ -136,16 +138,7 @@ void InspectorPanel::DrawNotFound(NodeId id)
 void InspectorPanel::DrawNode(const GraphNode& n)
 {
    // header: icon + title + subtitle
-   ImTextureID icon = tex.IconForKind(n.kind);
-   if (icon != ImTextureID_Invalid) {
-      ImGui::Image(icon, ImVec2(32, 32));
-      ImGui::SameLine();
-   }
-   ImGui::BeginGroup();
-   ImGui::TextUnformatted(n.title.c_str());
-   if (!n.subtitle.empty())
-      ImGui::TextDisabled("%s", n.subtitle.c_str());
-   ImGui::EndGroup();
+   ExplainIcon(n);
 
    // basic minimal fields
    ImGui::Separator();
@@ -162,7 +155,6 @@ void InspectorPanel::DrawNode(const GraphNode& n)
 
    // move up/down
    DrawUpDownButtons(n, fieldsStart);
-   DrawBadges(n);
 
    // links
    DrawLinksIn(n.id);
@@ -211,13 +203,33 @@ void InspectorPanel::DrawUpDownButtons(const GraphNode& n, const ImVec2& fieldsS
    ImGui::SetCursorPos(fieldsEnd);
 }
 
+void InspectorPanel::ExplainIcon(const GraphNode& n)
+{
+   ImTextureID icon = tex.IconForKind(n.kind);
+   if (icon != ImTextureID_Invalid) {
+      ImGui::Image(icon, ImVec2(32, 32));
+      ImGui::SameLine();
+   }
+   ImGui::BeginGroup();
+   ImGui::TextUnformatted(n.title.c_str());
+
+   if (!n.subtitle.empty()) {
+      //if (!n.badges.empty()) {
+      //   ImGui::SameLine();
+      //}
+      ImGui::TextDisabled("%s", n.subtitle.c_str());
+   }
+   ImGui::EndGroup();
+   DrawBadges(n);
+}
+
 void InspectorPanel::DrawBadges(const GraphNode& n)
 {
    if (n.badges.empty())
       return;
 
-   ImGui::Separator();
-   ImGui::TextUnformatted("Badges:");
+   //ImGui::Separator();
+   //ImGui::TextUnformatted("Badges:");
 
    for (NodeKind badge : n.badges) {
       const char* explanation = BadgeExplanation(badge);
@@ -230,7 +242,14 @@ void InspectorPanel::DrawBadges(const GraphNode& n)
          ImGui::SameLine();
       }
 
-      ImGui::Text("%s - %s", ToString(badge), explanation);
+      ImGui::Text("- %s", explanation);
+
+      #ifdef DBG_BADGES
+         if (badge == NodeKind::PartyLeader) {
+            ImGui::SameLine();
+            ImGui::Text("%3.1f -> %3.1f", view.selected.badgeDbg1, view.selected.badgeDbg2);
+         }
+      #endif // DBG_BADGES
    }
 }
 

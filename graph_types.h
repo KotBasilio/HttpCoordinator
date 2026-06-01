@@ -148,6 +148,8 @@ struct SelectionState {
    float drawH = 0.0f;
    int assetID = 0; // AssetID of the icon chosen for the selected node
    int lodPx = 0;
+   float badgeDbg1 = 0.0f;
+   float badgeDbg2 = 0.0f;
 };
 
 // View state for a canvas: with pan, zoom

@@ -136,13 +136,13 @@ void StartServerController::ProjectHydraUsers()
       // User
       {
          std::string title = u.nickname.empty() ? uid.substr(0, 6) : u.nickname;
-         std::string sub = u.online ? "ONLINE" : "OFFLINE";
-         if (u.isOwnerAny) sub += "  W";
+         //std::string sub = u.online ? "ONLINE" : "OFFLINE";
+         //if (u.isOwnerAny) sub += "  W";
 
          auto& n = UpsertNode(graph, userId);
          n.kind = NodeKind::User;
          n.title = title;
-         n.subtitle = sub;
+         n.subtitle = uid;
          n.entityKey = "user:" + uid;
          FillUserKv(n, u);
          n.badges.clear();

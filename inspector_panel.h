@@ -18,6 +18,7 @@ private:
    void DrawEmpty();
    void DrawNotFound(NodeId id);
    void DrawNode(const GraphNode& n);
+   void ExplainIcon(const GraphNode& n);
    void DrawUpDownButtons(const GraphNode& n, const ImVec2& fieldsStart);
    void DrawBadges(const GraphNode& n);
    void DrawKeyValTable(const GraphNode& n);
