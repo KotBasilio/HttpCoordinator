@@ -261,10 +261,14 @@ void GraphPanel::RenderBadges(ImDrawList* dl, const GraphNode& n, const Vec2f& p
    if (n.badges.empty())
       return;
 
-   const float badgePx = std::clamp(std::max(w, h) * 0.42f, 10.0f, 32.0f);
-   const float inset = std::clamp(std::max(w, h) * -0.08f, -4.0f, -1.0f);
-   const float maxX = p.x + w - badgePx - inset;
-   const float maxY = p.y + h - badgePx - inset;
+   const float iconPx = std::max(w, h);
+   const float zoomT = std::clamp((view.zoom - 0.65f) / 1.35f, 0.0f, 1.0f);
+   const float badgeRatio = 0.32f + (0.42f - 0.32f) * zoomT;
+   const float badgePx = std::clamp(iconPx * badgeRatio, 5.0f, 32.0f);
+   const float inset = std::clamp(iconPx * -0.08f, -4.0f, -1.0f);
+   const float crownLift = std::clamp(iconPx * 0.10f, 2.0f, 7.0f);
+   const float rightBadgeX = p.x + w - badgePx - inset;
+   const float bottomBadgeY = p.y + h - badgePx - inset;
 
    auto drawBadge = [&](NodeKind badge, const Vec2f& pos) {
       ImTextureID badgeIcon = tex.IconForKind(badge, badgePx);
@@ -282,10 +286,10 @@ void GraphPanel::RenderBadges(ImDrawList* dl, const GraphNode& n, const Vec2f& p
       drawBadge(NodeKind::Offline, Vec2f(p.x + inset, p.y + inset));
 
    if (HasBadge(n, NodeKind::PartyLeader))
-      drawBadge(NodeKind::PartyLeader, Vec2f(maxX, p.y + inset));
+      drawBadge(NodeKind::PartyLeader, Vec2f(rightBadgeX, p.y + inset - crownLift));
 
    if (HasBadge(n, NodeKind::LocalUser))
-      drawBadge(NodeKind::LocalUser, Vec2f(p.x + inset, maxY));
+      drawBadge(NodeKind::LocalUser, Vec2f(p.x + inset, bottomBadgeY));
 }
 
 void GraphPanel::HandleHoveredSelected(const Vec2f& p, const Vec2f& p_max, const GraphNode& n, const float w, const float h, ImDrawList* dl)
