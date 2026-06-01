@@ -140,6 +140,14 @@ SDK identity naming is inconsistent. Important values include:
 
 Do not assume identity-like values are the same without evidence.
 
+Local vs remote:
+- The Coordinator observes HTTP traffic from local instances of apps and
+  servers.
+- That traffic may mention other apps, servers, users, or sessions; those
+  mentioned entities are remote unless reducer evidence proves they are local.
+- `UserState::isLocal` currently exists as a placeholder display flag. Forge
+  should replace its default with concrete reducer evidence when available.
+
 ## SessionControl / SCSession
 
 `NodeKind::SCSession` represents the SessionControl game-session layer.
@@ -250,6 +258,14 @@ covers UI and status/control families such as connector caps/crosses,
 local/offline/online status markers, and party leader markers. These keys may be
 used with `IconForKind` / `LodInfoForKind(NodeKind, desiredPx)`, but should not
 be projected as graph nodes unless a product task explicitly asks for that.
+
+User badges:
+- `GraphNode::badges` stores visual marker keys drawn as overlays on the primary
+  icon.
+- User badges currently cover online/offline, owner/leader role, and local-user
+  state.
+- Badges are visual annotations, not graph entities or links.
+- Keep all badges the same on-screen size at a given zoom level.
 
 ## Bridge Workflow
 

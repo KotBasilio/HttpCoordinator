@@ -42,6 +42,19 @@ The split is organizational only; the reducer → `LiveState` → projector → 
 
 ## Validated Graph Behavior
 
+### User badge overlays
+
+Validated behavior:
+- User nodes can display small badge overlays for online/offline, owner/leader,
+  and local-user state.
+- Badges are stored as `GraphNode::badges` visual marker keys and drawn on top
+  of the User icon.
+- Badge marker `NodeKind` values are texture/LOD keys only; they do not create
+  graph entities or graph links.
+- Inspector explains selected-node badges near the node header.
+- Badge sizing is tuned visually across graph zoom levels; all badges share the
+  same on-screen size for a given node/zoom.
+
 ### User facts in Inspector
 
 Validated behavior:

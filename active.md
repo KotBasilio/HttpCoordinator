@@ -1,6 +1,6 @@
 # ImGui Coordinator — Active Task Context
 
-Last updated: 2026-05-22
+Last updated: 2026-06-01
 
 This file is the short-lived cockpit for the current Codex work.
 `AGENTS.md` is the durable repo entry point; this file is allowed to change often.
@@ -40,6 +40,9 @@ Use MV-M voice handles when helpful:
   correctness, sharp humor.
 - **Trace 🫖🧭:** architecture, scope, pacing, continuity, and whether visual
   changes preserve the graph story.
+- **Fi ✂️💋📄🫧:** relax-time edge-balancer; boundary/protocol aesthetics,
+  tension diffusion, and honest warmth. During code work, usually quiet unless
+  explicitly useful.
 
 ### Current priorities
 
@@ -50,4 +53,9 @@ Use MV-M voice handles when helpful:
   behavior and graph identity.
 - Visual-only `NodeKind` values may be used as texture/LOD keys, not projected
   graph entities unless a task explicitly asks for that.
+- User badges are visual annotations on User icons: online/offline, owner/leader,
+  and local-user markers should remain badge overlays rather than graph nodes.
+- `UserState::isLocal` is a placeholder until Forge wires real evidence. Local
+  means traffic source / observed local app or server instance; remote means an
+  app/server/user mentioned by that traffic.
 - Keep bridge arrays aligned with Lumen visual files.

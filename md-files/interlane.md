@@ -35,5 +35,7 @@ Optional format for new notes:
 - Touching: `UserState::isLocal`, User badge projection/rendering.
 - Needs from other lane: Forge should replace the temporary `isLocal = true`
   default with real local-user evidence when the reducer identity path exposes it.
+- Local means traffic source / observed local app or server instance; entities
+  mentioned by that traffic are remote until proven otherwise.
 - Risk: Until then every User gets the LocalUser badge by design placeholder.
 - Status: Open.
