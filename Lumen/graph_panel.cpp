@@ -246,13 +246,16 @@ void GraphPanel::RenderIcons(ImDrawList* dl)
 
       // Draw icon
       dl->AddImage(icon, p.AsIm(), p_max.AsIm());
+
+      // selection visuals and hover hit-test: on top of icon, before badges
+      HandleHoveredSelected(p, p_max, n, w, h, dl);
+
+      // badges order: draw over selection
       RenderBadges(dl, n, p, w, h);
 
       // All texts under icon
       RenderITexts(w, h, dl, n);
 
-      // selection visuals and hover hit-test
-      HandleHoveredSelected(p, p_max, n, w, h, dl);
    }
 }
 
@@ -262,11 +265,11 @@ void GraphPanel::RenderBadges(ImDrawList* dl, const GraphNode& n, const Vec2f& p
       return;
 
    const float iconPx = std::max(w, h);
-   const float zoomT = std::clamp((view.zoom - 0.65f) / 1.35f, 0.0f, 1.0f);
-   const float badgeRatio = 0.32f + (0.42f - 0.32f) * zoomT;
-   const float badgePx = std::clamp(iconPx * badgeRatio, 5.0f, 32.0f);
+   const float zoomT = std::clamp((view.zoom - 0.65f) / (3.48f - 0.65f), 0.0f, 1.0f);
+   const float zoomEase = zoomT * zoomT * (3.0f - 2.0f * zoomT);
+   const float badgePx = 5.0f + (30.0f - 5.0f) * zoomEase;
+
    const float inset = std::clamp(iconPx * -0.08f, -4.0f, -1.0f);
-   const float crownLift = std::clamp(iconPx * 0.10f, 2.0f, 7.0f);
    const float rightBadgeX = p.x + w - badgePx - inset;
    const float bottomBadgeY = p.y + h - badgePx - inset;
 
@@ -285,6 +288,7 @@ void GraphPanel::RenderBadges(ImDrawList* dl, const GraphNode& n, const Vec2f& p
    else if (HasBadge(n, NodeKind::Offline))
       drawBadge(NodeKind::Offline, Vec2f(p.x + inset, p.y + inset));
 
+   const float crownLift = std::clamp(iconPx * 0.10f, 2.0f, 7.0f);
    if (HasBadge(n, NodeKind::PartyLeader))
       drawBadge(NodeKind::PartyLeader, Vec2f(rightBadgeX, p.y + inset - crownLift));
 
