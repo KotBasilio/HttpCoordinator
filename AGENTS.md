@@ -19,6 +19,7 @@ Use `md-files/history.md` and `md-files/interlane_archive.md` only when historic
 ## Project Identity
 
 This repository contains a C++ / Dear ImGui coordinator tool targeting Win32 + OpenGL3, built with Visual Studio 2022.
+WSL is the repo-local working surface for Codex setup-health checks and checkpoint commits.
 
 The tool visualizes runtime SDK / Hydra / matchmaking / party events as an evolving graph:
 
@@ -52,6 +53,8 @@ Server → SCSession → HydraSample → User → Party → MMSession
   verifying the working tree, unless Archy says otherwise.
 - These commits are review/checkpoint artifacts for the WSL subset; they do not
   directly change the Win11 production copy.
+- The Doctor lane owns setup health: verify direct WSL paths/tooling first,
+  avoid workaround cascades, and document environment evidence when useful.
 
 ## Abbreviations, acronyms
 

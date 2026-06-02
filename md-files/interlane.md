@@ -5,6 +5,7 @@ Shared chalkboard for Codex instance lanes working in this repo.
 Current lanes:
 - **Forge**: graph/reducer/session/projector behavior.
 - **Lumen**: ImGui texture, mipmap, icon, and visual asset handling.
+- **Doctor**: WSL Codex setup health, direct tool checks, environment evidence.
 
 Use this file for live cross-lane handoffs, warnings, requests, and small design notes.
 
@@ -30,6 +31,14 @@ Optional format for new notes:
 ```
 
 ## Open Notes
+
+### 2026-06-02 - Doctor - WSL direct path confirmed
+- Touching: `AGENTS.md`, `active.md`, `md-files/field.md`, `md-files/tech.md`,
+  `md-files/interlane.md`, `bridges/nvm_install_log.txt`.
+- Needs from other lane: None.
+- Risk: Keep setup-health work out of Forge/Lumen product behavior unless a
+  specific tooling fix requires coordination.
+- Status: Open while WSL runner recovery is being validated.
 
 ### 2026-05-25 - Lumen - Local user badge evidence
 - Touching: `UserState::isLocal`, User badge projection/rendering.

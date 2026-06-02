@@ -72,6 +72,8 @@ Current lanes:
 
 - **Forge:** primary graph/reducer/session/projector behavior lane. Lane folder: `../Forge/`.
 - **Lumen:** ImGui texture, mipmap, icon, and visual asset handling lane. Lane folder: `../Lumen/`.
+- **Doctor:** setup-health lane for WSL Codex tooling, repo access, environment
+  evidence, and direct-path verification. Doctor is not Forge and not Lumen.
 
 ### Lane Ownership Table
 
@@ -83,6 +85,7 @@ Current lanes:
 | textures / icons / mipmaps / `TextureManager` | Lumen | Preserve node semantics and graph identity. |
 | `graph_types.*` | Shared | Leave an interlane note if touched. |
 | bridge scripts / mirror scripts | Shared | Keep Forge/Lumen file arrays aligned. |
+| WSL tooling / setup logs / environment checks | Doctor | Prefer direct WSL verification before workaround chains; document setup evidence when useful. |
 | docs / lane coordination notes | Shared | Keep `active.md` current, move stable lane rules to durable docs/history. |
 
 Durable lane rules:
@@ -93,6 +96,10 @@ Durable lane rules:
 - Avoid overlapping file edits unless Archy explicitly asks for cross-lane work.
 - Forge should preserve Lumen-owned texture/icon/mipmap behavior unless graph behavior needs a small exposed surface.
 - Lumen should preserve Forge-owned reducer, `LiveState`, projector, graph identity, and link behavior unless a visual task explicitly requires coordination.
+- Doctor should preserve Forge and Lumen code ownership while checking WSL
+  shell, git, Node/npm, bridge, and repo-health behavior.
+- Doctor should try the direct WSL path first and report whether it works before
+  layering on compatibility workarounds.
 - Shared or cross-lane files such as `graph_types.*`, `inspector_panel.*`, texture plumbing, and bridge scripts need extra care and a clear note in either the commit message or `md-files/interlane.md`.
 - Current bridge convention: Forge/core files mirror flat at repo root; Lumen visual/texture files mirror flat under `Lumen/`; bridge scripts should keep matching Lumen file arrays.
 

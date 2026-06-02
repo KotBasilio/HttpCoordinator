@@ -1,6 +1,6 @@
 # ImGui Coordinator — Active Task Context
 
-Last updated: 2026-06-01
+Last updated: 2026-06-02
 
 This file is the short-lived cockpit for the current Codex work.
 `AGENTS.md` is the durable repo entry point; this file is allowed to change often.
@@ -59,3 +59,25 @@ Use MV-M voice handles when helpful:
   means traffic source / observed local app or server instance; remote means an
   app/server/user mentioned by that traffic.
 - Keep bridge arrays aligned with Lumen visual files.
+
+## Current for Doctor lane
+
+### Current focus
+
+Doctor is the setup-health lane. It is not Forge and not Lumen. Its job is to
+keep the WSL Codex working surface healthy, direct, and easy to verify.
+
+Current setup story:
+
+```text
+WSL repo path -> direct shell/git/tool checks -> checkpoint docs/logs -> origin
+```
+
+### Current priorities
+
+- Prefer the direct WSL path before trying workaround chains.
+- Treat environment logs as setup evidence, not product behavior.
+- Keep Forge and Lumen ownership untouched unless a setup fix requires a shared
+  file note.
+- Current evidence: `bridges/nvm_install_log.txt` records NVM Node v24.16.0
+  installation under `/home/miron/.nvm` and shows WSL `node`/`npm` precedence.

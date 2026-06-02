@@ -249,6 +249,18 @@ Do not introduce `GraphPropertySection` until `GraphNode::kv` is clearly insuffi
 
 Logs are part of the development workflow.
 
+## WSL Setup Health
+
+Doctor lane owns setup-health checks for the WSL Codex surface. Start with the
+direct WSL repo path and ordinary shell/git/tool commands before trying
+workarounds.
+
+Current environment evidence:
+- `bridges/nvm_install_log.txt` records NVM installation of Node v24.16.0 under
+  `/home/miron/.nvm`.
+- That log shows WSL `node`/`npm` paths taking precedence over Windows Node/npm
+  paths, which is the desired direction for WSL-local Codex operation.
+
 ## Texture LODs
 
 Graph node icons use `TextureManager::IconForKind(NodeKind, desiredPx)`.

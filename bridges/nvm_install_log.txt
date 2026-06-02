@@ -1,0 +1,66 @@
+miron@MIRONYCH:~$ cd ~
+
+curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+
+source ~/.bashrc
+
+nvm install --lts
+nvm use --lts
+nvm alias default 'lts/*'
+
+hash -r
+
+which -a node
+which -a npm
+node -p "process.platform + ' ' + process.execPath"
+npm config get prefix
+=> Downloading nvm from git to '/home/miron/.nvm'
+=> Cloning into '/home/miron/.nvm'...
+remote: Enumerating objects: 428, done.
+remote: Counting objects: 100% (428/428), done.
+remote: Compressing objects: 100% (354/354), done.
+remote: Total 428 (delta 60), reused 194 (delta 46), pack-reused 0 (from 0)
+Receiving objects: 100% (428/428), 415.66 KiB | 4.12 MiB/s, done.
+Resolving deltas: 100% (60/60), done.
+* (HEAD detached at FETCH_HEAD)
+  master
+=> Compressing and cleaning up git repository
+
+=> Appending nvm source string to /home/miron/.bashrc
+=> Appending bash_completion source string to /home/miron/.bashrc
+=> You currently have modules installed globally with `npm`. These will no
+=> longer be linked to the active version of Node when you install a new node
+=> with `nvm`; and they may (depending on how you construct your `$PATH`)
+=> override the binaries of modules installed with `nvm`:
+
+C:\Users\miron\AppData\Roaming\npm
++-- @openai/codex@0.136.0
+=> If you wish to uninstall them at a later point (or re-install them under your
+=> `nvm` node installs), you can remove them from the system Node as follows:
+
+     $ nvm use system
+     $ npm uninstall -g a_module
+
+=> Close and reopen your terminal to start using nvm or run the following to use it now:
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+Installing latest LTS version.
+Downloading and installing node v24.16.0...
+Downloading https://nodejs.org/dist/v24.16.0/node-v24.16.0-linux-x64.tar.xz...
+################################################################################################################# 100.0%
+Computing checksum with sha256sum
+Checksums matched!
+Now using node v24.16.0 (npm v11.13.0)
+Creating default alias: default -> lts/* (-> v24.16.0)
+Now using node v24.16.0 (npm v11.13.0)
+default -> lts/* (-> v24.16.0)
+/home/miron/.nvm/versions/node/v24.16.0/bin/node
+/usr/bin/node
+/bin/node
+/home/miron/.nvm/versions/node/v24.16.0/bin/npm
+/mnt/d/progf/NodeJS//npm
+/mnt/c/Users/miron/AppData/Roaming/npm/npm
+linux /home/miron/.nvm/versions/node/v24.16.0/bin/node
+/home/miron/.nvm/versions/node/v24.16.0
