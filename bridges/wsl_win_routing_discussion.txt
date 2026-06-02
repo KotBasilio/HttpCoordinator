@@ -1,0 +1,228 @@
+Yes, that `.bashrc` is very likely the problem.
+
+The big red flags are:
+
+```bash
+export CODEX_HOME=/mnt/c/Users/miron/.codex
+export PATH="/mnt/c/Users/miron/.codex/bin/wsl/<hash>:..."
+alias codex='/mnt/c/Users/miron/.codex/bin/wsl/<hash>/codex'
+```
+
+Even though the binary is Linux ELF, your Codex home, plugins, tool metadata, and runner bits are living on the Windows filesystem. Also the alias pins Codex to a specific hash directory, which can become stale after updates. That’s a fragile bridge.
+
+I’d change `.bashrc` to stop hardcoding the Windows Codex install.
+
+**Step 1: Backup**
+
+```bash
+cp ~/.bashrc ~/.bashrc.codex-backup
+```
+
+**Step 2: Edit `.bashrc`**
+
+Open it:
+
+```bash
+nano ~/.bashrc
+```
+
+Find this block:
+
+```bash
+# codex paths
+export CODEX_HOME=/mnt/c/Users/miron/.codex
+export PATH="/mnt/c/Users/miron/.codex/bin/wsl/c3c4818502f6f621:/mnt/c/Users/miron/.codex/bin/wsl/fdb4d1c464fc08fc:$PATH"
+alias codex='/mnt/c/Users/miron/.codex/bin/wsl/c3c4818502f6f621/codex'
+```
+
+Comment it out:
+
+```bash
+# codex paths - disabled; Windows-backed install caused tool runner issues
+# export CODEX_HOME=/mnt/c/Users/miron/.codex
+# export PATH="/mnt/c/Users/miron/.codex/bin/wsl/c3c4818502f6f621:/mnt/c/Users/miron/.codex/bin/wsl/fdb4d1c464fc08fc:$PATH"
+# alias codex='/mnt/c/Users/miron/.codex/bin/wsl/c3c4818502f6f621/codex'
+```
+
+Add this instead:
+
+```bash
+# codex paths
+export CODEX_HOME="$HOME/.codex"
+```
+
+Do **not** add a hash-dir alias.
+
+**Step 3: Reload shell**
+
+```bash
+source ~/.bashrc
+hash -r
+unalias codex 2>/dev/null
+```
+
+Then check:
+
+```bash
+echo "$CODEX_HOME"
+which codex
+type codex
+```
+
+At this point `which codex` may say no Codex found. That is okay. It means we removed the fragile Windows-backed one.
+
+**Step 4: Install/use Codex inside WSL**
+
+If you installed Codex through npm before, install it from WSL’s Linux npm/node, not Windows npm:
+
+```bash
+which node
+node -p "process.platform + ' ' + process.execPath"
+```
+
+You want `linux`, not `win32`.
+
+Then install Codex using your normal Codex install command from inside WSL. After that:
+
+```bash
+which codex
+file "$(which codex)"
+codex --version
+```
+
+The goal is:
+
+- `CODEX_HOME=/home/miron/.codex`
+- `which codex` not hardcoded to `/mnt/c/Users/...`
+- no `alias codex=...`
+- `node -p ...` says `linux ...` if using npm/node
+
+I would not delete `/mnt/c/Users/miron/.codex` yet. First get a clean WSL-native Codex working, then we can copy over only useful config if needed.
+
+==============================================================
+
+
+Good find. Your screenshot matters: **Agent environment is already WSL**, which is the important one. Flipping **Integrated terminal shell** from `WSL` to `PowerShell` matches the workaround I’d try next.
+
+I would **not copy config yet**. First we need to prove the App agent actually starts inside WSL cleanly. Copying old `/mnt/c/Users/miron/.codex` config now could reintroduce the exact Windows-backed state we’re trying to isolate.
+
+Do this sequence:
+
+1. Fully quit the Windows Codex App.
+   Check tray/background if it has one.
+
+2. Open a fresh WSL terminal and sanity check the `.profile` condition manually:
+
+```bash
+CODEX_INTERNAL_ORIGINATOR_OVERRIDE="Codex Desktop" bash -lc 'echo "$CODEX_HOME"; which codex; node -p "process.platform + \" \" + process.execPath"'
+```
+
+Expected:
+
+```text
+/home/miron/.codex-app
+/home/miron/.nvm/versions/node/v24.16.0/bin/codex
+linux /home/miron/.nvm/versions/node/v24.16.0/bin/node
+```
+
+3. Reopen the Windows Codex App.
+
+4. Open `HttpCoordinator` from the App with:
+   - Default open destination: `WSL`
+   - Agent environment: `Windows Subsystem for Linux`
+   - Integrated terminal shell: `PowerShell`
+
+5. In a new App conversation, ask me to run:
+
+```
+pwd
+git status --short --branch
+echo "$CODEX_HOME"
+echo "$CODEX_INTERNAL_ORIGINATOR_OVERRIDE"
+which codex
+which bash
+```
+
+If it works, then we can decide what to copy.
+
+What might be worth copying later:
+
+```text
+/mnt/c/Users/miron/.codex/config.toml
+/mnt/c/Users/miron/.codex/AGENTS.md or similar personal instructions, if present
+/mnt/c/Users/miron/.codex/skills
+/mnt/c/Users/miron/.codex/plugins
+```
+
+What I would **not** copy blindly:
+
+```text
+sessions
+worktrees
+tmp
+bin/wsl/<hash>
+attachments
+```
+
+Those are more likely to carry stale paths or Windows/App-specific state.
+
+So: no config copying yet. First, restart App and test whether the runner can spawn `/bin/bash`. That’s the gate.
+
+===============
+
+The diagnostic script did not run. The command runner failed before launching `bash` because the Codex sandbox binary digest check failed:
+
+```text
+bundled bubblewrap digest mismatch for /mnt/c/Users/miron/.codex/bin/wsl/codex-resources/bwrap
+expected sha256:5a5104807cfbe9b509d0b9fa1c46054ff48dbed5393f30d261b34263ebf0e3fe
+got sha256:067a1289020a7398e71cf0cebbb057277b792831735da080f6cd88b8ec1237fa
+```
+
+Interpretation: this is a local Codex runtime/tooling integrity mismatch, not a repository issue. Since the sandbox failed during setup, none of these actually executed: `pwd`, `git status`, env echoes, or `which` checks.
+
+===============
+
+Good rollback. Given what happened, my current advice is: **keep `.profile` rolled back** for now.
+
+The `.profile` override solved the wrong layer. It changed conversation/state location, but the App still pulled its WSL sandbox bundle from:
+
+```text
+/mnt/c/Users/miron/.codex/bin/wsl/codex-resources/bwrap
+```
+
+So it broke continuity without fixing the actual runtime mismatch. The real App-side failure is now clearly this stale/corrupt bundle:
+
+```text
+C:\Users\miron\.codex\bin\wsl\codex-resources\bwrap
+```
+
+I’d do the safer, narrower fix:
+
+1. Fully quit the Codex Windows App.
+
+2. In PowerShell, rename only the WSL binary bundle:
+
+```powershell
+cd $env:USERPROFILE\.codex\bin
+Rename-Item wsl "wsl.bad.$(Get-Date -Format yyyyMMdd-HHmmss)"
+```
+
+3. Reopen the Codex Windows App.
+
+4. Keep settings as:
+   - Default open destination: `WSL`
+   - Agent environment: `Windows Subsystem for Linux`
+   - Integrated terminal shell: `PowerShell`
+
+5. In this same kind of App chat, ask me to run the diagnostics again.
+
+Do **not** delete or rename all of:
+
+```text
+C:\Users\miron\.codex
+```
+
+because that likely contains your visible conversations/settings.
+
+So the plan is: preserve App state, force only the WSL runtime bundle to regenerate. That’s the least disruptive move.
+
