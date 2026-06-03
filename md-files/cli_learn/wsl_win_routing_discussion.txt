@@ -99,8 +99,49 @@ The goal is:
 
 I would not delete `/mnt/c/Users/miron/.codex` yet. First get a clean WSL-native Codex working, then we can copy over only useful config if needed.
 
-==============================================================
+===============================
 
+**Bob ☕🧩:** Don’t reinstall WSL yet. WSL itself is almost certainly fine: you can run `pwd`, `git`, and `codex --version` inside Ubuntu. The missing `/bin/bash` is not “your Ubuntu lacks bash”; it means *this Codex tool runner process* is trying to start Linux bash from an environment where that path is not visible. In Windows, `/bin/bash` means nothing unless the process is actually inside WSL.
+
+`/bin/bash` is just the standard Linux shell executable. In WSL, this should exist:
+
+```bash
+ls -l /bin/bash
+```
+
+If that works in your WSL terminal, WSL is not the problem.
+
+**Trace 🫖🧭:** The screenshot points to a different but related Windows packaging issue. `C:\Program Files\WindowsApps` being blocked is normal Windows behavior, even on your own computer. Microsoft Store apps live there with restricted permissions. Annoying? yes. Suspicious by itself? not really.
+
+The error says Windows tried to launch the Codex Electron app from a `WindowsApps\OpenAI.Codex_...` package path and failed to find the app/module. That suggests the Codex app install/shortcut/protocol registration may be damaged or stale.
+
+Recommended order, gentle and least destructive:
+
+1. In WSL, verify bash:
+   ```bash
+   ls -l /bin/bash
+   echo $SHELL
+   codex --version
+   ```
+
+2. Fully close Codex.
+
+3. Reinstall or repair the **Codex app**, not WSL. If installed from Microsoft Store / app package, use Windows Settings → Apps → Installed apps → Codex → Advanced options → Repair or Reset if available. If not, uninstall/reinstall Codex.
+
+4. Reopen Codex only after your setting points integrated terminal to WSL.
+
+5. Open the project as WSL path:
+   ```text
+   /home/miron/proj/HttpCoordinator
+   ```
+   Avoid:
+   ```text
+   \\wsl$\Ubuntu\home\miron\proj\HttpCoordinator
+   ```
+
+**Bob ☕🧩:** Your WSL export backup is good insurance, but I would keep it untouched. This smells like Codex app / shell attachment / Windows app registration, not Ubuntu corruption.
+
+===============================
 
 Good find. Your screenshot matters: **Agent environment is already WSL**, which is the important one. Flipping **Integrated terminal shell** from `WSL` to `PowerShell` matches the workaround I’d try next.
 
