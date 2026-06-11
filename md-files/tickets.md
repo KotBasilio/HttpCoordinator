@@ -6,7 +6,6 @@ Keep this list light. Current task direction still belongs in `active.md`; accep
 
 | ID | Status | Area | Summary | Notes |
 |---|---|---|---|---|
-| UI-001 | Done | Inspector visuals | Copy icon polish | Inspector kv rows use the generated `IC_COPY_16PX` icon with the existing copy behavior and tooltip. |
 | SC-001 | Deferred | Server / SCSession | Harden activation correlation for interleaved streams | Current pending Server -> SCSession activation state is acceptable for observed ordered logs. Promote this when logs show interleaved server/session activation responses or multi-server ambiguity. |
 | RED-001 | Deferred | Reducer correlation | Replace single-slot pending request/response state when interleaving appears | Several reducer correlations keep one pending request context at a time: standalone sign-in code, SC create, GetServerInfo, GetSessionEvents, DS session info, and activation. This is acceptable for observed ordered streams, but interleaved traffic could attach a response to the wrong request. Promote when logs show concurrent flows or ambiguous pairings; use queues/maps keyed by concrete request evidence rather than graph-side fixes. |
 | ID-001 | Deferred | Identity | Map Hydra identity seams when evidence appears | The SDK exposes `context.data.userIdentity`, `member.userId`, and Facts `USER_ID`. Do not collapse them without packet evidence; Facts may later support an explicit identity map. |

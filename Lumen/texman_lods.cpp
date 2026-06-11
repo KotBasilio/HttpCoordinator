@@ -169,7 +169,6 @@ const IconVariant kPartyLeaderIcon[] = {
    { 13, AssetID::PARTYLEADER_13PX },
    { 20, AssetID::PARTYLEADER_20PX },
    { 30, AssetID::PARTYLEADER_30PX },
-   //{ 46, AssetID::PARTYLEADER_46PX },
 };
 
 struct IconLODSet {

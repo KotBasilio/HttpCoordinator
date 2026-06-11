@@ -117,7 +117,6 @@ enum AssetID {
     PARTYLEADER_13PX,
     PARTYLEADER_20PX,
     PARTYLEADER_30PX,
-    PARTYLEADER_46PX,
     PARTYLEADER_8PX,
     ASSET_COUNT
 };
@@ -239,7 +238,6 @@ static const char* AssetPaths[] = {
     "./Assets/Status/partyLeader_13px.png",
     "./Assets/Status/partyLeader_20px.png",
     "./Assets/Status/partyLeader_30px.png",
-    "./Assets/Status/partyLeader_46px.png",
     "./Assets/Status/partyLeader_8px.png",
 };
 #endif // COORD_ASSET_MAP_IMPL
