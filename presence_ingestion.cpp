@@ -11,6 +11,17 @@ namespace Sample::UI::Controllers
 
 using namespace nlohmann::literals; // enables "... "_json_pointer
 
+// Centralized updateType and reasons definitions
+static constexpr const char* PRESENCE_SESSION_MEMBER_UPDATE_TYPE_ADD    = "PRESENCE_SESSION_MEMBER_UPDATE_TYPE_ADD";
+static constexpr const char* PRESENCE_SESSION_MEMBER_UPDATE_TYPE_REMOVE = "PRESENCE_SESSION_MEMBER_UPDATE_TYPE_REMOVE";
+static constexpr const char* PRESENCE_SESSION_MEMBER_UPDATE_TYPE_UPDATE = "PRESENCE_SESSION_MEMBER_UPDATE_TYPE_UPDATE";
+
+static constexpr const char* PARTY_CHANGE_REASON_LEAVE = "PARTY_ID_CHANGE_REASON_LEAVE";
+
+static constexpr const char* PRESENCE_PARTY_MEMBER_UPDATE_TYPE_ADD    = "PRESENCE_PARTY_MEMBER_UPDATE_TYPE_ADD";
+static constexpr const char* PRESENCE_PARTY_MEMBER_UPDATE_TYPE_REMOVE = "PRESENCE_PARTY_MEMBER_UPDATE_TYPE_REMOVE";
+static constexpr const char* PRESENCE_PARTY_MEMBER_UPDATE_TYPE_UPDATE = "PRESENCE_PARTY_MEMBER_UPDATE_TYPE_UPDATE";
+
 static bool SetIfDifferent(std::string& dst, const std::string& src)
 {
    if (src.empty() || dst == src)
@@ -181,7 +192,7 @@ bool StartServerController::HandleMMSessionMembers(SdkPacket& u, SessionState& s
 
       // operations
       const std::string op = GetStr(mu, "updateType", "");
-      if (op == "PRESENCE_SESSION_MEMBER_UPDATE_TYPE_ADD") {
+      if (op == PRESENCE_SESSION_MEMBER_UPDATE_TYPE_ADD) {
          SessionState::MemberInfo info{};
          info.groupId = GetStr(md, "groupId", "");
          info.isOwner = BoolAt(md, "/isOwner"_json_pointer, false);
@@ -192,9 +203,9 @@ bool StartServerController::HandleMMSessionMembers(SdkPacket& u, SessionState& s
          info.nickname = ExtractNicknameFromStaticData(md);
          sess.members[uid] = std::move(info);
          usr.online = true;
-      } else if (op == "PRESENCE_SESSION_MEMBER_UPDATE_TYPE_REMOVE") {
+      } else if (op == PRESENCE_SESSION_MEMBER_UPDATE_TYPE_REMOVE) {
          sess.members.erase(uid);
-      } else if (op == "PRESENCE_SESSION_MEMBER_UPDATE_TYPE_UPDATE") {
+      } else if (op == PRESENCE_SESSION_MEMBER_UPDATE_TYPE_UPDATE) {
          auto& info = sess.members[uid]; // create if missing
          SetIfDifferent(info.groupId, StrAt(md, "/groupId"_json_pointer, ""));
          info.isOwner = BoolAt(md, "/isOwner"_json_pointer, info.isOwner);
@@ -247,7 +258,13 @@ bool StartServerController::HandlePartyUpdate(SdkPacket& u)
       }
    }
 
+   return HandlePartyDelta(u, party, changed);
+}
+
+bool StartServerController::HandlePartyDelta(SdkPacket& u, PartyState& party, bool changed)
+{
    // Members update stream (delta)
+   const auto& p = u.payload;
    static const auto MU = "/membersUpdate"_json_pointer;
    const Json* jMu = NodeAt(p, MU);
    if (!jMu) {
@@ -255,8 +272,7 @@ bool StartServerController::HandlePartyUpdate(SdkPacket& u)
       jMu = NodeAt(p, MU1);
    }
 
-   const std::string op = GetStr(p, "updateType", "");
-   if (!jMu && op == "PRESENCE_SESSION_MEMBER_UPDATE_TYPE_REMOVE") {
+   if (!jMu && party.reason == PARTY_CHANGE_REASON_LEAVE) {
       changed |= !party.members.empty();
       party.members.clear();
    } else if (jMu && jMu->is_array()) {
@@ -272,7 +288,7 @@ bool StartServerController::HandlePartyUpdate(SdkPacket& u)
 
          st.TouchUser(uid);
 
-         if (ut == "PRESENCE_PARTY_MEMBER_UPDATE_TYPE_ADD") {
+         if (ut == PRESENCE_PARTY_MEMBER_UPDATE_TYPE_ADD) {
             auto& mi = party.members[uid];
             mi.isOwner = BoolAt(*jm, "/isOwner"_json_pointer, false);
             mi.mmState = StrAt(*jm, "/state"_json_pointer, "");
@@ -285,10 +301,10 @@ bool StartServerController::HandlePartyUpdate(SdkPacket& u)
                std::string nick = ExtractNicknameFromStaticData(*jm);
                if (!nick.empty()) st.users[uid].nickname = std::move(nick);
             }
-         } else if (ut == "PRESENCE_PARTY_MEMBER_UPDATE_TYPE_REMOVE") {
+         } else if (ut == PRESENCE_PARTY_MEMBER_UPDATE_TYPE_REMOVE) {
             changed |= (party.members.erase(uid) > 0);
             // we don't set online to any particular value on remove
-         } else if (ut == "PRESENCE_PARTY_MEMBER_UPDATE_TYPE_UPDATE") {
+         } else if (ut == PRESENCE_PARTY_MEMBER_UPDATE_TYPE_UPDATE) {
             auto& mi = party.members[uid]; // create if missing
             mi.isOwner = BoolAt(*jm, "/isOwner"_json_pointer, mi.isOwner);
             const std::string s = StrAt(*jm, "/state"_json_pointer, "");

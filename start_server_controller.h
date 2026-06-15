@@ -38,6 +38,7 @@ private:
    bool HandleSignIn(SdkPacket& u);
    bool HandleSignOut(SdkPacket& u);
    bool HandlePartyUpdate(SdkPacket& u);
+   bool HandlePartyDelta(SdkPacket& u, PartyState& party, bool changed);
    bool HandlePartyInviteAcceptRequest(SdkPacket& u);
    bool HandlePartyDisbandRequest(SdkPacket& u);
    bool HandleMMSessionUpdate(SdkPacket& u);

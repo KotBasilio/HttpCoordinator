@@ -93,7 +93,7 @@ static std::string ShortenMiddleToFit(const std::string& text, float maxWidth)
 
    constexpr size_t kMinFrontChars = 3;
    constexpr size_t kMinBackChars = 2;
-   constexpr const char* kEllipsis = "\xE2\x80\xA6";
+   constexpr const char* kEllipsis = "_";
 
    const std::vector<size_t> offsets = Utf8CharOffsets(text);
    const size_t charCount = offsets.empty() ? 0 : offsets.size() - 1;
