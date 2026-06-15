@@ -255,7 +255,11 @@ bool StartServerController::HandlePartyUpdate(SdkPacket& u)
       jMu = NodeAt(p, MU1);
    }
 
-   if (jMu && jMu->is_array()) {
+   const std::string op = GetStr(p, "updateType", "");
+   if (!jMu && op == "PRESENCE_SESSION_MEMBER_UPDATE_TYPE_REMOVE") {
+      changed |= !party.members.empty();
+      party.members.clear();
+   } else if (jMu && jMu->is_array()) {
       for (const auto& e : *jMu) {
          if (!e.is_object()) continue;
 
