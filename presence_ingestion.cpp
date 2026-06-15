@@ -272,7 +272,7 @@ bool StartServerController::HandlePartyDelta(SdkPacket& u, PartyState& party, bo
       jMu = NodeAt(p, MU1);
    }
 
-   if (!jMu && party.reason == PARTY_CHANGE_REASON_LEAVE) {
+   if (!jMu && party.reason == PARTY_CHANGE_REASON_LEAVE && party.members.size() <= 1) {
       changed |= !party.members.empty();
       party.members.clear();
    } else if (jMu && jMu->is_array()) {
