@@ -18,7 +18,7 @@ struct SdkPacket {
 
    // for logs/debug display
    std::string printable;
-   std::string loggable;
+   std::string redacted;
 
    SdkPacket() = default;
    SdkPacket(const httplib::Request& req);

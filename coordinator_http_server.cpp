@@ -104,8 +104,8 @@ std::string SdkPacket::RedactSecrets(const std::string& reqBody)
 
 SdkPacket::SdkPacket(const std::string& reqBody)
 {
-   loggable = RedactSecrets(reqBody);
-   payload = nlohmann::json::parse(loggable);
+   redacted = RedactSecrets(reqBody);
+   payload = nlohmann::json::parse(reqBody);
    recv_time_s = NowSeconds();
 }
 
@@ -117,7 +117,7 @@ SdkPacket::SdkPacket(const httplib::Request& req)
 
    printable = reqName;
    if (req.body.length() > 5) {
-      printable += "|" + req.body.substr(0, 70) + "...";
+      printable += "|" + redacted.substr(0, 50) + "...";
    } else {
       isEmptyBody = true;
    }
@@ -125,7 +125,7 @@ SdkPacket::SdkPacket(const httplib::Request& req)
    if (reqNameId == ABSENT_REQNAME_ID) {
       OutputDebugString((reqName + " -- add to ReqNames.txt\n").c_str());
    } else {
-      OutputDebugString((reqName + "|" + loggable + "\n").c_str());
+      OutputDebugString((reqName + "|" + redacted + "\n").c_str());
    }
 }
 
