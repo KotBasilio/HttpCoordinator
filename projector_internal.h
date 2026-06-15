@@ -48,6 +48,7 @@ extern SaltVariants salt;
 GraphNode& UpsertNode(GraphModel& g, NodeId id);
 void EnsureLink(GraphModel& g, NodeId from, NodeId to,
    GraphPort fromPort = GraphPort::Right, GraphPort toPort = GraphPort::Left);
+void EnsureExclusiveSCLinkToHydra(GraphModel& g, NodeId scNodeId, NodeId hydraNodeId);
 NodeId HashToNodeId(const std::string& s, uint32_t salt);
 GraphNode* FindNode(GraphModel& g, NodeId id);
 std::string HydraIdentityKeyForUser(const LiveState& st, const std::string& userId);

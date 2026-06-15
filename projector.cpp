@@ -2,6 +2,7 @@
 
 #include "ui/models/start_server_model.h"
 
+#include <algorithm>
 #include <functional>
 
 namespace Sample::UI::Controllers
@@ -46,6 +47,36 @@ void EnsureLink(GraphModel& g, NodeId from, NodeId to,
    L.style = LinkStyle::Bezier;
    L.arrow = true;
    g.links.push_back(L);
+}
+
+void EnsureExclusiveSCLinkToHydra(GraphModel& g, NodeId scNodeId, NodeId hydraNodeId)
+{
+   bool hasDesiredLink = false;
+
+   auto isSCSessionNode = [&](NodeId id) {
+      for (const auto& n : g.nodes)
+         if (n.id == id)
+            return n.kind == NodeKind::SCSession;
+
+      return false;
+   };
+
+   auto& links = g.links;
+   links.erase(std::remove_if(links.begin(), links.end(),
+      [&](const GraphLink& link) {
+         if (link.to != hydraNodeId)
+            return false;
+
+         if (link.from == scNodeId) {
+            hasDesiredLink = true;
+            return false;
+         }
+
+         return isSCSessionNode(link.from);
+      }), links.end());
+
+   if (!hasDesiredLink)
+      EnsureLink(g, scNodeId, hydraNodeId);
 }
 
 NodeId HashToNodeId(const std::string& s, uint32_t salt)

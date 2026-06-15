@@ -92,11 +92,11 @@ void StartServerController::ProjectSCSessions()
 
       if (!s.hydraUserId.empty()) {
          const NodeId hydraNodeId = HydraNodeIdForUser(st, s.hydraUserId);
-         EnsureLink(graph, scNodeId, hydraNodeId);
+         EnsureExclusiveSCLinkToHydra(graph, scNodeId, hydraNodeId);
       }
       for (const std::string& hydraUserId : hydraUserIds) {
          const NodeId hydraNodeId = HydraNodeIdForUser(st, hydraUserId);
-         EnsureLink(graph, scNodeId, hydraNodeId);
+         EnsureExclusiveSCLinkToHydra(graph, scNodeId, hydraNodeId);
       }
    }
 
