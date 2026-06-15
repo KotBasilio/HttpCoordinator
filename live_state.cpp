@@ -142,6 +142,34 @@ void LiveState::ResetOwners()
    }
 }
 
+void LiveState::RefreshOwnerFlagForUser(const std::string& uid)
+{
+   auto itU = users.find(uid);
+   if (itU == users.end())
+      return;
+
+   bool isOwner = false;
+
+   for (const auto& skv : sessions) {
+      auto itM = skv.second.members.find(uid);
+      if (itM != skv.second.members.end() && itM->second.isOwner) {
+         isOwner = true;
+         break;
+      }
+   }
+
+   if (!isOwner) {
+      for (const auto& pkv : parties) {
+         if (pkv.second.leaderUid == uid) {
+            isOwner = true;
+            break;
+         }
+      }
+   }
+
+   itU->second.isOwnerAny = isOwner;
+}
+
 void LiveState::UnbindUser(const std::string& uid)
 {
    // Remove user from all sessions 
@@ -188,6 +216,10 @@ bool LiveState::RemoveUserFromAllParties(const std::string& uid)
       }
       ++it;
    }
+
+   if (removedAny)
+      RefreshOwnerFlagForUser(uid);
+
    return removedAny;
 }
 

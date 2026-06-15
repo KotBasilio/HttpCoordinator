@@ -215,6 +215,7 @@ struct LiveState
    void TouchSCSession(const std::string& scid);
 
    void ResetOwners();
+   void RefreshOwnerFlagForUser(const std::string& uid);
    void UnbindUser(const std::string& uid);
    bool RemoveUserFromAllParties(const std::string& uid);
    bool MoveEntityInOrder(NodeKind kind, std::string_view entityKey, int delta);

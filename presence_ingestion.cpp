@@ -272,7 +272,11 @@ bool StartServerController::HandlePartyDelta(SdkPacket& u, PartyState& party, bo
       jMu = NodeAt(p, MU1);
    }
 
+   std::vector<std::string> ownerRefreshUsers;
+
    if (!jMu && party.reason == PARTY_CHANGE_REASON_LEAVE && party.members.size() <= 1) {
+      for (const auto& mkv : party.members)
+         ownerRefreshUsers.push_back(mkv.first);
       changed |= !party.members.empty();
       party.members.clear();
    } else if (jMu && jMu->is_array()) {
@@ -302,7 +306,10 @@ bool StartServerController::HandlePartyDelta(SdkPacket& u, PartyState& party, bo
                if (!nick.empty()) st.users[uid].nickname = std::move(nick);
             }
          } else if (ut == PRESENCE_PARTY_MEMBER_UPDATE_TYPE_REMOVE) {
-            changed |= (party.members.erase(uid) > 0);
+            if (party.members.erase(uid) > 0) {
+               ownerRefreshUsers.push_back(uid);
+               changed = true;
+            }
             // we don't set online to any particular value on remove
          } else if (ut == PRESENCE_PARTY_MEMBER_UPDATE_TYPE_UPDATE) {
             auto& mi = party.members[uid]; // create if missing
@@ -322,6 +329,9 @@ bool StartServerController::HandlePartyDelta(SdkPacket& u, PartyState& party, bo
 
    // Recompute leader.
    changed |= party.RecomputeLeaderFromOwners();
+
+   for (const std::string& uid : ownerRefreshUsers)
+      st.RefreshOwnerFlagForUser(uid);
 
    return changed;
 }
