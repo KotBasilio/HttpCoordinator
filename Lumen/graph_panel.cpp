@@ -2,6 +2,8 @@
 
 #include <algorithm> // std::clamp
 #include <cmath> // std::sqrt, std::abs
+#include <string>
+#include <vector>
 
 GraphPanel::GraphPanel(GraphViewState& _view, GraphModel& _model, Sample::Tex::TextureManager& _tex)
    : view(_view)
@@ -63,6 +65,56 @@ static float IconFrameRounding(float w, float h)
 static bool HasBadge(const GraphNode& n, NodeKind badge)
 {
    return std::find(n.badges.begin(), n.badges.end(), badge) != n.badges.end();
+}
+
+static bool IsUtf8ContinuationByte(unsigned char c)
+{
+   return (c & 0xC0) == 0x80;
+}
+
+static std::vector<size_t> Utf8CharOffsets(const std::string& text)
+{
+   std::vector<size_t> offsets;
+   offsets.reserve(text.size() + 1);
+
+   for (size_t i = 0; i < text.size(); ++i) {
+      if (!IsUtf8ContinuationByte(static_cast<unsigned char>(text[i])))
+         offsets.push_back(i);
+   }
+
+   offsets.push_back(text.size());
+   return offsets;
+}
+
+static std::string ShortenMiddleToFit(const std::string& text, float maxWidth)
+{
+   if (text.empty() || ImGui::CalcTextSize(text.c_str()).x < maxWidth)
+      return text;
+
+   constexpr size_t kMinFrontChars = 3;
+   constexpr size_t kMinBackChars = 2;
+   constexpr const char* kEllipsis = "\xE2\x80\xA6";
+
+   const std::vector<size_t> offsets = Utf8CharOffsets(text);
+   const size_t charCount = offsets.empty() ? 0 : offsets.size() - 1;
+   if (charCount <= kMinFrontChars + kMinBackChars)
+      return {};
+
+   const size_t middleChars = charCount - kMinFrontChars - kMinBackChars;
+   for (size_t removeChars = 1; removeChars <= middleChars; ++removeChars) {
+      const size_t keepMiddleChars = middleChars - removeChars;
+      const size_t frontChars = kMinFrontChars + (keepMiddleChars + 1) / 2;
+      const size_t backChars = kMinBackChars + keepMiddleChars / 2;
+
+      std::string candidate = text.substr(0, offsets[frontChars]);
+      candidate += kEllipsis;
+      candidate += text.substr(offsets[charCount - backChars]);
+
+      if (ImGui::CalcTextSize(candidate.c_str()).x < maxWidth)
+         return candidate;
+   }
+
+   return {};
 }
 
 void GraphPanel::ProcessMouseCommands()
@@ -347,14 +399,12 @@ void GraphPanel::RenderITexts(float w, float h, ImDrawList* dl, const GraphNode&
    // Label padding under icon (screen pixels, clamp optional)
    const float labelPad = std::clamp(4.0f * view.zoom, 2.0f, 10.0f);
 
-   // Measure text in screen space (no scaling, so this is stable)
-   const char* label = n.title.c_str();
-   const Vec2f textSize = ImGui::CalcTextSize(label);
-
-   // screen-space text width exceeds 3x icon screen size -> hide the label.
-   if (textSize.x >= 3.0f * w) {
+   // Measure text in screen space (no scaling, so this is stable).
+   const std::string label = ShortenMiddleToFit(n.title, 3.0f * w);
+   if (label.empty())
       return;
-   }
+
+   const Vec2f textSize = ImGui::CalcTextSize(label.c_str());
 
    // Center-align text under icon
    const float iconCenterX = (p_min.x + p_max.x) * 0.5f;
@@ -364,7 +414,7 @@ void GraphPanel::RenderITexts(float w, float h, ImDrawList* dl, const GraphNode&
    textPos.x = std::floor(textPos.x + 0.5f);
    textPos.y = std::floor(textPos.y + 0.5f);
 
-   dl->AddText(textPos.AsIm(), IM_COL32(200, 220, 220, 255), label);
+   dl->AddText(textPos.AsIm(), IM_COL32(200, 220, 220, 255), label.c_str());
 
    // Future: optional subtitle, status icon, etc.
 }
