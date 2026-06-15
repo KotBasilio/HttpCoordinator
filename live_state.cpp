@@ -127,6 +127,19 @@ void LiveState::ResetOwners()
          }
       }
    }
+
+   // Recalc owner/leader from parties.
+   for (auto& pkv : parties) {
+      pkv.second.viewIdx = -1;
+      const std::string& leaderUid = pkv.second.leaderUid;
+      if (leaderUid.empty())
+         continue;
+
+      auto itU = users.find(leaderUid);
+      if (itU != users.end()) {
+         itU->second.isOwnerAny = true;
+      }
+   }
 }
 
 void LiveState::UnbindUser(const std::string& uid)
