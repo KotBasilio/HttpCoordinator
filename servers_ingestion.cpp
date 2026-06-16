@@ -424,6 +424,18 @@ bool StartServerController::HandleSCFinishSessionRequest(SdkPacket& u)
    if (scid.empty())
       return false;
 
+   bool changed = false;
+   auto itSC = st.scSessions.find(scid);
+   if (itSC != st.scSessions.end()) {
+      SCSessionState& sc = itSC->second;
+      changed |= !sc.hydraUserId.empty();
+      changed |= !sc.hydraKernelSessionId.empty();
+      changed |= !sc.hydraUsers.empty();
+      sc.hydraUserId.clear();
+      sc.hydraKernelSessionId.clear();
+      sc.hydraUsers.clear();
+   }
+
    std::unordered_set<std::string> affectedUsers;
    for (const auto& pkv : st.parties) {
       const PartyState& party = pkv.second;
@@ -434,7 +446,8 @@ bool StartServerController::HandleSCFinishSessionRequest(SdkPacket& u)
          affectedUsers.insert(mkv.first);
    }
 
-   return RemoveUsersFromAllMMSessions(st, affectedUsers);
+   changed |= RemoveUsersFromAllMMSessions(st, affectedUsers);
+   return changed;
 }
 
 bool StartServerController::HandleFactsWriteBinaryPackServer(SdkPacket& u)
