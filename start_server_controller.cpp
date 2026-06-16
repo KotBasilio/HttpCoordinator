@@ -139,6 +139,7 @@ bool StartServerController::ApplyServerReducers(SdkPacket& u)
       case HYDRA_API_SESSIONCONTROL_PREPAREACTIVATESESSIONRESPONSE:return HandleSCPrepareActivateSessionResponse(u);
       case HYDRA_API_SESSIONCONTROL_ACTIVATESESSION3REQUEST:       return HandleSCActivateSession3Request(u);
       case HYDRA_API_SESSIONCONTROL_PROCESSSESSIONMEMBEREVENTSREQUEST: return HandleSCProcessSessionMemberEventsRequest(u);
+      case HYDRA_API_SESSIONCONTROL_FINISHSESSIONREQUEST:          return HandleSCFinishSessionRequest(u);
       case PROS_API_FACTS_WRITEBINARYPACKSERVERREQUEST:            return HandleFactsWriteBinaryPackServer(u);
    }
 

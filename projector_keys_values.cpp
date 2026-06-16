@@ -183,6 +183,8 @@ void FillPartyKv(GraphNode& n, const PartyState& p, const std::string& pid)
    AddKv(n.kv, "PARTY_REASON", p.reason);
    AddKv(n.kv, "MEMBER_COUNT", std::to_string(p.members.size()));
    AddKv(n.kv, "LEADER_USER_ID", p.leaderUid);
+   AddKv(n.kv, "GAME_SESSION_ID", p.gameSessionId);
+   AddKv(n.kv, "MATCHMAKE_SESSION_ID", p.matchmakingSessionId);
    AddKv(n.kv, "JOIN_CODE", p.joinCode);
    AddKv(n.kv, "PARTY_MAX_COUNT", p.partyMaxCount);
    AddKv(n.kv, "JOIN_DELEGATION", p.joinDelegation);

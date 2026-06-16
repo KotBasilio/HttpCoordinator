@@ -40,6 +40,8 @@ struct PartyState {
    std::string reason;
    std::string joinCode; // best effort, may be empty
    std::string leaderUid; // computed from members' isOwner
+   std::string gameSessionId;
+   std::string matchmakingSessionId;
    std::string partyMaxCount;
    std::string joinDelegation;
    std::string joinable;

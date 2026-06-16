@@ -54,6 +54,19 @@ static std::string ExtractStaticDataValue(const Json& memberData, const char* ke
    return JsonGetString(j, { key });
 }
 
+static std::string ExtractPartyAttrValue(const Json& p, const char* key)
+{
+   const std::string dataBlob = JsonGetString(p, { "data", "data" });
+   if (dataBlob.size() < 2 || dataBlob.front() != '{')
+      return {};
+
+   const auto j = Json::parse(dataBlob, nullptr, false);
+   if (j.is_discarded())
+      return {};
+
+   return JsonGetString(j, { "Attrs", key });
+}
+
 static bool ApplySessionVariants(SessionState& sess, const Json& variants)
 {
    if (!variants.is_array())
@@ -241,6 +254,8 @@ bool StartServerController::HandlePartyUpdate(SdkPacket& u)
 
    bool changed = false;
    changed |= SetIfDifferent(party.reason, JsonGetString(p, { "id", "reason" }));
+   changed |= SetIfDifferent(party.gameSessionId, ExtractPartyAttrValue(p, "GameSessionID_s"));
+   changed |= SetIfDifferent(party.matchmakingSessionId, ExtractPartyAttrValue(p, "MatchmakingSessionID_s"));
    changed |= SetIfDifferent(party.partyMaxCount, JsonGetString(p, { "settings", "partyMaxCount" }));
    changed |= SetIfDifferent(party.joinDelegation, JsonGetString(p, { "settings", "joinDelegation" }));
    changed |= SetIfDifferent(party.joinable, JsonGetString(p, { "settings", "joinable" }));

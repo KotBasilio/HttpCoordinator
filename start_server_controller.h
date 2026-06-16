@@ -66,6 +66,7 @@ private:
    bool HandleSCPrepareActivateSessionResponse(SdkPacket& u);
    bool HandleSCActivateSession3Request(SdkPacket& u);
    bool HandleSCProcessSessionMemberEventsRequest(SdkPacket& u);
+   bool HandleSCFinishSessionRequest(SdkPacket& u);
    bool ApplyReorderCommands();
 
    // projection LiveState -> GraphModel
