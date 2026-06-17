@@ -466,7 +466,8 @@ bool StartServerController::HandleSCFinishSessionRequest(SdkPacket& u)
          affectedUsers.insert(mkv.first);
    }
 
-   changed |= RemoveUsersFromAllMMSessions(st, affectedUsers);
+   // changed |= RemoveUsersFromAllMMSessions(st, affectedUsers); yes, we don't call it. will handle MM session some other way
+
    return changed;
 }
 
