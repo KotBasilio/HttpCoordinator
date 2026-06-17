@@ -211,9 +211,10 @@ Observed MM teardown behavior:
 - `Hydra.Api.Presence.MatchmakeSessionRemoveMembersRequest` uses
   `context.data.userIdentity` as the actor performing the operation.
 - Its `userId[]` array contains the members to remove, not the actor.
-- The current reducer accepts this operation only when that actor is already
-  stored as `UserState::isOwnerAny`; otherwise it logs an error and leaves MM
-  membership unchanged.
+- The reducer accepts this operation only when that actor is already owner in
+  live Party/MM membership state; otherwise it logs an error and leaves MM
+  membership unchanged. Do not gate this on `UserState::isOwnerAny`, because
+  that flag is projection/display-derived.
 - When MM membership removal empties a session, remove the session from
   `LiveState` and tombstone its `mmsession:<id>` entity key.
 
@@ -223,14 +224,19 @@ Tombstone/re-entry rules:
   recreate them in the same run.
 - `CreateSessionResponse` clears `scsession:<id>` tombstones for real SC
   recreation.
+- `PresenceSessionUpdate` clears `mmsession:<id>` tombstones only on a credible
+  MM lifecycle start, currently a JOIN reason or member ADD.
 - Dedicated-server handshake clears `server:<id>` tombstones for real server
   recreation.
-- `PresenceSessionUpdate` is currently the admissible MM re-entry signal and
-  clears `mmsession:<id>` tombstones before `TouchSession()`.
+- `PresenceSessionUpdate` is currently the admissible MM re-entry signal; it
+  clears `mmsession:<id>` tombstones before `TouchSession()` only when the
+  lifecycle-start gate above passes.
 
 Party → MM link reduction:
-- if Party member set matches MMSession member set;
-- and MM leader belongs to that Party;
+- prefer explicit Party attr `MatchmakingSessionID_s` when it names the
+  MMSession;
+- otherwise, if Party member set matches MMSession member set and MM leader
+  belongs to that Party, use that heuristic;
 - replace direct User → MMSession links with Party → MMSession link.
 
 ## Layout Rules

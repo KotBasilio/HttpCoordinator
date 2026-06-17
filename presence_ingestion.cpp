@@ -16,6 +16,8 @@ static constexpr const char* PRESENCE_SESSION_MEMBER_UPDATE_TYPE_ADD    = "PRESE
 static constexpr const char* PRESENCE_SESSION_MEMBER_UPDATE_TYPE_REMOVE = "PRESENCE_SESSION_MEMBER_UPDATE_TYPE_REMOVE";
 static constexpr const char* PRESENCE_SESSION_MEMBER_UPDATE_TYPE_UPDATE = "PRESENCE_SESSION_MEMBER_UPDATE_TYPE_UPDATE";
 
+static constexpr const char* GAME_SESSION_ID_CHANGE_REASON_JOIN = "GAME_SESSION_ID_CHANGE_REASON_JOIN";
+
 static constexpr const char* PARTY_CHANGE_REASON_LEAVE = "PARTY_ID_CHANGE_REASON_LEAVE";
 
 static constexpr const char* PRESENCE_PARTY_MEMBER_UPDATE_TYPE_ADD    = "PRESENCE_PARTY_MEMBER_UPDATE_TYPE_ADD";
@@ -100,6 +102,56 @@ static bool ApplySessionVariants(SessionState& sess, const Json& variants)
    return true;
 }
 
+static bool HasMMSessionMemberAdd(const Json& p)
+{
+   const Json* gameData = NodeAt(p, Json::json_pointer("/gameData"));
+   if (!gameData || !gameData->is_object())
+      return false;
+
+   const Json* membersUpdate = NodeAt(*gameData, Json::json_pointer("/membersUpdate"));
+   if (!membersUpdate || !membersUpdate->is_array())
+      return false;
+
+   for (const auto& update : *membersUpdate) {
+      if (!update.is_object())
+         continue;
+
+      if (GetStr(update, "updateType", "") == PRESENCE_SESSION_MEMBER_UPDATE_TYPE_ADD)
+         return true;
+   }
+
+   return false;
+}
+
+static bool IsMMSessionLifecycleStart(const Json& p)
+{
+   if (JsonGetString(p, { "id", "reason" }) == GAME_SESSION_ID_CHANGE_REASON_JOIN)
+      return true;
+
+   return HasMMSessionMemberAdd(p);
+}
+
+static bool IsUserOwnerInAnyActiveGroup(const LiveState& st, const std::string& uid)
+{
+   for (const auto& skv : st.sessions) {
+      const auto itMember = skv.second.members.find(uid);
+      if (itMember != skv.second.members.end() && itMember->second.isOwner)
+         return true;
+   }
+
+   for (const auto& pkv : st.parties) {
+      const PartyState& party = pkv.second;
+      if (party.leaderUid == uid)
+         return true;
+
+      const auto itMember = party.members.find(uid);
+      if (itMember != party.members.end() && itMember->second.isOwner)
+         return true;
+   }
+
+   return false;
+}
+
 bool StartServerController::HandleMatchmakeSessionLeaveRequest(SdkPacket& u)
 {
    const auto& p = u.payload;
@@ -136,7 +188,7 @@ bool StartServerController::HandleMatchmakeSessionRemoveMembersRequest(SdkPacket
    const auto& p = u.payload;
    const std::string actorUid = ExtractUserIdentity(p);
    auto itActor = st.users.find(actorUid);
-   if (actorUid.empty() || itActor == st.users.end() || !itActor->second.isOwnerAny) {
+   if (actorUid.empty() || itActor == st.users.end() || !IsUserOwnerInAnyActiveGroup(st, actorUid)) {
       if (mainModel) {
          const std::string msg = "HandleMatchmakeSessionRemoveMembersRequest: actor is not owner: "
             + (actorUid.empty() ? std::string("<empty>") : actorUid);
@@ -201,7 +253,14 @@ bool StartServerController::HandleMMSessionUpdate(SdkPacket& u)
    if (sessionId.empty()) {
       return false;
    }
-   st.ClearTombstone("mmsession:" + sessionId);
+   const std::string tombstoneKey = "mmsession:" + sessionId;
+   if (st.IsTombstoned(tombstoneKey)) {
+      if (!IsMMSessionLifecycleStart(p))
+         return false;
+
+      st.ClearTombstone(tombstoneKey);
+   }
+
    if (!st.TouchSession(sessionId))
       return false;
    auto& sess = st.sessions[sessionId];
@@ -250,6 +309,8 @@ bool StartServerController::HandleMMSessionMembers(SdkPacket& u, SessionState& s
       return changed;
    }
 
+   bool removedMember = false;
+
    // membersUpdate deltas
    for (const auto& mu : *itMU) {
       if (!mu.is_object()) continue;
@@ -285,9 +346,9 @@ bool StartServerController::HandleMMSessionMembers(SdkPacket& u, SessionState& s
          sess.members[uid] = std::move(info);
          usr.online = true;
       } else if (op == PRESENCE_SESSION_MEMBER_UPDATE_TYPE_REMOVE) {
-         sess.members.erase(uid);
-         if (sess.members.empty())
-            changed |= st.RemoveSession(sess.sessionId);
+         if (sess.members.erase(uid) > 0) {
+            removedMember = true;
+         }
       } else if (op == PRESENCE_SESSION_MEMBER_UPDATE_TYPE_UPDATE) {
          auto& info = sess.members[uid]; // create if missing
          SetIfDifferent(info.groupId, StrAt(md, "/groupId"_json_pointer, ""));
@@ -300,6 +361,11 @@ bool StartServerController::HandleMMSessionMembers(SdkPacket& u, SessionState& s
       } else {
          OutputDebugString((op + " -- to handle as MMSessionMembers operation\n").c_str());
       }
+   }
+
+   if (removedMember && sess.members.empty()) {
+      const std::string sessionId = sess.sessionId;
+      changed |= st.RemoveSession(sessionId);
    }
 
    return changed;

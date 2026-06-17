@@ -103,13 +103,15 @@ Validated behavior:
   teardown/member-removal signal.
 - In that packet, `context.data.userIdentity` is the actor and `userId[]`
   lists the members being removed.
-- The reducer currently trusts that operation only when the actor already has
-  `UserState::isOwnerAny`; otherwise it logs an error and ignores the removal.
+- The reducer trusts that operation only when the actor is already owner in
+  live Party/MM membership state; otherwise it logs an error and ignores the
+  removal. `UserState::isOwnerAny` remains display-derived, not reducer
+  authority.
 - If MM member removal empties the session, the reducer removes the MM session
   from `LiveState` and tombstones `mmsession:<id>`.
 - A later `Hydra.Api.Push.Presence.PresenceSessionUpdate` can clear that MM
-  tombstone and reintroduce the session if the stream shows a real new MM
-  lifecycle.
+  tombstone only if the stream shows a real new MM lifecycle start, currently a
+  JOIN reason or member ADD.
 
 Observed domain constraints:
 - A user belongs to one Party at a time.

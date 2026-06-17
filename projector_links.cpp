@@ -41,38 +41,55 @@ static void RemoveUserLinksToSession(GraphModel& g, NodeId sessNodeId,
 
 void StartServerController::ReduceLinksPartyOwnsSession()
 {
-   // if a party perfectly "owns" a session (same members + leader),
-   // hide the user->session links and add a party->session link for cleaner visualization
+   // If a party explicitly names an MM session, or perfectly "owns" a session
+   // by member set + leader, hide the user->session links and add a party->session
+   // link for cleaner visualization.
    auto& graph = mainModel->graph;
 
    // For each MM session, find a matching party by:
-   // - leader is in party
-   // - member sets equal
+   // - explicit Party attr match
+   // - fallback: leader is in party and member sets equal
    for (const std::string& sid : st.sessionOrder) {
       auto itS = st.sessions.find(sid);
       if (itS == st.sessions.end()) continue;
       const SessionState& sess = itS->second;
       if (sess.members.empty()) continue;
 
-      const std::string leaderUid = FindSessionLeaderUid(sess);
-      if (leaderUid.empty()) continue;
-
-      // Find party candidate: leader is a member AND member sets match
       const PartyState* bestParty = nullptr;
+
+      // Strong binding: Party data attrs name the concrete MM session id.
       for (const std::string& pid : st.partyOrder) {
          auto itP = st.parties.find(pid);
          if (itP == st.parties.end()) continue;
          const PartyState& party = itP->second;
          if (party.members.empty()) continue;
 
-         if (party.members.find(leaderUid) == party.members.end())
-            continue;
+         if (party.matchmakingSessionId == sid) {
+            bestParty = &party;
+            break;
+         }
+      }
 
-         if (!sess.SameMemberSet(party.members))
-            continue;
+      // Fallback heuristic: leader is in party AND member sets match.
+      const std::string leaderUid = FindSessionLeaderUid(sess);
+      if (!bestParty && !leaderUid.empty()) {
+         for (const std::string& pid : st.partyOrder) {
+            if (bestParty) break;
 
-         bestParty = &party;
-         break;
+            auto itP = st.parties.find(pid);
+            if (itP == st.parties.end()) continue;
+            const PartyState& party = itP->second;
+            if (party.members.empty()) continue;
+
+            if (party.members.find(leaderUid) == party.members.end())
+               continue;
+
+            if (!sess.SameMemberSet(party.members))
+               continue;
+
+            bestParty = &party;
+            break;
+         }
       }
 
       if (!bestParty) continue;
