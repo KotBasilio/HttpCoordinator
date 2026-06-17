@@ -98,6 +98,7 @@ bool StartServerController::ApplyAllReducers(SdkPacket& u)
    // -- MM
    switch (u.reqNameId) {
       case HYDRA_API_PUSH_PRESENCE_PRESENCESESSIONUPDATE:      return HandleMMSessionUpdate(u);
+      case HYDRA_API_PRESENCE_MATCHMAKESESSIONREMOVEMEMBERSREQUEST: return HandleMatchmakeSessionRemoveMembersRequest(u);
       case HYDRA_API_PRESENCE_MATCHMAKESESSIONLEAVEREQUEST:    return HandleMatchmakeSessionLeaveRequest(u);
    }
 

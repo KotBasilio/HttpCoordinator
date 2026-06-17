@@ -58,6 +58,11 @@ static std::string SCSessionEntityKey(const std::string& scid)
    return "scsession:" + scid;
 }
 
+static std::string MMSessionEntityKey(const std::string& sid)
+{
+   return "mmsession:" + sid;
+}
+
 bool LiveState::TouchServer(const std::string& sid)
 {
    if (IsTombstoned(ServerEntityKey(sid)))
@@ -67,6 +72,21 @@ bool LiveState::TouchServer(const std::string& sid)
    if (s.serverId.empty()) {
       s.serverId = sid;
       serverOrder.push_back(sid);
+   }
+
+   return true;
+}
+
+bool LiveState::TouchSession(const std::string& sid)
+{
+   if (IsTombstoned(MMSessionEntityKey(sid)))
+      return false;
+
+   auto& s = sessions[sid];
+   if (!s.seen) {
+      s.seen = true;
+      s.sessionId = sid;
+      sessionOrder.push_back(sid);
    }
 
    return true;
@@ -84,6 +104,14 @@ bool LiveState::TouchSCSession(const std::string& scid)
    }
 
    return true;
+}
+
+bool LiveState::RemoveSession(const std::string& sid)
+{
+   tombstonedEntityKeys.insert(MMSessionEntityKey(sid));
+   const size_t erased = sessions.erase(sid);
+   const bool removedOrder = RemoveFromOrder(sessionOrder, sid);
+   return erased > 0 || removedOrder;
 }
 
 bool LiveState::RemoveServer(const std::string& sid)
@@ -140,16 +168,6 @@ void LiveState::TouchUser(const std::string& uid)
       u.seen = true;
       u.userId = uid;
       userOrder.push_back(uid);
-   }
-}
-
-void LiveState::TouchSession(const std::string& sid)
-{
-   auto& s = sessions[sid];
-   if (!s.seen) {
-      s.seen = true;
-      s.sessionId = sid;
-      sessionOrder.push_back(sid);
    }
 }
 

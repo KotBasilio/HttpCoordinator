@@ -115,14 +115,69 @@ bool StartServerController::HandleMatchmakeSessionLeaveRequest(SdkPacket& u)
 
    // Remove membership from all sessions (no sessionId given here).
    bool removedAny = false;
+   std::vector<std::string> emptySessionIds;
    for (auto& skv : st.sessions) {
       auto& sess = skv.second;
       if (sess.members.erase(uid) > 0) {
          removedAny = true;
+         if (sess.members.empty())
+            emptySessionIds.push_back(skv.first);
       }
    }
 
+   for (const std::string& sid : emptySessionIds)
+      removedAny |= st.RemoveSession(sid);
+
    return removedAny;
+}
+
+bool StartServerController::HandleMatchmakeSessionRemoveMembersRequest(SdkPacket& u)
+{
+   const auto& p = u.payload;
+   auto itUserIds = p.find("userId");
+   if (itUserIds == p.end() || !itUserIds->is_array() || itUserIds->empty())
+      return false;
+
+   std::vector<std::string> userIds;
+   userIds.reserve(itUserIds->size());
+   for (const auto& item : *itUserIds) {
+      if (!item.is_string())
+         continue;
+
+      const std::string uid = item.get<std::string>();
+      if (uid.empty())
+         continue;
+
+      st.TouchUser(uid);
+      st.users[uid].online = true;
+      userIds.push_back(uid);
+   }
+
+   if (userIds.empty())
+      return false;
+
+   bool changed = false;
+   std::vector<std::string> emptySessionIds;
+
+   for (auto& skv : st.sessions) {
+      auto& sess = skv.second;
+      bool removedHere = false;
+      for (const std::string& uid : userIds) {
+         if (sess.members.erase(uid) > 0) {
+            removedHere = true;
+            changed = true;
+         }
+      }
+
+      if (removedHere && sess.members.empty())
+         emptySessionIds.push_back(skv.first);
+   }
+
+   for (const std::string& sid : emptySessionIds) {
+      changed |= st.RemoveSession(sid);
+   }
+
+   return changed;
 }
 
 // PresenceSessionUpdate is the truth stream for MM state + membership.
@@ -135,7 +190,8 @@ bool StartServerController::HandleMMSessionUpdate(SdkPacket& u)
    if (sessionId.empty()) {
       return false;
    }
-   st.TouchSession(sessionId);
+   if (!st.TouchSession(sessionId))
+      return false;
    auto& sess = st.sessions[sessionId];
    bool changed = false;
 
@@ -218,6 +274,8 @@ bool StartServerController::HandleMMSessionMembers(SdkPacket& u, SessionState& s
          usr.online = true;
       } else if (op == PRESENCE_SESSION_MEMBER_UPDATE_TYPE_REMOVE) {
          sess.members.erase(uid);
+         if (sess.members.empty())
+            changed |= st.RemoveSession(sess.sessionId);
       } else if (op == PRESENCE_SESSION_MEMBER_UPDATE_TYPE_UPDATE) {
          auto& info = sess.members[uid]; // create if missing
          SetIfDifferent(info.groupId, StrAt(md, "/groupId"_json_pointer, ""));

@@ -214,10 +214,11 @@ struct LiveState
    std::unordered_set<std::string> tombstonedEntityKeys;
 
    void TouchUser(const std::string& uid);
-   void TouchSession(const std::string& sid);
+   bool TouchSession(const std::string& sid);
    void TouchParty(const std::string& pid);
    bool TouchServer(const std::string& sid);
    bool TouchSCSession(const std::string& scid);
+   bool RemoveSession(const std::string& sid);
    bool RemoveServer(const std::string& sid);
    bool RemoveSCSession(const std::string& scid);
    bool IsTombstoned(std::string_view entityKey) const;

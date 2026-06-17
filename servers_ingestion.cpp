@@ -2,7 +2,6 @@
 #include "ui/controllers/coordinator_http_server.h"
 #include "packet_json_helpers.h"
 
-#include <unordered_set>
 #include <utility>
 
 namespace Sample::UI::Controllers
@@ -124,23 +123,6 @@ static bool ApplyServerFactsContext(SCSessionState& sc, const Json& p)
             // Despite the name in server facts, observed value is the SC/kernel session id.
             changed |= SetIfDifferent(sc.serverFactSessionId, value);
          }
-      }
-   }
-
-   return changed;
-}
-
-static bool RemoveUsersFromAllMMSessions(LiveState& st, const std::unordered_set<std::string>& userIds)
-{
-   if (userIds.empty())
-      return false;
-
-   bool changed = false;
-   for (auto& skv : st.sessions) {
-      auto& sess = skv.second;
-      for (const std::string& uid : userIds) {
-         if (sess.members.erase(uid) > 0)
-            changed = true;
       }
    }
 
@@ -455,18 +437,6 @@ bool StartServerController::HandleSCFinishSessionRequest(SdkPacket& u)
       sc.hydraKernelSessionId.clear();
       sc.hydraUsers.clear();
    }
-
-   std::unordered_set<std::string> affectedUsers;
-   for (const auto& pkv : st.parties) {
-      const PartyState& party = pkv.second;
-      if (party.gameSessionId != scid)
-         continue;
-
-      for (const auto& mkv : party.members)
-         affectedUsers.insert(mkv.first);
-   }
-
-   // changed |= RemoveUsersFromAllMMSessions(st, affectedUsers); yes, we don't call it. will handle MM session some other way
 
    return changed;
 }
