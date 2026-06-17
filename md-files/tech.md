@@ -199,6 +199,35 @@ MM reducer should:
 - track state such as QUEUE/GAME;
 - hide empty sessions but keep MM column sticky once shown.
 
+Observed design invariants worth preserving:
+- A user can be in one Party at a time.
+- A user can be in one MMSession at a time.
+- If a user is in a Party but also appears in another unrelated MMSession,
+  treat that as suspicious evidence and avoid building extra assumptions on top.
+- Party ownership and the actor who creates/controls the corresponding MM
+  session are aligned by design.
+
+Observed MM teardown behavior:
+- `Hydra.Api.Presence.MatchmakeSessionRemoveMembersRequest` uses
+  `context.data.userIdentity` as the actor performing the operation.
+- Its `userId[]` array contains the members to remove, not the actor.
+- The current reducer accepts this operation only when that actor is already
+  stored as `UserState::isOwnerAny`; otherwise it logs an error and leaves MM
+  membership unchanged.
+- When MM membership removal empties a session, remove the session from
+  `LiveState` and tombstone its `mmsession:<id>` entity key.
+
+Tombstone/re-entry rules:
+- Removed `SCSession`, `HeatedDSServer`/`StandaloneServer`, and empty
+  `MMSession` entities are tombstoned in `LiveState` so late packets do not
+  recreate them in the same run.
+- `CreateSessionResponse` clears `scsession:<id>` tombstones for real SC
+  recreation.
+- Dedicated-server handshake clears `server:<id>` tombstones for real server
+  recreation.
+- `PresenceSessionUpdate` is currently the admissible MM re-entry signal and
+  clears `mmsession:<id>` tombstones before `TouchSession()`.
+
 Party → MM link reduction:
 - if Party member set matches MMSession member set;
 - and MM leader belongs to that Party;

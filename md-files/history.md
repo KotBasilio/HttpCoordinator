@@ -96,6 +96,27 @@ Validated / intended behavior:
   - and MM leader belongs to that Party;
   - replace direct User → MMSession links with Party → MMSession link.
 
+### MM teardown and invariants
+
+Validated behavior:
+- `Hydra.Api.Presence.MatchmakeSessionRemoveMembersRequest` is a real MM
+  teardown/member-removal signal.
+- In that packet, `context.data.userIdentity` is the actor and `userId[]`
+  lists the members being removed.
+- The reducer currently trusts that operation only when the actor already has
+  `UserState::isOwnerAny`; otherwise it logs an error and ignores the removal.
+- If MM member removal empties the session, the reducer removes the MM session
+  from `LiveState` and tombstones `mmsession:<id>`.
+- A later `Hydra.Api.Push.Presence.PresenceSessionUpdate` can clear that MM
+  tombstone and reintroduce the session if the stream shows a real new MM
+  lifecycle.
+
+Observed domain constraints:
+- A user belongs to one Party at a time.
+- A user belongs to one MMSession at a time.
+- Party ownership and the user who creates/controls the corresponding MM
+  session are aligned by design.
+
 ### SCSession layer
 
 Validated direction:
@@ -116,6 +137,16 @@ Relevant Hydra/user bridge flow:
 - `CreateSessionResponse` uses `gameSessionId` as the SC session id.
 - `GetServerInfoRequest` can directly confirm `gameSessionId` plus user-side context.
 - `GetSessionEventsRequest/Response` can attach member user contexts to the remembered SC session.
+
+### Tombstone lifecycle guards
+
+Validated behavior:
+- `SCSession`, linked Server nodes, and empty `MMSession` nodes are removed
+  from reducer state rather than only having their projected links hidden.
+- Their entity keys are tombstoned in `LiveState` so late packets in the same
+  run do not resurrect them.
+- Late SessionControl responses such as `GetSessionEventsResponse` may arrive
+  after `FinishSessionResponse`; those must be treated as echoes, not rebirth.
 
 ## Workflow History
 

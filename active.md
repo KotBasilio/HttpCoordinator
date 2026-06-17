@@ -1,6 +1,6 @@
 # ImGui Coordinator — Active Task Context
 
-Last updated: 2026-06-02
+Last updated: 2026-06-17
 
 This file is the short-lived cockpit for the current Codex work.
 `AGENTS.md` is the durable repo entry point; this file is allowed to change often.
@@ -24,6 +24,9 @@ The tool should help us understand multiplayer/session behavior by turning noisy
 
 - Keep selected-node properties useful and factual.
 - Preserve Party/MM, SCSession, and projector behavior while iterating.
+- Keep teardown behavior truthful: finished SC/server and empty MM entities
+  should disappear from the graph and resist stale-packet rehydration unless a
+  valid new lifecycle start is observed.
 - Promote deferred ideas from `md-files/tickets.md` only when a task or new evidence calls for them.
 
 ## Current for Lumen lane
