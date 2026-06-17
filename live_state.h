@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <deque>
 
@@ -210,14 +211,17 @@ struct LiveState
    // session-control sessions
    std::unordered_map<std::string, SCSessionState> scSessions;
    std::vector<std::string> scSessionOrder;
+   std::unordered_set<std::string> tombstonedEntityKeys;
 
    void TouchUser(const std::string& uid);
    void TouchSession(const std::string& sid);
    void TouchParty(const std::string& pid);
-   void TouchServer(const std::string& sid);
-   void TouchSCSession(const std::string& scid);
+   bool TouchServer(const std::string& sid);
+   bool TouchSCSession(const std::string& scid);
    bool RemoveServer(const std::string& sid);
    bool RemoveSCSession(const std::string& scid);
+   bool IsTombstoned(std::string_view entityKey) const;
+   void ClearTombstone(std::string_view entityKey);
 
    void ResetOwners();
    void RefreshOwnerFlagForUser(const std::string& uid);

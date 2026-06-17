@@ -153,7 +153,9 @@ bool StartServerController::HandleDedicatedServerHandshake(SdkPacket& u)
    if (serverId.empty())
       return false; // HandshakeRequest can be empty
 
-   st.TouchServer(serverId);
+   st.ClearTombstone("server:" + serverId);
+   if (!st.TouchServer(serverId))
+      return false;
    auto& s = st.servers[serverId];
 
    bool changed = false;
@@ -180,7 +182,8 @@ bool StartServerController::HandleDedicatedServerSessionInfo(SdkPacket& u)
          return false;
 
       const bool isNewServer = (st.servers.find(serverId) == st.servers.end());
-      st.TouchServer(serverId);
+      if (!st.TouchServer(serverId))
+         return false;
       standaloneCorr.pendingGetServerSessionInfoServerId = serverId;
       return isNewServer;
    }
@@ -192,7 +195,8 @@ bool StartServerController::HandleDedicatedServerSessionInfo(SdkPacket& u)
       return false;
    }
 
-   st.TouchServer(serverId);
+   if (!st.TouchServer(serverId))
+      return false;
    auto& s = st.servers[serverId];
 
    bool changed = false;
@@ -250,7 +254,9 @@ bool StartServerController::HandleSCCreateSessionResponse(SdkPacket& u)
       return false;
 
    const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
-   st.TouchSCSession(scid);
+   st.ClearTombstone("scsession:" + scid);
+   if (!st.TouchSCSession(scid))
+      return false;
    auto& sc = st.scSessions[scid];
 
    bool changed = isNewSCSession;
@@ -273,7 +279,8 @@ bool StartServerController::HandleSCGetServerInfoRequest(SdkPacket& u)
       return false;
 
    const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
-   st.TouchSCSession(scid);
+   if (!st.TouchSCSession(scid))
+      return false;
    auto& sc = st.scSessions[scid];
 
    bool changed = isNewSCSession;
@@ -292,7 +299,10 @@ bool StartServerController::HandleSCGetServerInfoResponse(SdkPacket& u)
    if (scid.empty())
       return false;
 
-   st.TouchSCSession(scid);
+   if (!st.TouchSCSession(scid)) {
+      standaloneCorr.pendingGetServerInfoSCSessionId.clear();
+      return false;
+   }
    auto& sc = st.scSessions[scid];
 
    bool changed = false;
@@ -319,7 +329,8 @@ bool StartServerController::HandleSCGetSessionEventsRequest(SdkPacket& u)
    standaloneCorr.pendingGetSessionEventsSCSessionId = scid;
 
    const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
-   st.TouchSCSession(scid);
+   if (!st.TouchSCSession(scid))
+      return false;
    auto& sc = st.scSessions[scid];
 
    bool changed = isNewSCSession;
@@ -334,7 +345,10 @@ bool StartServerController::HandleSCGetSessionEventsResponse(SdkPacket& u)
       return false;
 
    const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
-   st.TouchSCSession(scid);
+   if (!st.TouchSCSession(scid)) {
+      standaloneCorr.pendingGetSessionEventsSCSessionId.clear();
+      return false;
+   }
    auto& sc = st.scSessions[scid];
 
    bool changed = isNewSCSession;
@@ -353,7 +367,8 @@ bool StartServerController::HandleSCPrepareActivateSessionResponse(SdkPacket& u)
       return false;
 
    const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
-   st.TouchSCSession(scid);
+   if (!st.TouchSCSession(scid))
+      return false;
    auto& sc = st.scSessions[scid];
 
    bool changed = isNewSCSession;
@@ -362,7 +377,8 @@ bool StartServerController::HandleSCPrepareActivateSessionResponse(SdkPacket& u)
 
    const std::string serverId = standaloneCorr.pendingSCActivationServerId;
    if (!serverId.empty()) {
-      st.TouchServer(serverId);
+      if (!st.TouchServer(serverId))
+         return changed;
       auto& server = st.servers[serverId];
       changed |= SetIfDifferent(server.scSessionId, scid);
       changed |= SetIfDifferent(sc.serverId, serverId);
@@ -382,7 +398,8 @@ bool StartServerController::HandleSCActivateSession3Request(SdkPacket& u)
       return false;
 
    const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
-   st.TouchSCSession(scid);
+   if (!st.TouchSCSession(scid))
+      return false;
    auto& sc = st.scSessions[scid];
 
    bool changed = isNewSCSession;
@@ -403,7 +420,8 @@ bool StartServerController::HandleSCProcessSessionMemberEventsRequest(SdkPacket&
       return false;
 
    const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
-   st.TouchSCSession(scid);
+   if (!st.TouchSCSession(scid))
+      return false;
    auto& sc = st.scSessions[scid];
 
    bool changed = isNewSCSession;
@@ -494,7 +512,8 @@ bool StartServerController::HandleFactsWriteBinaryPackServer(SdkPacket& u)
       return false;
 
    const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
-   st.TouchSCSession(scid);
+   if (!st.TouchSCSession(scid))
+      return false;
    auto& sc = st.scSessions[scid];
 
    bool changed = isNewSCSession;
@@ -511,14 +530,16 @@ bool StartServerController::HandleDedicatedServerSetGameSessionTags(SdkPacket& u
       return false;
 
    const bool isNewSCSession = (st.scSessions.find(scid) == st.scSessions.end());
-   st.TouchSCSession(scid);
+   if (!st.TouchSCSession(scid))
+      return false;
    auto& sc = st.scSessions[scid];
 
    bool changed = isNewSCSession;
    changed |= SetIfDifferent(sc.serverContextKernelSessionId, scid);
 
    if (!sc.serverId.empty()) {
-      st.TouchServer(sc.serverId);
+      if (!st.TouchServer(sc.serverId))
+         return changed;
       changed |= SetIfDifferent(st.servers[sc.serverId].serverState, JsonGetString(u.payload, { "state" }));
    }
 

@@ -48,26 +48,47 @@ static bool RemoveFromOrder(std::vector<std::string>& order, const std::string& 
    return true;
 }
 
-void LiveState::TouchServer(const std::string& sid)
+static std::string ServerEntityKey(const std::string& sid)
 {
+   return "server:" + sid;
+}
+
+static std::string SCSessionEntityKey(const std::string& scid)
+{
+   return "scsession:" + scid;
+}
+
+bool LiveState::TouchServer(const std::string& sid)
+{
+   if (IsTombstoned(ServerEntityKey(sid)))
+      return false;
+
    auto& s = servers[sid];
    if (s.serverId.empty()) {
       s.serverId = sid;
       serverOrder.push_back(sid);
    }
+
+   return true;
 }
 
-void LiveState::TouchSCSession(const std::string& scid)
+bool LiveState::TouchSCSession(const std::string& scid)
 {
+   if (IsTombstoned(SCSessionEntityKey(scid)))
+      return false;
+
    auto& s = scSessions[scid];
    if (s.scSessionId.empty()) {
       s.scSessionId = scid;
       scSessionOrder.push_back(scid);
    }
+
+   return true;
 }
 
 bool LiveState::RemoveServer(const std::string& sid)
 {
+   tombstonedEntityKeys.insert(ServerEntityKey(sid));
    const size_t erased = servers.erase(sid);
    const bool removedOrder = RemoveFromOrder(serverOrder, sid);
    return erased > 0 || removedOrder;
@@ -75,9 +96,20 @@ bool LiveState::RemoveServer(const std::string& sid)
 
 bool LiveState::RemoveSCSession(const std::string& scid)
 {
+   tombstonedEntityKeys.insert(SCSessionEntityKey(scid));
    const size_t erased = scSessions.erase(scid);
    const bool removedOrder = RemoveFromOrder(scSessionOrder, scid);
    return erased > 0 || removedOrder;
+}
+
+bool LiveState::IsTombstoned(std::string_view entityKey) const
+{
+   return tombstonedEntityKeys.find(std::string(entityKey)) != tombstonedEntityKeys.end();
+}
+
+void LiveState::ClearTombstone(std::string_view entityKey)
+{
+   tombstonedEntityKeys.erase(std::string(entityKey));
 }
 
 bool LiveState::MoveEntityInOrder(NodeKind kind, std::string_view entityKey, int delta)
