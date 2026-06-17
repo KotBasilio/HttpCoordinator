@@ -134,6 +134,17 @@ bool StartServerController::HandleMatchmakeSessionLeaveRequest(SdkPacket& u)
 bool StartServerController::HandleMatchmakeSessionRemoveMembersRequest(SdkPacket& u)
 {
    const auto& p = u.payload;
+   const std::string actorUid = ExtractUserIdentity(p);
+   auto itActor = st.users.find(actorUid);
+   if (actorUid.empty() || itActor == st.users.end() || !itActor->second.isOwnerAny) {
+      if (mainModel) {
+         const std::string msg = "HandleMatchmakeSessionRemoveMembersRequest: actor is not owner: "
+            + (actorUid.empty() ? std::string("<empty>") : actorUid);
+         mainModel->logs.Error(msg);
+      }
+      return false;
+   }
+
    auto itUserIds = p.find("userId");
    if (itUserIds == p.end() || !itUserIds->is_array() || itUserIds->empty())
       return false;
