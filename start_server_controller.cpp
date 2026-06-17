@@ -79,6 +79,7 @@ bool StartServerController::ApplyAllReducers(SdkPacket& u)
    // a few switch-es to separate different logical areas
    // -- user
    switch (u.reqNameId) {
+      case PROS_GLOBAL_API_AUTH_SIGNINHYDRAREQUEST:   return HandleSignInHydraRequest(u);
       case PROS_GLOBAL_API_AUTH_SIGNINHYDRARESPONSE:
       case HYDRA_API_USER_CONNECTRESPONSE:              return HandleSignIn(u);
 

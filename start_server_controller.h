@@ -35,6 +35,7 @@ private:
    void SwitchGraphToIngestion();
    bool ApplyAllReducers(SdkPacket& u);
    bool ApplyServerReducers(SdkPacket& u);
+   bool HandleSignInHydraRequest(SdkPacket& u);
    bool HandleSignIn(SdkPacket& u);
    bool HandleSignOut(SdkPacket& u);
    bool HandlePartyUpdate(SdkPacket& u);

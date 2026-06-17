@@ -83,6 +83,16 @@ bool StartServerController::HandleFactsWriteBinaryPackUser(SdkPacket& u)
    return true;
 }
 
+bool StartServerController::HandleSignInHydraRequest(SdkPacket& u)
+{
+   const std::string login = JsonGetString(u.payload, { "login" });
+   if (login.empty())
+      return false;
+
+   standaloneCorr.pendingHydraLogins.push_back(login);
+   return false; // correlation only until SignInHydraResponse gives userIdentity
+}
+
 bool StartServerController::HandleSignIn(SdkPacket& u)
 {
    const auto& p = u.payload;
@@ -95,6 +105,14 @@ bool StartServerController::HandleSignIn(SdkPacket& u)
    st.TouchUser(uid);
    auto& usr = st.users[uid];
    SetIfDifferent(usr.userIdentity, uid);
+
+   if (u.reqNameId == PROS_GLOBAL_API_AUTH_SIGNINHYDRARESPONSE && !standaloneCorr.pendingHydraLogins.empty()) {
+      const std::string login = standaloneCorr.pendingHydraLogins.front();
+      standaloneCorr.pendingHydraLogins.pop_front();
+      if (!login.empty())
+         SetIfDifferent(usr.nickname, login);
+   }
+
    const std::string hydraKernelSessionId = ExtractHydraKernelSessionId(p);
    if (!hydraKernelSessionId.empty())
       usr.hydraKernelSessionId = hydraKernelSessionId;

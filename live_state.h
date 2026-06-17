@@ -179,6 +179,7 @@ struct StandaloneCorrelationState {
    std::deque<PendingStandaloneCreate> pendingCreates;
 
    PendingSessionControlCreate pendingSCCreate;
+   std::deque<std::string> pendingHydraLogins;
    std::string pendingGetSessionEventsSCSessionId;
    std::string pendingGetServerInfoSCSessionId;
    std::string pendingGetServerSessionInfoServerId;
