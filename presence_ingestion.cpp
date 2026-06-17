@@ -190,6 +190,7 @@ bool StartServerController::HandleMMSessionUpdate(SdkPacket& u)
    if (sessionId.empty()) {
       return false;
    }
+   st.ClearTombstone("mmsession:" + sessionId);
    if (!st.TouchSession(sessionId))
       return false;
    auto& sess = st.sessions[sessionId];

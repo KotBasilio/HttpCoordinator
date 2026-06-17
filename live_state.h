@@ -211,7 +211,6 @@ struct LiveState
    // session-control sessions
    std::unordered_map<std::string, SCSessionState> scSessions;
    std::vector<std::string> scSessionOrder;
-   std::unordered_set<std::string> tombstonedEntityKeys;
 
    void TouchUser(const std::string& uid);
    bool TouchSession(const std::string& sid);
@@ -221,6 +220,8 @@ struct LiveState
    bool RemoveSession(const std::string& sid);
    bool RemoveServer(const std::string& sid);
    bool RemoveSCSession(const std::string& scid);
+
+   void Tombstone(const std::string& entityKey);
    bool IsTombstoned(std::string_view entityKey) const;
    void ClearTombstone(std::string_view entityKey);
 
@@ -235,6 +236,9 @@ struct LiveState
 private:
    template <class ItemT, class OrderT, class TableT>
    float YforGroupAsCentroid(ItemT& item, const OrderT& order, const TableT& table) const;
+
+   // graveyard of removed entities, to avoid re-adding them in the same run
+   std::unordered_set<std::string> tombstonedEntityKeys;
 };
 
 } // namespace Sample::UI::Controllers
