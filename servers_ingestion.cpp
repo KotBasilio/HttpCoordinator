@@ -424,6 +424,8 @@ bool StartServerController::HandleSCFinishSessionRequest(SdkPacket& u)
    if (scid.empty())
       return false;
 
+   standaloneCorr.pendingFinishSessionSCSessionIds.push_back(scid);
+
    bool changed = false;
    auto itSC = st.scSessions.find(scid);
    if (itSC != st.scSessions.end()) {
@@ -447,6 +449,39 @@ bool StartServerController::HandleSCFinishSessionRequest(SdkPacket& u)
    }
 
    changed |= RemoveUsersFromAllMMSessions(st, affectedUsers);
+   return changed;
+}
+
+bool StartServerController::HandleSCFinishSessionResponse(SdkPacket& u)
+{
+   (void)u;
+
+   if (standaloneCorr.pendingFinishSessionSCSessionIds.empty())
+      return false;
+
+   const std::string scid = standaloneCorr.pendingFinishSessionSCSessionIds.front();
+   standaloneCorr.pendingFinishSessionSCSessionIds.pop_front();
+
+   std::string serverId;
+   auto itSC = st.scSessions.find(scid);
+   if (itSC != st.scSessions.end()) {
+      serverId = itSC->second.serverId;
+   }
+
+   if (serverId.empty()) {
+      for (const auto& skv : st.servers) {
+         if (skv.second.scSessionId == scid) {
+            serverId = skv.first;
+            break;
+         }
+      }
+   }
+
+   bool changed = false;
+   changed |= st.RemoveSCSession(scid);
+   if (!serverId.empty())
+      changed |= st.RemoveServer(serverId);
+
    return changed;
 }
 

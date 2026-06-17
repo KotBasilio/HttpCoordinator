@@ -182,6 +182,7 @@ struct StandaloneCorrelationState {
    std::string pendingGetServerInfoSCSessionId;
    std::string pendingGetServerSessionInfoServerId;
    std::string pendingSCActivationServerId;
+   std::deque<std::string> pendingFinishSessionSCSessionIds;
 };
 
 struct LiveState
@@ -215,6 +216,8 @@ struct LiveState
    void TouchParty(const std::string& pid);
    void TouchServer(const std::string& sid);
    void TouchSCSession(const std::string& scid);
+   bool RemoveServer(const std::string& sid);
+   bool RemoveSCSession(const std::string& scid);
 
    void ResetOwners();
    void RefreshOwnerFlagForUser(const std::string& uid);

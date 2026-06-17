@@ -38,6 +38,16 @@ static bool MoveAdjacent(std::vector<std::string>& order, std::string_view key, 
    return true;
 }
 
+static bool RemoveFromOrder(std::vector<std::string>& order, const std::string& key)
+{
+   auto it = std::find(order.begin(), order.end(), key);
+   if (it == order.end())
+      return false;
+
+   order.erase(it);
+   return true;
+}
+
 void LiveState::TouchServer(const std::string& sid)
 {
    auto& s = servers[sid];
@@ -54,6 +64,20 @@ void LiveState::TouchSCSession(const std::string& scid)
       s.scSessionId = scid;
       scSessionOrder.push_back(scid);
    }
+}
+
+bool LiveState::RemoveServer(const std::string& sid)
+{
+   const size_t erased = servers.erase(sid);
+   const bool removedOrder = RemoveFromOrder(serverOrder, sid);
+   return erased > 0 || removedOrder;
+}
+
+bool LiveState::RemoveSCSession(const std::string& scid)
+{
+   const size_t erased = scSessions.erase(scid);
+   const bool removedOrder = RemoveFromOrder(scSessionOrder, scid);
+   return erased > 0 || removedOrder;
 }
 
 bool LiveState::MoveEntityInOrder(NodeKind kind, std::string_view entityKey, int delta)
