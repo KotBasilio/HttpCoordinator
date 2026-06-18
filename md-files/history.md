@@ -112,6 +112,9 @@ Validated behavior:
 - A later `Hydra.Api.Push.Presence.PresenceSessionUpdate` can clear that MM
   tombstone only if the stream shows a real new MM lifecycle start, currently a
   JOIN reason or member ADD.
+- `MM-001` is validated in the Win11 environment as of 2026-06-18: Party ->
+  MMSession binding prefers explicit Party attrs `MatchmakingSessionID_s` /
+  `GameSessionID_s`, with the member-set + leader heuristic kept as fallback.
 
 Observed domain constraints:
 - A user belongs to one Party at a time.
