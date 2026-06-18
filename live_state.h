@@ -75,6 +75,7 @@ struct SessionState
    std::string sessionId;
    std::string reason;
    std::string mmState; // "MATCHMAKE_STATE_QUEUE" / "MATCHMAKE_STATE_GAME" / etc.
+   std::string isJoinable;
    std::string playlistId;
    std::string dataCenterId;
    std::string sessionType;
@@ -94,6 +95,8 @@ struct SessionState
       std::string memberState;
       std::string classRole;
       std::string nickname;
+      std::string provider;
+      std::string extendedData;
    };
    typedef std::unordered_map<std::string, MemberInfo> MapT;
    MapT members;
@@ -180,6 +183,7 @@ struct StandaloneCorrelationState {
 
    PendingSessionControlCreate pendingSCCreate;
    std::deque<std::string> pendingHydraLogins;
+   std::deque<std::string> pendingMMGetInfoSessionIds;
    std::string pendingGetSessionEventsSCSessionId;
    std::string pendingGetServerInfoSCSessionId;
    std::string pendingGetServerSessionInfoServerId;

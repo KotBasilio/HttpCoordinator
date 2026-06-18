@@ -44,6 +44,8 @@ private:
    bool HandlePartyDisbandRequest(SdkPacket& u);
    bool HandleMMSessionUpdate(SdkPacket& u);
    bool HandleMMSessionMembers(SdkPacket& u, SessionState& sess);
+   bool HandleMatchmakeSessionGetInfoRequest(SdkPacket& u);
+   bool HandleMatchmakeSessionGetInfoResponse(SdkPacket& u);
    bool HandleMatchmakeSessionRemoveMembersRequest(SdkPacket& u);
    bool HandleFactsWriteBinaryPackUser(SdkPacket& u);
    bool HandleFactsWriteBinaryPackServer(SdkPacket& u);

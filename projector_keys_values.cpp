@@ -144,6 +144,7 @@ void FillMMSessionKv(GraphNode& n, const SessionState& s, const std::string& sid
    AddKv(n.kv, "MM_SESSION_ID", sid);
    AddKv(n.kv, "MM_REASON", s.reason);
    AddKv(n.kv, "MM_STATE", s.mmState);
+   AddKv(n.kv, "IS_JOINABLE", s.isJoinable);
    AddKv(n.kv, "MEMBER_COUNT", std::to_string(s.members.size()));
    AddKv(n.kv, "PLAYLIST_ID", s.playlistId);
    AddKv(n.kv, "DATA_CENTER_ID", s.dataCenterId);
@@ -172,6 +173,8 @@ void FillMMSessionKv(GraphNode& n, const SessionState& s, const std::string& sid
       AddKv(n.kv, (prefix + "SORTING_INDEX").c_str(), mi.sortingIndex);
       AddKv(n.kv, (prefix + "MEMBER_STATE").c_str(), mi.memberState);
       AddKv(n.kv, (prefix + "CLASS_ROLE").c_str(), mi.classRole);
+      AddKv(n.kv, (prefix + "PROVIDER").c_str(), mi.provider);
+      AddKv(n.kv, (prefix + "EXTENDED_DATA").c_str(), mi.extendedData);
       ++memberIndex;
    }
 }

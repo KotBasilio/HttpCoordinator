@@ -102,6 +102,90 @@ static bool ApplySessionVariants(SessionState& sess, const Json& variants)
    return true;
 }
 
+static bool SameMMSessionMemberInfo(const SessionState::MemberInfo& a,
+   const SessionState::MemberInfo& b)
+{
+   return a.groupId == b.groupId
+      && a.isOwner == b.isOwner
+      && a.rating == b.rating
+      && a.sortingIndex == b.sortingIndex
+      && a.memberState == b.memberState
+      && a.classRole == b.classRole
+      && a.nickname == b.nickname
+      && a.provider == b.provider
+      && a.extendedData == b.extendedData;
+}
+
+static bool SameMMSessionMembers(const SessionState::MapT& a,
+   const SessionState::MapT& b)
+{
+   if (a.size() != b.size())
+      return false;
+
+   for (const auto& kv : a) {
+      auto it = b.find(kv.first);
+      if (it == b.end())
+         return false;
+
+      if (!SameMMSessionMemberInfo(kv.second, it->second))
+         return false;
+   }
+
+   return true;
+}
+
+static SessionState::MemberInfo BuildMMSessionMemberInfo(const Json& memberData)
+{
+   SessionState::MemberInfo info{};
+   info.groupId = GetStr(memberData, "groupId", "");
+   info.isOwner = BoolAt(memberData, "/isOwner"_json_pointer, false);
+   info.rating = JsonGetString(memberData, { "rating" });
+   info.sortingIndex = JsonGetString(memberData, { "sortingIndex" });
+   info.memberState = JsonGetString(memberData, { "state" });
+   info.classRole = JsonGetString(memberData, { "classRole" });
+   info.nickname = ExtractNicknameFromStaticData(memberData);
+   info.provider = ExtractStaticDataValue(memberData, "provider");
+   info.extendedData = ExtractStaticDataValue(memberData, "extendedData");
+   return info;
+}
+
+static bool ApplyMMSessionMemberSnapshot(LiveState& st, SessionState& sess, const Json& members)
+{
+   if (!members.is_array())
+      return false;
+
+   bool changed = false;
+   SessionState::MapT nextMembers;
+
+   for (const auto& member : members) {
+      if (!member.is_object())
+         continue;
+
+      const std::string uid = GetStr(member, "userId", "");
+      if (uid.empty())
+         continue;
+
+      st.TouchUser(uid);
+      auto& usr = st.users[uid];
+      usr.online = true;
+
+      const std::string nick = ExtractNicknameFromStaticData(member);
+      if (!nick.empty() && usr.nickname != nick) {
+         usr.nickname = nick;
+         changed = true;
+      }
+
+      nextMembers[uid] = BuildMMSessionMemberInfo(member);
+   }
+
+   if (!SameMMSessionMembers(sess.members, nextMembers)) {
+      sess.members = std::move(nextMembers);
+      changed = true;
+   }
+
+   return changed;
+}
+
 static bool HasMMSessionMemberAdd(const Json& p)
 {
    const Json* gameData = NodeAt(p, Json::json_pointer("/gameData"));
@@ -243,6 +327,59 @@ bool StartServerController::HandleMatchmakeSessionRemoveMembersRequest(SdkPacket
    return changed;
 }
 
+bool StartServerController::HandleMatchmakeSessionGetInfoRequest(SdkPacket& u)
+{
+   const std::string sessionId = GetStr(u.payload, "sessionId", "");
+   if (sessionId.empty())
+      return false;
+
+   standaloneCorr.pendingMMGetInfoSessionIds.push_back(sessionId);
+   return false;
+}
+
+bool StartServerController::HandleMatchmakeSessionGetInfoResponse(SdkPacket& u)
+{
+   const auto& p = u.payload;
+   const Json* sessionData = NodeAt(p, "/sessionData"_json_pointer);
+   std::string sessionId = sessionData ? JsonGetString(*sessionData, { "id" }) : std::string{};
+
+   if (!standaloneCorr.pendingMMGetInfoSessionIds.empty()) {
+      if (sessionId.empty())
+         sessionId = standaloneCorr.pendingMMGetInfoSessionIds.front();
+
+      standaloneCorr.pendingMMGetInfoSessionIds.pop_front();
+   }
+
+   if (sessionId.empty())
+      return false;
+
+   const std::string tombstoneKey = "mmsession:" + sessionId;
+   if (st.IsTombstoned(tombstoneKey))
+      return false;
+
+   if (!st.TouchSession(sessionId))
+      return false;
+
+   auto& sess = st.sessions[sessionId];
+   bool changed = false;
+
+   changed |= SetIfDifferent(sess.isJoinable, JsonGetString(p, { "isJoinable" }));
+
+   if (!sessionData || !sessionData->is_object())
+      return changed;
+
+   changed |= SetIfDifferent(sess.dataCenterId, JsonGetString(*sessionData, { "dataCenterId" }));
+   changed |= SetIfDifferent(sess.jip, JsonGetString(*sessionData, { "settings", "jip" }));
+   changed |= SetIfDifferent(sess.maxPlayers, JsonGetString(*sessionData, { "settings", "maxPlayers" }));
+   changed |= SetIfDifferent(sess.joinDelegation, JsonGetString(*sessionData, { "settings", "joinDelegation" }));
+   changed |= ApplySessionVariants(sess, sessionData->value("variants", Json::array()));
+
+   if (const Json* members = NodeAt(*sessionData, "/sessionMembers"_json_pointer); members && members->is_array())
+      changed |= ApplyMMSessionMemberSnapshot(st, sess, *members);
+
+   return changed;
+}
+
 // PresenceSessionUpdate is the truth stream for MM state + membership.
 bool StartServerController::HandleMMSessionUpdate(SdkPacket& u)
 {
@@ -335,15 +472,7 @@ bool StartServerController::HandleMMSessionMembers(SdkPacket& u, SessionState& s
       // operations
       const std::string op = GetStr(mu, "updateType", "");
       if (op == PRESENCE_SESSION_MEMBER_UPDATE_TYPE_ADD) {
-         SessionState::MemberInfo info{};
-         info.groupId = GetStr(md, "groupId", "");
-         info.isOwner = BoolAt(md, "/isOwner"_json_pointer, false);
-         info.rating = JsonGetString(md, { "rating" });
-         info.sortingIndex = JsonGetString(md, { "sortingIndex" });
-         info.memberState = JsonGetString(md, { "state" });
-         info.classRole = JsonGetString(md, { "classRole" });
-         info.nickname = ExtractNicknameFromStaticData(md);
-         sess.members[uid] = std::move(info);
+         sess.members[uid] = BuildMMSessionMemberInfo(md);
          usr.online = true;
       } else if (op == PRESENCE_SESSION_MEMBER_UPDATE_TYPE_REMOVE) {
          if (sess.members.erase(uid) > 0) {
@@ -358,6 +487,8 @@ bool StartServerController::HandleMMSessionMembers(SdkPacket& u, SessionState& s
          SetIfDifferent(info.memberState, JsonGetString(md, { "state" }));
          SetIfDifferent(info.classRole, JsonGetString(md, { "classRole" }));
          SetIfDifferent(info.nickname, ExtractNicknameFromStaticData(md));
+         SetIfDifferent(info.provider, ExtractStaticDataValue(md, "provider"));
+         SetIfDifferent(info.extendedData, ExtractStaticDataValue(md, "extendedData"));
       } else {
          OutputDebugString((op + " -- to handle as MMSessionMembers operation\n").c_str());
       }
