@@ -72,6 +72,8 @@ struct GraphNode
 
    // Inspector payload key (userId/sessionId etc.)
    std::string entityKey;
+   // Extra values that should resolve this node from Inspector kv clicks.
+   std::vector<std::string> echoValues;
    // facts, context pairs, etc.
    std::vector<std::pair<std::string, std::string>> kv;
 

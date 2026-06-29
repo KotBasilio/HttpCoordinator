@@ -54,6 +54,7 @@ GraphNode* FindNode(GraphModel& g, NodeId id);
 std::string HydraIdentityKeyForUser(const LiveState& st, const std::string& userId);
 NodeId HydraNodeIdForUser(const LiveState& st, const std::string& userId);
 std::string HydraEntityKeyForUser(const LiveState& st, const std::string& userId);
+std::string KernelSessionIdVisualAlias(const std::string& kernelSessionId);
 
 void AddKv(std::vector<std::pair<std::string, std::string>>& kv,
    const char* key,

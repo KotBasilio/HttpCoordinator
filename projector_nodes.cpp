@@ -124,10 +124,16 @@ void StartServerController::ProjectHydraUsers()
       // HydraSample
       {
          auto& n = UpsertNode(graph, hydraId);
+         const std::string ksiva = KernelSessionIdVisualAlias(u.hydraKernelSessionId);
          n.kind = NodeKind::HydraSample;
          n.title = "Hydra";
          n.subtitle = "entry";
          n.entityKey = HydraEntityKeyForUser(st, uid);
+         n.echoValues.clear();
+         if (!u.hydraKernelSessionId.empty())
+            n.echoValues.push_back(u.hydraKernelSessionId);
+         if (!ksiva.empty())
+            n.echoValues.push_back(ksiva);
          FillHydraKv(n, u, hydraIdentityKey);
          n.pos = Vec2f(lay.xHydra, y);
          n.size = lay.s32;
@@ -144,6 +150,7 @@ void StartServerController::ProjectHydraUsers()
          n.title = title;
          n.subtitle = uid;
          n.entityKey = "user:" + uid;
+         n.echoValues.clear();
          FillUserKv(n, u);
          n.badges.clear();
          n.badges.push_back(u.online ? NodeKind::Online : NodeKind::Offline);

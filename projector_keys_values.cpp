@@ -114,10 +114,12 @@ void FillSCSessionKv(GraphNode& n, const SCSessionState& s, const std::string& s
 void FillHydraKv(GraphNode& n, const UserState& u, const std::string& hydraIdentityKey)
 {
    n.kv.clear();
+   const std::string ksiva = KernelSessionIdVisualAlias(u.hydraKernelSessionId);
    AddKv(n.kv, "HYDRA_ENTITY_ID", hydraIdentityKey);
    AddKv(n.kv, "RUNTIME_SEANCE_ID", u.runtimeSeanceId);
    AddKv(n.kv, "HYDRA_USER_IDENTITY", u.userIdentity);
    AddKv(n.kv, "HYDRA_KERNEL_SESSION_ID", u.hydraKernelSessionId);
+   AddKv(n.kv, "KSIVA", ksiva);
    AddKv(n.kv, "LINKED_USER_ID", u.userId);
    AddKv(n.kv, "PLATFORM", u.platform);
    AddKv(n.kv, "PROVIDER_ID", u.providerId);
@@ -128,6 +130,7 @@ void FillHydraKv(GraphNode& n, const UserState& u, const std::string& hydraIdent
 void FillUserKv(GraphNode& n, const UserState& u)
 {
    n.kv = u.facts;
+   const std::string ksiva = KernelSessionIdVisualAlias(u.hydraKernelSessionId);
    AddKvIfMissing(n.kv, "USER_IDENTITY", u.userIdentity, "USER_ID");
    AddKvIfMissing(n.kv, "USER_ID", u.userId);
    AddKvIfMissing(n.kv, "ACCOUNT_NAME", u.nickname);
@@ -135,6 +138,7 @@ void FillUserKv(GraphNode& n, const UserState& u)
    AddKvIfMissing(n.kv, "PROVIDER_ID", u.providerId, "PROVIDER");
    AddKvIfMissing(n.kv, "USER_IDENTITY_TYPE", u.userIdentityType);
    AddKvIfMissing(n.kv, "KERNEL_SESSION_ID", u.hydraKernelSessionId);
+   AddKvIfMissing(n.kv, "KSIVA", ksiva);
    std::sort(n.kv.begin(), n.kv.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
 }
 

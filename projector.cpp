@@ -25,6 +25,7 @@ GraphNode& UpsertNode(GraphModel& g, NodeId id)
    n.title.clear();
    n.subtitle.clear();
    n.entityKey.clear();
+   n.echoValues.clear();
    n.kv.clear();
    n.badges.clear();
    n.pos = Vec2f(0, 0);
@@ -111,6 +112,11 @@ NodeId HydraNodeIdForUser(const LiveState& st, const std::string& userId)
 std::string HydraEntityKeyForUser(const LiveState& st, const std::string& userId)
 {
    return "hydra:" + HydraIdentityKeyForUser(st, userId);
+}
+
+std::string KernelSessionIdVisualAlias(const std::string& kernelSessionId)
+{
+   return kernelSessionId.size() >= 5 ? kernelSessionId.substr(0, 5) : std::string{};
 }
 
 GraphNode* FindNode(GraphModel& g, NodeId id)

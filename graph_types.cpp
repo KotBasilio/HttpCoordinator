@@ -84,7 +84,11 @@ static bool NodeEchoesValue(const GraphNode& node, const std::string& value)
       return true;
    }
 
-   return node.title == value;
+   if (node.title == value) {
+      return true;
+   }
+
+   return std::find(node.echoValues.begin(), node.echoValues.end(), value) != node.echoValues.end();
 }
 
 // -- Implementation --
