@@ -1,6 +1,6 @@
 # ImGui Coordinator — Active Task Context
 
-Last updated: 2026-06-17
+Last updated: 2026-06-29
 
 This file is the short-lived cockpit for the current Codex work.
 `AGENTS.md` is the durable repo entry point; this file is allowed to change often.
