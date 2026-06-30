@@ -430,7 +430,7 @@ void InspectorPanel::DrawKeyValTable(const GraphNode& n)
 
          ImGui::TableNextRow();
          ImGui::TableSetColumnIndex(0);
-         const std::string label = "members[size=" + std::to_string(members.size()) + "]";
+         const std::string label = "MEMBERS[size=" + std::to_string(members.size()) + "]";
          const bool membersOpen = ImGui::TreeNodeEx("members_array",
             ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanFullWidth, "%s", label.c_str());
          ImGui::TableSetColumnIndex(1);
