@@ -55,6 +55,19 @@ Validated behavior:
 - Badge sizing is tuned visually across graph zoom levels; all badges share the
   same on-screen size for a given node/zoom.
 
+### User offline grace and local observation
+
+Validated behavior:
+- On sign-out, a User node is marked offline immediately and unbound from
+  Party/MM state, but the user record stays visible for a short grace period.
+- Offline user expiry is currently 2 seconds and is anchored to the first
+  cleanup observation in the controller loop, not to raw packet arrival time.
+- This is intentional because the Coordinator only receives traffic from
+  locally observed apps/servers/Hydra instances. Remote entities mentioned by
+  local traffic do not reliably send their own packets here, so packet silence
+  alone is not universal evidence of remote disappearance.
+- A later sign-in for the same user cancels the pending offline expiry.
+
 ### User facts in Inspector
 
 Validated behavior:

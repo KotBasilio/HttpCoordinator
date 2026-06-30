@@ -145,6 +145,10 @@ Local vs remote:
   servers.
 - That traffic may mention other apps, servers, users, or sessions; those
   mentioned entities are remote unless reducer evidence proves they are local.
+- Remote entities usually do not send packets into this Coordinator directly.
+  Packet presence/absence is therefore only strong evidence for locally
+  observed users/apps/servers/Hydra instances, not for every entity mentioned
+  in the stream.
 - `UserState::isLocal` currently exists as a placeholder display flag. Forge
   should replace its default with concrete reducer evidence when available.
 

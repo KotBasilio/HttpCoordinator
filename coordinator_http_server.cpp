@@ -1,7 +1,7 @@
 #define REQ_NAMES_PARSER_IMPL
 
 #include "ui/controllers/coordinator_http_server.h"
-#include "packet_json_helpers.h"
+#include "ui/ingest/packet_json_helpers.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 

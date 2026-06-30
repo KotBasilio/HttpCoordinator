@@ -1,6 +1,6 @@
 #include "ui/controllers/start_server_controller.h"
 #include "ui/controllers/coordinator_http_server.h"
-#include "packet_json_helpers.h"
+#include "ui/ingest/packet_json_helpers.h"
 
 namespace Sample::UI::Controllers {
 
@@ -83,9 +83,12 @@ bool StartServerController::ExpireOfflineUsers()
    const double nowS = MonotonicNowSeconds();
    std::vector<std::string> expiredUserIds;
 
-   for (const auto& [uid, user] : st.users) {
-      if (user.online || user.offlineSinceS < 0.0)
+   for (auto& [uid, user] : st.users) {
+      if (user.online)
          continue;
+
+      if (user.offlineSinceS < 0.0)
+         user.offlineSinceS= nowS;
 
       if ((nowS - user.offlineSinceS) >= kOfflineUserGraceSeconds)
          expiredUserIds.push_back(uid);

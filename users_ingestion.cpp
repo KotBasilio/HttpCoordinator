@@ -136,7 +136,6 @@ bool StartServerController::HandleSignOut(SdkPacket& u)
    st.TouchUser(uid);
    auto& usr = st.users[uid];
    usr.online = false;
-   usr.offlineSinceS = u.recv_time_s;
    st.UnbindUser(uid);
 
    return true;
