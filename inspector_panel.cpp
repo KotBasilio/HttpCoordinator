@@ -316,7 +316,7 @@ static bool ParseMemberKvKey(std::string_view key, int& memberIndex, std::string
    }
 
    memberIndex = std::atoi(std::string(key.substr(idxStart, idxEnd - idxStart)).c_str());
-   if (memberIndex <= 0 || idxEnd + 1 >= key.size())
+   if (memberIndex < 0 || idxEnd + 1 >= key.size())
       return false;
 
    fieldName = std::string(key.substr(idxEnd + 1));
@@ -385,7 +385,7 @@ void InspectorPanel::DrawKeyValTable(const GraphNode& n)
    std::vector<std::pair<std::string, std::string>> flatRows;
    std::vector<GroupedMemberKv> groupedMembers;
 
-   if (n.kind == NodeKind::Party) {
+   if (n.kind == NodeKind::Party || n.kind == NodeKind::MMSession) {
       std::map<int, std::vector<std::pair<std::string, std::string>>> grouped;
       for (const auto& kv : n.kv) {
          int memberIndex = 0;
@@ -430,7 +430,7 @@ void InspectorPanel::DrawKeyValTable(const GraphNode& n)
 
          ImGui::TableNextRow();
          ImGui::TableSetColumnIndex(0);
-         const std::string label = "members[" + std::to_string(members.size()) + "]";
+         const std::string label = "members[size=" + std::to_string(members.size()) + "]";
          const bool membersOpen = ImGui::TreeNodeEx("members_array",
             ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanFullWidth, "%s", label.c_str());
          ImGui::TableSetColumnIndex(1);

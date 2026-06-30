@@ -165,9 +165,15 @@ void FillMMSessionKv(GraphNode& n, const SessionState& s, const std::string& sid
 
    const std::vector<std::string> memberIds = SortedKeys(s.members);
 
-   int memberIndex = 1;
+   int fallbackMemberIndex = 0;
    for (const std::string& uid : memberIds) {
       const auto& mi = s.members.at(uid);
+      int memberIndex = fallbackMemberIndex;
+      if (!mi.sortingIndex.empty()) {
+         const int parsed = std::atoi(mi.sortingIndex.c_str());
+         if (parsed > 0)
+            memberIndex = parsed - 1;
+      }
       const std::string prefix = "MEMBER_" + std::to_string(memberIndex) + "_";
       AddKv(n.kv, (prefix + "USER_ID").c_str(), uid);
       AddKv(n.kv, (prefix + "NICKNAME").c_str(), mi.nickname);
@@ -179,7 +185,7 @@ void FillMMSessionKv(GraphNode& n, const SessionState& s, const std::string& sid
       AddKv(n.kv, (prefix + "CLASS_ROLE").c_str(), mi.classRole);
       AddKv(n.kv, (prefix + "PROVIDER").c_str(), mi.provider);
       AddKv(n.kv, (prefix + "EXTENDED_DATA").c_str(), mi.extendedData);
-      ++memberIndex;
+      ++fallbackMemberIndex;
    }
 }
 
@@ -202,7 +208,7 @@ void FillPartyKv(GraphNode& n, const PartyState& p, const std::string& pid)
 
    const std::vector<std::string> memberIds = SortedKeys(p.members);
 
-   int memberIndex = 1;
+   int memberIndex = 0;
    for (const std::string& uid : memberIds) {
       const auto& mi = p.members.at(uid);
       const std::string prefix = "MEMBER_" + std::to_string(memberIndex) + "_";
