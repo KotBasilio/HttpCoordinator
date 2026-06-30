@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
+#include <map>
 #include <string>
 #include <string_view>
 
@@ -292,6 +293,36 @@ static std::string BuildKvCopyText(std::string_view key, std::string_view value)
    return std::string(value);
 }
 
+struct GroupedMemberKv
+{
+   int memberIndex = 0;
+   std::vector<std::pair<std::string, std::string>> fields;
+};
+
+static bool ParseMemberKvKey(std::string_view key, int& memberIndex, std::string& fieldName)
+{
+   static constexpr std::string_view prefix = "MEMBER_";
+   if (key.substr(0, prefix.size()) != prefix)
+      return false;
+
+   const size_t idxStart = prefix.size();
+   const size_t idxEnd = key.find('_', idxStart);
+   if (idxEnd == std::string_view::npos || idxEnd == idxStart)
+      return false;
+
+   for (size_t i = idxStart; i < idxEnd; ++i) {
+      if (!std::isdigit(static_cast<unsigned char>(key[i])))
+         return false;
+   }
+
+   memberIndex = std::atoi(std::string(key.substr(idxStart, idxEnd - idxStart)).c_str());
+   if (memberIndex <= 0 || idxEnd + 1 >= key.size())
+      return false;
+
+   fieldName = std::string(key.substr(idxEnd + 1));
+   return !fieldName.empty();
+}
+
 void InspectorPanel::DrawMaybeClickableKvValue(const std::string& value)
 {
    const GraphNode* target = model.FindUniqueNodeEchoForValue(value);
@@ -351,6 +382,28 @@ void InspectorPanel::DrawKvCopyButton(int rowIndex, const std::string& key, cons
 
 void InspectorPanel::DrawKeyValTable(const GraphNode& n)
 {
+   std::vector<std::pair<std::string, std::string>> flatRows;
+   std::vector<GroupedMemberKv> groupedMembers;
+
+   if (n.kind == NodeKind::Party) {
+      std::map<int, std::vector<std::pair<std::string, std::string>>> grouped;
+      for (const auto& kv : n.kv) {
+         int memberIndex = 0;
+         std::string fieldName;
+         if (ParseMemberKvKey(kv.first, memberIndex, fieldName)) {
+            grouped[memberIndex].push_back({ fieldName, kv.second });
+         } else {
+            flatRows.push_back(kv);
+         }
+      }
+
+      for (auto& [memberIndex, fields] : grouped) {
+         groupedMembers.push_back({ memberIndex, std::move(fields) });
+      }
+   } else {
+      flatRows = n.kv;
+   }
+
    const float minHeight = 250.0f;
    float availY = ImGui::GetContentRegionAvail().y;
    float childHeight = std::max(minHeight, availY);
@@ -358,23 +411,62 @@ void InspectorPanel::DrawKeyValTable(const GraphNode& n)
 
    ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp;
    if (ImGui::BeginTable("facts_tbl", 3, flags)) {
-      float propNameWidth = CalcPropNameColumnWidth(n.kv);
+      auto drawFlatKvRows = [&](const std::vector<std::pair<std::string, std::string>>& rows, int& rowIndex) {
+         for (const auto& kv : rows) {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::TextUnformatted(kv.first.c_str());
+            ImGui::TableSetColumnIndex(1);
+            DrawMaybeClickableKvValue(kv.second);
+            ImGui::TableSetColumnIndex(2);
+            DrawKvCopyButton(rowIndex, kv.first, kv.second);
+            ++rowIndex;
+         }
+      };
+
+      auto drawGroupedMemberKvRows = [&](const std::vector<GroupedMemberKv>& members, int& rowIndex) {
+         if (members.empty())
+            return;
+
+         ImGui::TableNextRow();
+         ImGui::TableSetColumnIndex(0);
+         ImGui::TextUnformatted("MEMBERS");
+         ImGui::TableSetColumnIndex(1);
+
+         const std::string label = "members[" + std::to_string(members.size()) + "]";
+         if (ImGui::TreeNodeEx("members_array", ImGuiTreeNodeFlags_DefaultOpen, "%s", label.c_str())) {
+            for (const auto& member : members) {
+               std::string memberLabel = "member[" + std::to_string(member.memberIndex) + "]";
+               if (ImGui::TreeNode(memberLabel.c_str())) {
+                  std::string tableId = memberLabel + "_tbl";
+                  if (ImGui::BeginTable(tableId.c_str(), 3,
+                     ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp)) {
+                     ImGui::TableSetupColumn("propName", ImGuiTableColumnFlags_WidthFixed, 150.0f);
+                     ImGui::TableSetupColumn("propValue", ImGuiTableColumnFlags_WidthStretch);
+                     ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, kCopyButtonWidth);
+
+                     drawFlatKvRows(member.fields, rowIndex);
+                     ImGui::EndTable();
+                  }
+                  ImGui::TreePop();
+               }
+            }
+            ImGui::TreePop();
+         }
+
+         ImGui::TableSetColumnIndex(2);
+         ImGui::Dummy(ImVec2(0.0f, 0.0f));
+      };
+
+      float propNameWidth = CalcPropNameColumnWidth(flatRows.empty() ? n.kv : flatRows);
       ImGui::TableSetupColumn("propName", ImGuiTableColumnFlags_WidthFixed, propNameWidth);
       ImGui::TableSetupColumn("propValue", ImGuiTableColumnFlags_WidthStretch);
       ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, kCopyButtonWidth);
       ImGui::TableHeadersRow();
 
       int rowIndex = 0;
-      for (const auto& kv : n.kv) {
-         ImGui::TableNextRow();
-         ImGui::TableSetColumnIndex(0);
-         ImGui::TextUnformatted(kv.first.c_str());
-         ImGui::TableSetColumnIndex(1);
-         DrawMaybeClickableKvValue(kv.second);
-         ImGui::TableSetColumnIndex(2);
-         DrawKvCopyButton(rowIndex, kv.first, kv.second);
-         ++rowIndex;
-      }
+      drawFlatKvRows(flatRows, rowIndex);
+      drawGroupedMemberKvRows(groupedMembers, rowIndex);
 
       ImGui::EndTable();
    }
