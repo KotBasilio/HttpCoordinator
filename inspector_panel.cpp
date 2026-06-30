@@ -430,32 +430,45 @@ void InspectorPanel::DrawKeyValTable(const GraphNode& n)
 
          ImGui::TableNextRow();
          ImGui::TableSetColumnIndex(0);
-         ImGui::TextUnformatted("MEMBERS");
-         ImGui::TableSetColumnIndex(1);
-
          const std::string label = "members[" + std::to_string(members.size()) + "]";
-         if (ImGui::TreeNodeEx("members_array", ImGuiTreeNodeFlags_DefaultOpen, "%s", label.c_str())) {
-            for (const auto& member : members) {
-               std::string memberLabel = "member[" + std::to_string(member.memberIndex) + "]";
-               if (ImGui::TreeNode(memberLabel.c_str())) {
-                  std::string tableId = memberLabel + "_tbl";
-                  if (ImGui::BeginTable(tableId.c_str(), 3,
-                     ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp)) {
-                     ImGui::TableSetupColumn("propName", ImGuiTableColumnFlags_WidthFixed, 150.0f);
-                     ImGui::TableSetupColumn("propValue", ImGuiTableColumnFlags_WidthStretch);
-                     ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, kCopyButtonWidth);
+         const bool membersOpen = ImGui::TreeNodeEx("members_array",
+            ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanFullWidth, "%s", label.c_str());
+         ImGui::TableSetColumnIndex(1);
+         ImGui::TextUnformatted("");
+         ImGui::TableSetColumnIndex(2);
+         ImGui::Dummy(ImVec2(0.0f, 0.0f));
 
-                     drawFlatKvRows(member.fields, rowIndex);
-                     ImGui::EndTable();
+         if (membersOpen) {
+            for (const auto& member : members) {
+               ImGui::TableNextRow();
+               ImGui::TableSetColumnIndex(0);
+               std::string memberLabel = "member[" + std::to_string(member.memberIndex) + "]";
+               const std::string memberId = "member_" + std::to_string(member.memberIndex);
+               const bool memberOpen = ImGui::TreeNodeEx(memberId.c_str(),
+                  ImGuiTreeNodeFlags_SpanFullWidth, "%s", memberLabel.c_str());
+               ImGui::TableSetColumnIndex(1);
+               ImGui::TextUnformatted("");
+               ImGui::TableSetColumnIndex(2);
+               ImGui::Dummy(ImVec2(0.0f, 0.0f));
+
+               if (memberOpen) {
+                  for (const auto& field : member.fields) {
+                     ImGui::TableNextRow();
+                     ImGui::TableSetColumnIndex(0);
+                     ImGui::Indent();
+                     ImGui::TextUnformatted(field.first.c_str());
+                     ImGui::Unindent();
+                     ImGui::TableSetColumnIndex(1);
+                     DrawMaybeClickableKvValue(field.second);
+                     ImGui::TableSetColumnIndex(2);
+                     DrawKvCopyButton(rowIndex, field.first, field.second);
+                     ++rowIndex;
                   }
                   ImGui::TreePop();
                }
             }
             ImGui::TreePop();
          }
-
-         ImGui::TableSetColumnIndex(2);
-         ImGui::Dummy(ImVec2(0.0f, 0.0f));
       };
 
       float propNameWidth = CalcPropNameColumnWidth(flatRows.empty() ? n.kv : flatRows);
