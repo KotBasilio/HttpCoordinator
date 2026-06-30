@@ -101,9 +101,10 @@ bool StartServerController::HandleSignIn(SdkPacket& u)
       return false;
    }
 
-   st.users[uid].online = true;
    st.TouchUser(uid);
    auto& usr = st.users[uid];
+   usr.online = true;
+   usr.offlineSinceS = -1.0;
    SetIfDifferent(usr.userIdentity, uid);
 
    if (u.reqNameId == PROS_GLOBAL_API_AUTH_SIGNINHYDRARESPONSE && !standaloneCorr.pendingHydraLogins.empty()) {
@@ -132,8 +133,10 @@ bool StartServerController::HandleSignOut(SdkPacket& u)
       return false;
    }
 
-   st.users[uid].online = false;
    st.TouchUser(uid);
+   auto& usr = st.users[uid];
+   usr.online = false;
+   usr.offlineSinceS = u.recv_time_s;
    st.UnbindUser(uid);
 
    return true;

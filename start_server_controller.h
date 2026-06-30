@@ -33,6 +33,7 @@ private:
 
    // packets ingestion -- expands TickIngestion()
    void SwitchGraphToIngestion();
+   bool ExpireOfflineUsers();
    bool ApplyAllReducers(SdkPacket& u);
    bool ApplyServerReducers(SdkPacket& u);
    bool HandleSignInHydraRequest(SdkPacket& u);

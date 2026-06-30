@@ -106,6 +106,13 @@ bool LiveState::TouchSCSession(const std::string& scid)
    return true;
 }
 
+bool LiveState::RemoveUser(const std::string& uid)
+{
+   const size_t erased = users.erase(uid);
+   const bool removedOrder = RemoveFromOrder(userOrder, uid);
+   return erased > 0 || removedOrder;
+}
+
 bool LiveState::RemoveSession(const std::string& sid)
 {
    Tombstone(MMSessionEntityKey(sid));

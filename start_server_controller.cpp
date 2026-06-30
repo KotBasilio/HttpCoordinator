@@ -1,5 +1,6 @@
 #include "ui/controllers/start_server_controller.h"
 #include "ui/controllers/coordinator_http_server.h"
+#include "packet_json_helpers.h"
 
 namespace Sample::UI::Controllers {
 
@@ -54,6 +55,7 @@ void StartServerController::TickIngestion()
 
    // may reorder nodes in layout
    changed |= ApplyReorderCommands();
+   changed |= ExpireOfflineUsers();
 
    // may repaint the graph from state
    if (changed) {
@@ -72,6 +74,29 @@ void StartServerController::SwitchGraphToIngestion()
       graph.indexById.clear();
       mainModel->logs.Info("first packet -> switching graph to ingestion-driven");
    }
+}
+
+bool StartServerController::ExpireOfflineUsers()
+{
+   static constexpr double kOfflineUserGraceSeconds = 2.0;
+
+   const double nowS = MonotonicNowSeconds();
+   std::vector<std::string> expiredUserIds;
+
+   for (const auto& [uid, user] : st.users) {
+      if (user.online || user.offlineSinceS < 0.0)
+         continue;
+
+      if ((nowS - user.offlineSinceS) >= kOfflineUserGraceSeconds)
+         expiredUserIds.push_back(uid);
+   }
+
+   bool changed = false;
+   for (const std::string& uid : expiredUserIds) {
+      changed |= st.RemoveUser(uid);
+   }
+
+   return changed;
 }
 
 bool StartServerController::ApplyAllReducers(SdkPacket& u)

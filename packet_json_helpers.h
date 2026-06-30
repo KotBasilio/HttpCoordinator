@@ -17,6 +17,7 @@ std::string GetStr(const Json& obj, const char* key, std::string_view fallback =
 std::string StrAt(const Json& j, const JsonPointer& ptr, std::string_view fallback = {});
 std::optional<std::string> StringAt(const Json& j, const JsonPointer& ptr);
 bool BoolAt(const Json& j, const JsonPointer& ptr, bool fallback = false) noexcept;
+double MonotonicNowSeconds();
 
 std::string ExtractUserIdentity(const Json& p);
 std::string ExtractHydraKernelSessionId(const Json& p);

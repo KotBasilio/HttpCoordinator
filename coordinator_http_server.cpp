@@ -1,6 +1,7 @@
 #define REQ_NAMES_PARSER_IMPL
 
 #include "ui/controllers/coordinator_http_server.h"
+#include "packet_json_helpers.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
@@ -14,14 +15,6 @@ static ReqNameID ParseReqName(const std::string& key)
       }
    }
    return ABSENT_REQNAME_ID;
-}
-
-static double NowSeconds()
-{
-   using clock = std::chrono::steady_clock;
-   static const auto t0 = clock::now();
-   auto dt = std::chrono::duration<double>(clock::now() - t0);
-   return dt.count();
 }
 
 namespace Sample::UI::Controllers {
@@ -106,7 +99,7 @@ SdkPacket::SdkPacket(const std::string& reqBody)
 {
    redacted = RedactSecrets(reqBody);
    payload = nlohmann::json::parse(reqBody);
-   recv_time_s = NowSeconds();
+   recv_time_s = MonotonicNowSeconds();
 }
 
 SdkPacket::SdkPacket(const httplib::Request& req)

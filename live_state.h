@@ -23,6 +23,7 @@ struct UserState
    std::string providerId;
    std::string userIdentityType;
    bool online = false;
+   double offlineSinceS = -1.0;
    bool isLocal = true; // placeholder until Forge wires concrete local-user evidence
 
    // propertyName/propertyValue
@@ -222,6 +223,7 @@ struct LiveState
    void TouchParty(const std::string& pid);
    bool TouchServer(const std::string& sid);
    bool TouchSCSession(const std::string& scid);
+   bool RemoveUser(const std::string& uid);
    bool RemoveSession(const std::string& sid);
    bool RemoveServer(const std::string& sid);
    bool RemoveSCSession(const std::string& scid);

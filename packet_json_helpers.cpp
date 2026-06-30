@@ -1,5 +1,6 @@
 #include "packet_json_helpers.h"
 
+#include <chrono>
 #include <utility>
 
 namespace Sample::UI::Controllers
@@ -56,6 +57,14 @@ bool BoolAt(const Json& j, const JsonPointer& ptr, bool fallback) noexcept
    if (auto* n = NodeAt(j, ptr); n && n->is_boolean())
       return n->get<bool>();
    return fallback;
+}
+
+double MonotonicNowSeconds()
+{
+   using clock = std::chrono::steady_clock;
+   static const auto t0 = clock::now();
+   auto dt = std::chrono::duration<double>(clock::now() - t0);
+   return dt.count();
 }
 
 std::string ExtractUserIdentity(const Json& p)
