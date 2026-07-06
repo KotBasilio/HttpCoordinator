@@ -1,14 +1,26 @@
 #include "inspector_panel.h"
 #include <imgui.h>
 #include <algorithm>
+#include <chrono>
 #include <cctype>
+#include <ctime>
 #include <cstdlib>
+#include <cstdio>
 #include <map>
+#include <sstream>
 #include <string>
 #include <string_view>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <shellapi.h>
+#endif
+
 static constexpr float kCopyIconPx = 16.0f;
 static constexpr float kCopyButtonWidth = kCopyIconPx * 2.0f;
+static constexpr const char* kHydraStub1Url = "https://www.google.com";
+static constexpr const char* kHydraStub2Url = "https://stgadm.prismray.io/Title/RVSBBCE/Diagnostics/FactViewerPresetList";
+static constexpr const char* kHydraStub3BaseUrl = "https://stgadm.prismray.io/Title/RVSBBCE/Diagnostics/FactViewerPresetList/FactViewerSearchResult?query=";
 
 // #define DBG_BADGES
 
@@ -260,6 +272,93 @@ static float ClampFloat(float lo, float v, float hi)
    return (v < lo) ? lo : (v > hi) ? hi : v;
 }
 
+static std::string FindKvValue(std::string_view key, const std::vector<std::pair<std::string, std::string>>& kv)
+{
+   const auto it = std::find_if(kv.begin(), kv.end(), [key](const auto& row) {
+      return row.first == key;
+   });
+   return (it == kv.end()) ? std::string{} : it->second;
+}
+
+static bool OpenUrlInBrowser(const std::string& url)
+{
+#ifdef _WIN32
+   const HINSTANCE result = ::ShellExecuteA(nullptr, "open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+   return reinterpret_cast<intptr_t>(result) > 32;
+#else
+   (void)url;
+   return false;
+#endif
+}
+
+static std::string UrlEncode(std::string_view value)
+{
+   static constexpr char hex[] = "0123456789ABCDEF";
+
+   std::string encoded;
+   encoded.reserve(value.size() * 3);
+   for (unsigned char ch : value) {
+      if (std::isalnum(ch) || ch == '-' || ch == '_' || ch == '.' || ch == '~') {
+         encoded.push_back(static_cast<char>(ch));
+         continue;
+      }
+
+      encoded.push_back('%');
+      encoded.push_back(hex[(ch >> 4) & 0x0F]);
+      encoded.push_back(hex[ch & 0x0F]);
+   }
+   return encoded;
+}
+
+static bool FormatUtcTimestamp(std::chrono::system_clock::time_point tp, std::string& out)
+{
+   using namespace std::chrono;
+
+   const auto secs = time_point_cast<seconds>(tp);
+   const auto millis = duration_cast<milliseconds>(tp - secs).count();
+   std::time_t tt = system_clock::to_time_t(secs);
+
+   std::tm tmUtc{};
+#ifdef _WIN32
+   if (::gmtime_s(&tmUtc, &tt) != 0)
+      return false;
+#else
+   if (::gmtime_r(&tt, &tmUtc) == nullptr)
+      return false;
+#endif
+
+   char buffer[32];
+   const size_t written = std::strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", &tmUtc);
+   if (written == 0)
+      return false;
+
+   char millisBuf[8];
+   std::snprintf(millisBuf, sizeof(millisBuf), ".%03lldZ", static_cast<long long>(millis));
+   out.assign(buffer, written);
+   out += millisBuf;
+   return true;
+}
+
+static std::string BuildHydraStub3Url(const std::string& hydraKernelSessionId)
+{
+   using namespace std::chrono;
+
+   const system_clock::time_point now = system_clock::now();
+   std::string startUtc;
+   std::string endUtc;
+   if (!FormatUtcTimestamp(now - hours(6), startUtc) || !FormatUtcTimestamp(now + hours(6), endUtc)) {
+      return std::string{};
+   }
+
+   std::ostringstream json;
+   json << "{\"session\":\"" << hydraKernelSessionId
+      << "\",\"start\":\"" << startUtc
+      << "\",\"end\":\"" << endUtc
+      << "\",\"useStrictDateInclusion\":false,\"contexts\":[]}";
+
+   return std::string(kHydraStub3BaseUrl) + UrlEncode(json.str());
+}
+
 static float CalcPropNameColumnWidth(const std::vector<std::pair<std::string, std::string>>& kv)
 {
    const ImGuiStyle& style = ImGui::GetStyle();
@@ -487,6 +586,40 @@ void InspectorPanel::DrawKeyValTable(const GraphNode& n)
    ImGui::EndChild();
 }
 
+void InspectorPanel::DrawHydraActions(const GraphNode& n)
+{
+   const std::string hydraKernelSessionId = FindKvValue("HYDRA_KERNEL_SESSION_ID", n.kv);
+   const bool hasHydraKernelSessionId = !hydraKernelSessionId.empty();
+
+   if (ImGui::Button("Stub1")) {
+      OpenUrlInBrowser(kHydraStub1Url);
+   }
+
+   ImGui::SameLine();
+   if (ImGui::Button("Stub2")) {
+      OpenUrlInBrowser(kHydraStub2Url);
+   }
+
+   ImGui::SameLine();
+   if (!hasHydraKernelSessionId) {
+      ImGui::BeginDisabled();
+   }
+
+   if (ImGui::Button("Stub3") && hasHydraKernelSessionId) {
+      const std::string url = BuildHydraStub3Url(hydraKernelSessionId);
+      if (!url.empty()) {
+         OpenUrlInBrowser(url);
+      }
+   }
+
+   if (!hasHydraKernelSessionId) {
+      ImGui::EndDisabled();
+      if (ImGui::IsItemHovered()) {
+         ImGui::SetTooltip("HYDRA_KERNEL_SESSION_ID is missing");
+      }
+   }
+}
+
 void InspectorPanel::DrawNodeKeys(const GraphNode& n)
 {
    ImGui::Separator();
@@ -494,6 +627,11 @@ void InspectorPanel::DrawNodeKeys(const GraphNode& n)
    // entityKey always
    if (!n.entityKey.empty()) {
       ImGui::Text("%s", n.entityKey.c_str());
+   }
+
+   if (n.kind == NodeKind::HydraSample) {
+      DrawHydraActions(n);
+      ImGui::Separator();
    }
 
    // kv is here => draw entire section

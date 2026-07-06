@@ -21,6 +21,7 @@ private:
    void ExplainIcon(const GraphNode& n);
    void DrawUpDownButtons(const GraphNode& n, const ImVec2& fieldsStart);
    void DrawBadges(const GraphNode& n);
+   void DrawHydraActions(const GraphNode& n);
    void DrawKeyValTable(const GraphNode& n);
    void DrawNodeKeys(const GraphNode& n);
    void DrawMaybeClickableKvValue(const std::string& value);
