@@ -35,6 +35,7 @@ bool StartServerController::HandleFactsWriteBinaryPackUser(SdkPacket& u)
    SetIfDifferent(usr.userIdentity, ExtractUserIdentity(p));
    SetIfDifferent(usr.hydraKernelSessionId, ExtractHydraKernelSessionId(p));
    SetIfDifferent(usr.runtimeSeanceId, ExtractFactsHeaderValue(p, "RUNTIME_SEANCE_ID"));
+   SetIfDifferent(usr.titleId, JsonGetString(p, { "userContext", "data", "titleId" }));
    SetIfDifferent(usr.platform, JsonGetString(p, { "userContext", "data", "platform" }));
    SetIfDifferent(usr.providerId, JsonGetString(p, { "userContext", "data", "providerId" }));
    SetIfDifferent(usr.userIdentityType, JsonGetString(p, { "userContext", "data", "userIdentityType" }));
@@ -119,6 +120,7 @@ bool StartServerController::HandleSignIn(SdkPacket& u)
       usr.hydraKernelSessionId = hydraKernelSessionId;
 
    SetIfDifferent(usr.platform, JsonGetString(p, { "data", "userContext", "data", "platform" }));
+   SetIfDifferent(usr.titleId, JsonGetString(p, { "data", "userContext", "data", "titleId" }));
    SetIfDifferent(usr.providerId, JsonGetString(p, { "data", "userContext", "data", "providerId" }));
    SetIfDifferent(usr.userIdentityType, JsonGetString(p, { "data", "userContext", "data", "userIdentityType" }));
 

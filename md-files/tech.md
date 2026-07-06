@@ -137,6 +137,7 @@ SDK identity naming is inconsistent. Important values include:
 - Facts `USER_ID`
 - Facts `RUNTIME_SEANCE_ID`
 - user/client `kernelSessionId`
+- title ID from `SignInHydraResponse` / user context, used for title-scoped diagnostics URLs
 
 Do not assume identity-like values are the same without evidence.
 
