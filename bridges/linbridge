@@ -1,0 +1,350 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CONFIG_PATH_DEFAULT='D:\miron\wip\codex_paths_config.txt'
+WIN_COORDINATOR_DIR_DEFAULT='C:\Users\miron\source\repos\ImGuiCoo\ImGui-Coordinator'
+CODEX_COORDINATOR_DIR_DEFAULT='\\wsl.localhost\Ubuntu\home\miron\proj\HttpCoordinator'
+TEMP_DIR_DEFAULT='D:\tmp'
+
+FILES=(
+  'ui\utils\graph_types.h'
+  'ui\utils\graph_types.cpp'
+  'ui\utils\inspector_panel.cpp'
+  'ui\utils\inspector_panel.h'
+  'ui\ingest\packets_ingestion.cpp'
+  'ui\ingest\packet_json_helpers.h'
+  'ui\ingest\packet_json_helpers.cpp'
+  'ui\ingest\users_ingestion.cpp'
+  'ui\ingest\presence_ingestion.cpp'
+  'ui\ingest\servers_ingestion.cpp'
+  'ui\proj\projector.cpp'
+  'ui\proj\projector_internal.h'
+  'ui\proj\projector_keys_values.cpp'
+  'ui\proj\projector_layout.cpp'
+  'ui\proj\projector_links.cpp'
+  'ui\proj\projector_nodes.cpp'
+  'ui\utils\coordinator_http_server.cpp'
+  'ui\controllers\live_state.cpp'
+  'ui\controllers\live_state.h'
+  'ui\models\ReqNamesEnum.h'
+  'ui\controllers\coordinator_http_server.h'
+  'ui\controllers\start_server_controller.cpp'
+  'ui\controllers\start_server_controller.h'
+  'ui\models\main_model.h'
+)
+
+LUMEN_FILES=(
+  'ui\utils\texture_manager.cpp'
+  'ui\utils\texman_lods.cpp'
+  'ui\utils\texture_manager.h'
+  'ui\utils\AssetsEnum.h'
+  'ui\utils\zoom_control_widget.cpp'
+  'ui\utils\graph_panel.h'
+  'ui\utils\graph_panel.cpp'
+  'ui\utils\stubs.cpp'
+  'ui\utils\units_panel.cpp'
+  'ui\utils\units_panel.h'
+  'Assets\gen_assets_enum.py'
+)
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  ./linbridge ToCodex
+  ./linbridge ToWin
+  ./linbridge -Direction ToCodex
+  ./linbridge -Direction ToWin
+USAGE
+}
+
+die() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
+
+trim() {
+  local value="$1"
+  value="${value#"${value%%[![:space:]]*}"}"
+  value="${value%"${value##*[![:space:]]}"}"
+  printf '%s\n' "$value"
+}
+
+win_to_wsl_path() {
+  local path="$1"
+
+  if command -v wslpath >/dev/null 2>&1; then
+    wslpath -u "$path"
+    return
+  fi
+
+  printf '%s\n' "${path//\\//}"
+}
+rel_to_wsl_path() {
+  printf '%s\n' "${1//\\//}"
+}
+
+load_bridge_paths() {
+  WIN_COORDINATOR_DIR="$WIN_COORDINATOR_DIR_DEFAULT"
+  CODEX_COORDINATOR_DIR="$CODEX_COORDINATOR_DIR_DEFAULT"
+  TEMP_DIR="$TEMP_DIR_DEFAULT"
+
+  local config_path="${CODEX_BRIDGE_CONFIG:-$CONFIG_PATH_DEFAULT}"
+  local config_wsl
+  config_wsl="$(win_to_wsl_path "$config_path")"
+
+  if [[ ! -f "$config_wsl" ]]; then
+    echo "Bridge path config not found; using defaults: $config_path"
+    return
+  fi
+
+  local valid_config=1
+  local line_no=0
+  local overrides=()
+  local raw line key value pair
+
+  while IFS= read -r raw || [[ -n "$raw" ]]; do
+    line_no=$((line_no + 1))
+    line="$(trim "$raw")"
+
+    if [[ -z "$line" || "${line:0:1}" == "#" ]]; then
+      continue
+    fi
+
+    if [[ "$line" != *=* ]]; then
+      echo "Ignoring bridge path config; malformed line ${line_no}: $raw" >&2
+      valid_config=0
+      break
+    fi
+
+    key="$(trim "${line%%=*}")"
+    value="$(trim "${line#*=}")"
+
+    case "$key" in
+      WinCoordinatorDir|CodexCoordinatorDir|TempDir) ;;
+      *)
+        echo "Ignoring bridge path config; unknown key on line ${line_no}: $key" >&2
+        valid_config=0
+        break
+        ;;
+    esac
+
+    if [[ -z "$value" ]]; then
+      echo "Ignoring bridge path config; empty value on line ${line_no}: $key" >&2
+      valid_config=0
+      break
+    fi
+
+    overrides+=("$key=$value")
+  done < "$config_wsl"
+
+  if [[ "$valid_config" -eq 1 ]]; then
+    for pair in "${overrides[@]}"; do
+      key="${pair%%=*}"
+      value="${pair#*=}"
+      case "$key" in
+        WinCoordinatorDir) WIN_COORDINATOR_DIR="$value" ;;
+        CodexCoordinatorDir) CODEX_COORDINATOR_DIR="$value" ;;
+        TempDir) TEMP_DIR="$value" ;;
+      esac
+    done
+
+    if [[ "${#overrides[@]}" -gt 0 ]]; then
+      echo "Bridge path config loaded: $config_path"
+    fi
+  else
+    echo "Using built-in bridge path defaults." >&2
+  fi
+}
+
+assert_no_duplicate_flat_basenames() {
+  declare -A seen=()
+  local file base
+
+  for file in "$@"; do
+    base="$(basename "$(rel_to_wsl_path "$file")")"
+    if [[ -n "${seen[$base]:-}" ]]; then
+      echo "Ambiguous flat-file copy: duplicate basename detected: $base" >&2
+      die "Cannot safely copy from flat CodexDir with duplicate basenames."
+    fi
+    seen[$base]=1
+  done
+}
+
+copy_to_codex_file() {
+  local rel_path="$1"
+  local win_dir="$2"
+  local dest_root="$3"
+  local rel_wsl src_path dest_path
+
+  rel_wsl="$(rel_to_wsl_path "$rel_path")"
+  src_path="$win_dir/$rel_wsl"
+  dest_path="$dest_root/$(basename "$rel_wsl")"
+
+  cp -f "$src_path" "$dest_path"
+  echo "$rel_path -> $dest_root"
+}
+
+copy_to_win_file() {
+  local rel_path="$1"
+  local source_root="$2"
+  local win_dir="$3"
+  local display_prefix="${4:-}"
+  local rel_wsl file_name src_path dst_path dst_dir display_source
+
+  rel_wsl="$(rel_to_wsl_path "$rel_path")"
+  file_name="$(basename "$rel_wsl")"
+  src_path="$source_root/$file_name"
+  dst_path="$win_dir/$rel_wsl"
+  dst_dir="$(dirname "$dst_path")"
+  display_source="${display_prefix}${file_name}"
+
+  if [[ ! -f "$src_path" ]]; then
+    echo "MISSING: $display_source  (expected at $src_path)" >&2
+    MISSING=$((MISSING + 1))
+    return
+  fi
+
+  mkdir -p "$dst_dir"
+  cp -f "$src_path" "$dst_path"
+  COPIED=$((COPIED + 1))
+  echo "$display_source -> $rel_path"
+}
+
+zip_codebase() {
+  local temp_dir="$1"
+  local label="$2"
+  local tmp_dir="$temp_dir/Codebase"
+  local zip_base zip_path file rel_wsl
+
+  rm -rf "$tmp_dir"
+  mkdir -p "$tmp_dir"
+
+  for file in "${FILES[@]}" "${LUMEN_FILES[@]}"; do
+    rel_wsl="$(rel_to_wsl_path "$file")"
+    cp -f "$WIN_DIR/$rel_wsl" "$tmp_dir/$(basename "$rel_wsl")"
+  done
+
+  zip_base="$(printf '%s\n' "$label" | sed -E 's#[\\/:*?"<>|]#_#g; s/[[:space:]]+//g')"
+  if [[ -z "$zip_base" ]]; then
+    zip_base="Codebase"
+  fi
+
+  zip_path="$temp_dir/$zip_base.zip"
+  rm -f "$zip_path"
+
+  if command -v powershell.exe >/dev/null 2>&1; then
+    powershell.exe -NoProfile -Command "Compress-Archive -Path '$(wslpath -w "$tmp_dir")\*' -DestinationPath '$(wslpath -w "$zip_path")'" >/dev/null
+  elif command -v zip >/dev/null 2>&1; then
+    (cd "$tmp_dir" && zip -qr "$zip_path" .)
+  else
+    echo "Skipping zip: neither powershell.exe nor zip is available." >&2
+    return
+  fi
+
+  echo "Codebase zipped to $zip_path"
+}
+
+invoke_to_codex() {
+  WIN_DIR="$(win_to_wsl_path "$WIN_COORDINATOR_DIR")"
+  CODEX_DIR="$(win_to_wsl_path "$CODEX_COORDINATOR_DIR")"
+  TEMP_DIR_WSL="$(win_to_wsl_path "$TEMP_DIR")"
+
+  echo "Bridge Win -> CODEX"
+  echo "WinDir:   $WIN_COORDINATOR_DIR"
+  echo "CodexDir: $CODEX_COORDINATOR_DIR"
+  echo ""
+
+  [[ -d "$WIN_DIR" ]] || die "WinDir not found: $WIN_COORDINATOR_DIR"
+  mkdir -p "$CODEX_DIR" "$CODEX_DIR/Lumen"
+
+  local file
+  for file in "${FILES[@]}"; do
+    copy_to_codex_file "$file" "$WIN_DIR" "$CODEX_DIR"
+  done
+
+  for file in "${LUMEN_FILES[@]}"; do
+    copy_to_codex_file "$file" "$WIN_DIR" "$CODEX_DIR/Lumen"
+  done
+
+  echo ""
+  read -r -p "Enter a label if you want to commit and zip: " answer
+  if [[ -z "${answer//[[:space:]]/}" ]]; then
+    echo "No label entered; commit and zip skipped."
+    return
+  fi
+
+  (
+    cd "$CODEX_DIR"
+    git add .
+    if git diff --cached --quiet; then
+      echo "No Codex changes to commit."
+    else
+      git commit -m "$answer"
+    fi
+    git push
+  )
+
+  mkdir -p "$TEMP_DIR_WSL"
+  zip_codebase "$TEMP_DIR_WSL" "$answer"
+}
+
+invoke_to_win() {
+  WIN_DIR="$(win_to_wsl_path "$WIN_COORDINATOR_DIR")"
+  CODEX_DIR="$(win_to_wsl_path "$CODEX_COORDINATOR_DIR")"
+
+  echo "Bridge CODEX -> Win"
+  echo "CodexDir: $CODEX_COORDINATOR_DIR"
+  echo "WinDir:   $WIN_COORDINATOR_DIR"
+  echo ""
+
+  [[ -d "$CODEX_DIR" ]] || die "CodexDir not found: $CODEX_COORDINATOR_DIR"
+  [[ -d "$WIN_DIR" ]] || die "WinDir not found: $WIN_COORDINATOR_DIR"
+
+  assert_no_duplicate_flat_basenames "${FILES[@]}"
+
+  COPIED=0
+  MISSING=0
+
+  local file
+  for file in "${FILES[@]}"; do
+    copy_to_win_file "$file" "$CODEX_DIR" "$WIN_DIR"
+  done
+
+  for file in "${LUMEN_FILES[@]}"; do
+    copy_to_win_file "$file" "$CODEX_DIR/Lumen" "$WIN_DIR" "Lumen/"
+  done
+
+  echo ""
+  echo "Copied $COPIED file(s). Missing $MISSING file(s)."
+}
+
+parse_direction() {
+  if [[ "$#" -eq 1 ]]; then
+    DIRECTION="$1"
+    return
+  fi
+
+  if [[ "$#" -eq 2 && "$1" == "-Direction" ]]; then
+    DIRECTION="$2"
+    return
+  fi
+
+  usage
+  exit 2
+}
+
+parse_direction "$@"
+case "$DIRECTION" in
+  ToCodex|ToWin) ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac
+
+load_bridge_paths
+
+case "$DIRECTION" in
+  ToCodex) invoke_to_codex ;;
+  ToWin) invoke_to_win ;;
+esac

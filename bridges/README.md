@@ -3,16 +3,29 @@
 These scripts are Archy-operated helpers for moving the small Codex WSL subset
 to and from the full Win11 Coordinator repository.
 
-Preferred entry point:
+Preferred Windows / PowerShell entry point:
 
 ```powershell
 .\bridge.ps1 -Direction ToCodex
 .\bridge.ps1 -Direction ToWin
 ```
 
+Approved WSL / Bash entry point:
+
+```bash
+./linbridge ToCodex
+./linbridge ToWin
+./linbridge -Direction ToCodex
+./linbridge -Direction ToWin
+```
+
+`linbridge` exists for running the bridge from WSL when PowerShell warns on the
+`\\wsl.localhost` script path. It is tracked as executable; if that bit is ever
+missing after a copy, restore it from WSL with `chmod +x bridges/linbridge`.
+
 ## Paths
 
-`bridge.ps1` has built-in defaults, then optionally reads:
+`bridge.ps1` and `linbridge` have built-in defaults, then optionally read:
 
 ```text
 D:\miron\wip\codex_paths_config.txt
@@ -72,10 +85,14 @@ Copies files from the Codex subset back into their detailed paths under
 
 ## Bridge Scripts Usage Rule and Reasons
 
-The bridge is an Archy-operated Windows/PowerShell tool. Codex may inspect,
-edit, and reason about these scripts from WSL, but should not run bridge
-directions by default. This WSL subset intentionally may not have `pwsh`; that is fine.
-Do not invent a Linux workaround for bridge execution.
+The bridge is an Archy-operated helper. Codex may inspect, edit, and reason
+about these scripts from WSL, but should not run bridge directions by default
+unless Archy explicitly asks.
+
+`bridge.ps1` is the Windows/PowerShell entry point. `linbridge` is the approved
+WSL/Bash entry point, added to avoid PowerShell trust prompts on
+`\\wsl.localhost` script paths. Do not invent additional bridge execution
+workarounds unless Archy asks.
 
 The bridged subset is intentionally smaller than the Win11 production project. This is
 not only an ownership boundary; it is an operating constraint:
