@@ -18,8 +18,6 @@
 
 static constexpr float kCopyIconPx = 16.0f;
 static constexpr float kCopyButtonWidth = kCopyIconPx * 2.0f;
-static constexpr const char* kHydraStub1Url = "https://www.google.com";
-static constexpr const char* kHydraStub2Url = "https://stgadm.prismray.io/Title/RVSBBCE/Diagnostics/FactViewerPresetList";
 static constexpr const char* kHydraFactsSessionBaseUrl = "https://stgadm.prismray.io/Title/";
 static constexpr const char* kHydraFactsSessionPath = "/Diagnostics/FactViewerPresetList/FactViewerSearchResult?query=";
 
@@ -591,33 +589,22 @@ void InspectorPanel::DrawKeyValTable(const GraphNode& n)
 
 void InspectorPanel::DrawHydraActions(const GraphNode& n)
 {
+   bool allOK = true;
    const std::string hydraKernelSessionId = FindKvValue("HYDRA_KERNEL_SESSION_ID", n.kv);
    const std::string titleId = FindKvValue("TITLE_ID", n.kv);
-   const bool hasHydraKernelSessionId = !hydraKernelSessionId.empty();
-   const bool hasTitleId = !titleId.empty();
-
-   if (ImGui::Button("Stub1")) {
-      OpenUrlInBrowser(kHydraStub1Url);
-   }
-
-   ImGui::SameLine();
-   if (ImGui::Button("Stub2")) {
-      OpenUrlInBrowser(kHydraStub2Url);
-   }
-
-   ImGui::SameLine();
-   if (!hasHydraKernelSessionId || !hasTitleId) {
+   if (hydraKernelSessionId.empty() || titleId.empty()) {
       ImGui::BeginDisabled();
+      allOK = false;
    }
 
-   if (ImGui::Button("View Facts Session") && hasHydraKernelSessionId && hasTitleId) {
+   if (ImGui::Button("View Facts Session") && allOK) {
       const std::string url = BuildHydraFactsSessionUrl(titleId, hydraKernelSessionId);
       if (!url.empty()) {
          OpenUrlInBrowser(url);
       }
    }
 
-   if (!hasHydraKernelSessionId || !hasTitleId) {
+   if (!allOK) {
       ImGui::EndDisabled();
       if (ImGui::IsItemHovered()) {
          ImGui::SetTooltip("TITLE_ID or HYDRA_KERNEL_SESSION_ID is missing");
