@@ -366,7 +366,7 @@ static float CalcPropNameColumnWidth(const std::vector<std::pair<std::string, st
    float w = ImGui::CalcTextSize("propName").x;
 
    for (const auto& row : kv) {
-      w = std::max(w, ImGui::CalcTextSize(row.first.c_str()).x);
+      w = max(w, ImGui::CalcTextSize(row.first.c_str()).x);
    }
 
    // Cell padding on both sides + small breathing room
@@ -375,7 +375,7 @@ static float CalcPropNameColumnWidth(const std::vector<std::pair<std::string, st
    // Do not let propName eat the whole Inspector.
    const float avail = ImGui::GetContentRegionAvail().x;
    const float minW = 120.0f;
-   const float maxW = std::max(minW, avail * 0.75f);
+   const float maxW = max(minW, avail * 0.75f);
 
    return ClampFloat(minW, w, maxW);
 }
@@ -505,7 +505,7 @@ void InspectorPanel::DrawKeyValTable(const GraphNode& n)
 
    const float minHeight = 250.0f;
    float availY = ImGui::GetContentRegionAvail().y;
-   float childHeight = std::max(minHeight, availY);
+   float childHeight = max(minHeight, availY);
    ImGui::BeginChild("facts_kv", ImVec2(0, childHeight), true);
 
    ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp;
