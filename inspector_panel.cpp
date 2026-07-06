@@ -20,7 +20,7 @@ static constexpr float kCopyIconPx = 16.0f;
 static constexpr float kCopyButtonWidth = kCopyIconPx * 2.0f;
 static constexpr const char* kHydraStub1Url = "https://www.google.com";
 static constexpr const char* kHydraStub2Url = "https://stgadm.prismray.io/Title/RVSBBCE/Diagnostics/FactViewerPresetList";
-static constexpr const char* kHydraStub3BaseUrl = "https://stgadm.prismray.io/Title/RVSBBCE/Diagnostics/FactViewerPresetList/FactViewerSearchResult?query=";
+static constexpr const char* kHydraFactsSessionBaseUrl = "https://stgadm.prismray.io/Title/RVSBBCE/Diagnostics/FactViewerPresetList/FactViewerSearchResult?query=";
 
 // #define DBG_BADGES
 
@@ -339,7 +339,7 @@ static bool FormatUtcTimestamp(std::chrono::system_clock::time_point tp, std::st
    return true;
 }
 
-static std::string BuildHydraStub3Url(const std::string& hydraKernelSessionId)
+static std::string BuildHydraFactsSessionUrl(const std::string& hydraKernelSessionId)
 {
    using namespace std::chrono;
 
@@ -356,7 +356,7 @@ static std::string BuildHydraStub3Url(const std::string& hydraKernelSessionId)
       << "\",\"end\":\"" << endUtc
       << "\",\"useStrictDateInclusion\":false,\"contexts\":[]}";
 
-   return std::string(kHydraStub3BaseUrl) + UrlEncode(json.str());
+   return std::string(kHydraFactsSessionBaseUrl) + UrlEncode(json.str());
 }
 
 static float CalcPropNameColumnWidth(const std::vector<std::pair<std::string, std::string>>& kv)
@@ -605,8 +605,8 @@ void InspectorPanel::DrawHydraActions(const GraphNode& n)
       ImGui::BeginDisabled();
    }
 
-   if (ImGui::Button("Stub3") && hasHydraKernelSessionId) {
-      const std::string url = BuildHydraStub3Url(hydraKernelSessionId);
+   if (ImGui::Button("View Facts Session") && hasHydraKernelSessionId) {
+      const std::string url = BuildHydraFactsSessionUrl(hydraKernelSessionId);
       if (!url.empty()) {
          OpenUrlInBrowser(url);
       }
