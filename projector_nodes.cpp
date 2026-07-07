@@ -1,9 +1,19 @@
 #include "projector_internal.h"
 
 #include <algorithm>
+#include <string_view>
 
 namespace Sample::UI::Controllers
 {
+
+static NodeKind HydraIconKindForClientVersion(std::string_view clientVersion)
+{
+   if (clientVersion == "DemoH5.17.build48")
+      return NodeKind::ProsSample;
+   if (clientVersion == "co-4.27h-mm-flow")
+      return NodeKind::MMFlowSample;
+   return NodeKind::HydraSample;
+}
 
 void StartServerController::ProjectServers()
 {
@@ -126,6 +136,7 @@ void StartServerController::ProjectHydraUsers()
          auto& n = UpsertNode(graph, hydraId);
          const std::string ksiva = KernelSessionIdVisualAlias(u.hydraKernelSessionId);
          n.kind = NodeKind::HydraSample;
+         n.iconKindOverride = HydraIconKindForClientVersion(u.clientVersion);
          n.title = "Hydra";
          n.subtitle = "entry";
          n.entityKey = HydraEntityKeyForUser(st, uid);

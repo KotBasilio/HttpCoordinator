@@ -25,6 +25,7 @@ GraphNode& UpsertNode(GraphModel& g, NodeId id)
    n.title.clear();
    n.subtitle.clear();
    n.entityKey.clear();
+   n.iconKindOverride = NodeKind::Unknown;
    n.echoValues.clear();
    n.kv.clear();
    n.badges.clear();

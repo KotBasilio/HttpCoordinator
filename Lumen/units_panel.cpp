@@ -10,6 +10,11 @@ UnitsPanel::UnitsPanel(GraphViewState& view_, GraphModel& model_, Sample::Tex::T
 {
 }
 
+static NodeKind EffectiveIconKind(const GraphNode& n)
+{
+   return n.iconKindOverride == NodeKind::Unknown ? n.kind : n.iconKindOverride;
+}
+
 // Prototype "status dot" logic.
 // Later: drive from real runtime state (online/starting/offline/etc).
 ImU32 UnitsPanel::StatusColorFor(const GraphNode& n)
@@ -164,7 +169,7 @@ void UnitsPanel::DrawNodeRow(const GraphNode& n)
    ImGui::SameLine();
 
    // Icon
-   ImTextureID icon = tex.IconForKind(n.kind, 24.0f);
+   ImTextureID icon = tex.IconForKind(EffectiveIconKind(n), 24.0f);
    if (icon != ImTextureID_Invalid) {
       // Use a small, consistent icon size for list readability
       const float iconSz = 16.0f;

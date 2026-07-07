@@ -217,7 +217,7 @@ void InspectorPanel::DrawUpDownButtons(const GraphNode& n, const ImVec2& fieldsS
 
 void InspectorPanel::ExplainIcon(const GraphNode& n)
 {
-   ImTextureID icon = tex.IconForKind(n.kind);
+   ImTextureID icon = tex.IconForKind(EffectiveIconKind(n));
    if (icon != ImTextureID_Invalid) {
       ImGui::Image(icon, ImVec2(32, 32));
       ImGui::SameLine();
@@ -269,6 +269,11 @@ static float ClampFloat(float lo, float v, float hi)
 {
    if (hi < lo) hi = lo;
    return (v < lo) ? lo : (v > hi) ? hi : v;
+}
+
+static NodeKind EffectiveIconKind(const GraphNode& n)
+{
+   return n.iconKindOverride == NodeKind::Unknown ? n.kind : n.iconKindOverride;
 }
 
 static std::string FindKvValue(std::string_view key, const std::vector<std::pair<std::string, std::string>>& kv)

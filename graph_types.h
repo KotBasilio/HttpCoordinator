@@ -72,6 +72,8 @@ struct GraphNode
 
    // Inspector payload key (userId/sessionId etc.)
    std::string entityKey;
+   // Optional visual override for icon family; Unknown means "use kind".
+   NodeKind iconKindOverride = NodeKind::Unknown;
    // Extra values that should resolve this node from Inspector kv clicks.
    std::vector<std::string> echoValues;
    // facts, context pairs, etc.

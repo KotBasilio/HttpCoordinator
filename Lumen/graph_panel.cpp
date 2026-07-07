@@ -62,6 +62,11 @@ static float IconFrameRounding(float w, float h)
    return std::clamp(shortSide * 0.10f, 3.0f, 16.0f);
 }
 
+static NodeKind EffectiveIconKind(const GraphNode& n)
+{
+   return n.iconKindOverride == NodeKind::Unknown ? n.kind : n.iconKindOverride;
+}
+
 static bool HasBadge(const GraphNode& n, NodeKind badge)
 {
    return std::find(n.badges.begin(), n.badges.end(), badge) != n.badges.end();
@@ -281,7 +286,7 @@ void GraphPanel::RenderIcons(ImDrawList* dl)
       const float h = base_h * view.zoom;
       const float desiredPx = std::max(w, h);
 
-      auto lod = tex.LodInfoForKind(n.kind, desiredPx);
+      auto lod = tex.LodInfoForKind(EffectiveIconKind(n), desiredPx);
       ImTextureID icon = tex.Access(lod.asset);
       if (!icon) continue;
 
