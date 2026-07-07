@@ -119,6 +119,7 @@ void FillHydraKv(GraphNode& n, const UserState& u, const std::string& hydraIdent
    AddKv(n.kv, "RUNTIME_SEANCE_ID", u.runtimeSeanceId);
    AddKv(n.kv, "HYDRA_USER_IDENTITY", u.userIdentity);
    AddKv(n.kv, "HYDRA_KERNEL_SESSION_ID", u.hydraKernelSessionId);
+   AddKv(n.kv, "CLIENT_VERSION", u.clientVersion);
    AddKv(n.kv, "TITLE_ID", u.titleId);
    AddKv(n.kv, "KSIVA", ksiva);
    AddKv(n.kv, "LINKED_USER_ID", u.userId);
@@ -135,6 +136,7 @@ void FillUserKv(GraphNode& n, const UserState& u)
    AddKvIfMissing(n.kv, "USER_IDENTITY", u.userIdentity, "USER_ID");
    AddKvIfMissing(n.kv, "USER_ID", u.userId);
    AddKvIfMissing(n.kv, "ACCOUNT_NAME", u.nickname);
+   AddKvIfMissing(n.kv, "CLIENT_VERSION", u.clientVersion);
    AddKvIfMissing(n.kv, "TITLE_ID", u.titleId);
    AddKvIfMissing(n.kv, "PLATFORM", u.platform);
    AddKvIfMissing(n.kv, "PROVIDER_ID", u.providerId, "PROVIDER");

@@ -35,6 +35,7 @@ bool StartServerController::HandleFactsWriteBinaryPackUser(SdkPacket& u)
    SetIfDifferent(usr.userIdentity, ExtractUserIdentity(p));
    SetIfDifferent(usr.hydraKernelSessionId, ExtractHydraKernelSessionId(p));
    SetIfDifferent(usr.runtimeSeanceId, ExtractFactsHeaderValue(p, "RUNTIME_SEANCE_ID"));
+   SetIfDifferent(usr.clientVersion, ExtractFactsHeaderValue(p, "CLIENT_VERSION"));
    SetIfDifferent(usr.titleId, JsonGetString(p, { "userContext", "data", "titleId" }));
    SetIfDifferent(usr.platform, JsonGetString(p, { "userContext", "data", "platform" }));
    SetIfDifferent(usr.providerId, JsonGetString(p, { "userContext", "data", "providerId" }));
@@ -66,6 +67,9 @@ bool StartServerController::HandleFactsWriteBinaryPackUser(SdkPacket& u)
 
       if (k == "RUNTIME_SEANCE_ID") {
          SetIfDifferent(usr.runtimeSeanceId, v);
+      }
+      if (k == "CLIENT_VERSION") {
+         SetIfDifferent(usr.clientVersion, v);
       }
 
       usr.facts.emplace_back(k, v);

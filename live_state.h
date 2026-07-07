@@ -19,6 +19,7 @@ struct UserState
    std::string hydraKernelSessionId; // client/user-side kernelSessionId
    std::string runtimeSeanceId;
    std::string titleId;
+   std::string clientVersion;
    std::string nickname;    // best effort
    std::string platform;
    std::string providerId;
