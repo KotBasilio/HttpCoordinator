@@ -10,11 +10,6 @@ UnitsPanel::UnitsPanel(GraphViewState& view_, GraphModel& model_, Sample::Tex::T
 {
 }
 
-static NodeKind EffectiveIconKind(const GraphNode& n)
-{
-   return n.iconKindOverride == NodeKind::Unknown ? n.kind : n.iconKindOverride;
-}
-
 // Prototype "status dot" logic.
 // Later: drive from real runtime state (online/starting/offline/etc).
 ImU32 UnitsPanel::StatusColorFor(const GraphNode& n)

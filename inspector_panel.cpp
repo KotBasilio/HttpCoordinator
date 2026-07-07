@@ -271,11 +271,6 @@ static float ClampFloat(float lo, float v, float hi)
    return (v < lo) ? lo : (v > hi) ? hi : v;
 }
 
-static NodeKind EffectiveIconKind(const GraphNode& n)
-{
-   return n.iconKindOverride == NodeKind::Unknown ? n.kind : n.iconKindOverride;
-}
-
 static std::string FindKvValue(std::string_view key, const std::vector<std::pair<std::string, std::string>>& kv)
 {
    const auto it = std::find_if(kv.begin(), kv.end(), [key](const auto& row) {

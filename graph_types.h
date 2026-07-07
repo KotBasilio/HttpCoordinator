@@ -84,6 +84,11 @@ struct GraphNode
    std::vector<NodeKind> badges;
 };
 
+inline NodeKind EffectiveIconKind(const GraphNode& n)
+{
+   return n.iconKindOverride == NodeKind::Unknown ? n.kind : n.iconKindOverride;
+}
+
 enum class LinkStyle : uint8_t
 {
    Straight,
