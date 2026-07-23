@@ -5,7 +5,7 @@
 
 #include "ui/controllers/live_state.h"
 
-// Codex form VS Code was here
+// WSL-Codex form VS Code was here.
 namespace Sample::UI::Controllers {
 
 static bool StartsWith(std::string_view s, std::string_view pre)
