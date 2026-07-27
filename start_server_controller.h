@@ -34,6 +34,7 @@ private:
    // packets ingestion -- expands TickIngestion()
    void SwitchGraphToIngestion();
    bool ExpireOfflineUsers();
+   void PromoteUserToLocal(const std::string& uid);
    bool ApplyAllReducers(SdkPacket& u);
    bool ApplyServerReducers(SdkPacket& u);
    bool HandleSignInHydraRequest(SdkPacket& u);

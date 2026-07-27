@@ -6,6 +6,7 @@ Keep this list light. Current task direction still belongs in `active.md`; accep
 
 | ID | Status | Area | Summary | Notes |
 |---|---|---|---|---|
+| USER-LCL-001 | Review | User attribution | Strict local user attribution and promotion | Users default to remote and are promoted only from a packet's outer caller context. Passive Party/MM member arrays remain remote. Pending Win11 trace validation. |
 | RED-001 | Deferred | Reducer correlation | Replace remaining single-slot request/response state when interleaving appears | FIFO queues now cover Hydra login, MM get-info, standalone create, and SC finish flows. Standalone code/sign-in, SC create/GetServerInfo/GetSessionEvents, DS session info, and activation still use one pending context. Promote only when logs show concurrent or ambiguous flows; correlate from concrete packet evidence rather than graph-side fixes. |
 | ID-001 | Deferred | Identity | Map Hydra identity seams when evidence appears | The SDK exposes `context.data.userIdentity`, `member.userId`, and Facts `USER_ID`. Do not collapse them without packet evidence; Facts may later support an explicit identity map. |
 | HYDRA-001 | Deferred | Hydra identity | Merge local users through local Hydra instance state | `task_ctx/log_3_users.analysis.md` shows three local Hydra connect flows but only one current `RUNTIME_SEANCE_ID`. Add minimal local-Hydra-instance state so one proven runtime seance can key the shared HydraSample while per-user fallback remains for unproven users. |

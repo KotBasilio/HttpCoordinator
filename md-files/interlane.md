@@ -38,5 +38,6 @@ Optional format for new notes:
   default with real local-user evidence when the reducer identity path exposes it.
 - Local means traffic source / observed local app or server instance; entities
   mentioned by that traffic are remote until proven otherwise.
-- Risk: Until then every User gets the LocalUser badge by design placeholder.
-- Status: Open.
+- Risk: Runtime trace validation is still needed to confirm local callers keep
+  the badge while passively observed Party/MM members do not receive it.
+- Status: Forge implemented `USER-LCL-001` on 2026-07-27; pending Win11 review.

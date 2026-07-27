@@ -26,7 +26,7 @@ struct UserState
    std::string userIdentityType;
    bool online = false;
    double offlineSinceS = -1.0;
-   bool isLocal = true; // placeholder until Forge wires concrete local-user evidence
+   bool isLocal = false; // default to false; promoted only by direct caller context
 
    // propertyName/propertyValue
    std::vector<std::pair<std::string, std::string>> facts; 

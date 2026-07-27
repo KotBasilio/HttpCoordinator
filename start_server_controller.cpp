@@ -102,39 +102,62 @@ bool StartServerController::ExpireOfflineUsers()
    return changed;
 }
 
+void StartServerController::PromoteUserToLocal(const std::string& uid)
+{
+   if (uid.empty())
+      return;
+
+   st.TouchUser(uid);
+   st.users[uid].isLocal = true;
+}
+
 bool StartServerController::ApplyAllReducers(SdkPacket& u)
 {
+   // An outer caller context identifies the local user instance that emitted
+   // this packet. Users mentioned passively inside member arrays stay remote.
+   const std::string activeCallerUid = ExtractUserIdentity(u.payload);
+   bool localPromotionChanged = false;
+   if (!activeCallerUid.empty()) {
+      const auto it = st.users.find(activeCallerUid);
+      localPromotionChanged = (it == st.users.end() || !it->second.isLocal);
+      PromoteUserToLocal(activeCallerUid);
+   }
+
+   const auto withLocalPromotion = [localPromotionChanged](bool reducerChanged) {
+      return localPromotionChanged || reducerChanged;
+   };
+
    // a few switch-es to separate different logical areas
    // -- user
    switch (u.reqNameId) {
-      case PROS_GLOBAL_API_AUTH_SIGNINHYDRAREQUEST:   return HandleSignInHydraRequest(u);
+      case PROS_GLOBAL_API_AUTH_SIGNINHYDRAREQUEST:   return withLocalPromotion(HandleSignInHydraRequest(u));
       case PROS_GLOBAL_API_AUTH_SIGNINHYDRARESPONSE:
-      case HYDRA_API_USER_CONNECTRESPONSE:              return HandleSignIn(u);
+      case HYDRA_API_USER_CONNECTRESPONSE:              return withLocalPromotion(HandleSignIn(u));
 
       case PROS_GLOBAL_API_AUTH_SIGNOUTUSERREQUEST:
-      case PROS_GLOBAL_API_AUTH_SIGNOUTUSERRESPONSE:    return HandleSignOut(u);
+      case PROS_GLOBAL_API_AUTH_SIGNOUTUSERRESPONSE:    return withLocalPromotion(HandleSignOut(u));
 
-      case PROS_API_FACTS_WRITEBINARYPACKUSERREQUEST:   return HandleFactsWriteBinaryPackUser(u);
+      case PROS_API_FACTS_WRITEBINARYPACKUSERREQUEST:   return withLocalPromotion(HandleFactsWriteBinaryPackUser(u));
    }
 
    // -- party
    switch (u.reqNameId) {
-      case HYDRA_API_PUSH_PRESENCE_PRESENCEPARTYUPDATE: return HandlePartyUpdate(u);
-      case HYDRA_API_PRESENCE_PARTYINVITEACCEPTREQUEST: return HandlePartyInviteAcceptRequest(u);
-      case HYDRA_API_PRESENCE_PARTYDISBANDREQUEST:      return HandlePartyDisbandRequest(u);
+      case HYDRA_API_PUSH_PRESENCE_PRESENCEPARTYUPDATE: return withLocalPromotion(HandlePartyUpdate(u));
+      case HYDRA_API_PRESENCE_PARTYINVITEACCEPTREQUEST: return withLocalPromotion(HandlePartyInviteAcceptRequest(u));
+      case HYDRA_API_PRESENCE_PARTYDISBANDREQUEST:      return withLocalPromotion(HandlePartyDisbandRequest(u));
    }
 
    // -- MM
    switch (u.reqNameId) {
-      case HYDRA_API_PUSH_PRESENCE_PRESENCESESSIONUPDATE:      return HandleMMSessionUpdate(u);
-      case HYDRA_API_PRESENCE_MATCHMAKESESSIONGETINFOREQUEST:  return HandleMatchmakeSessionGetInfoRequest(u);
-      case HYDRA_API_PRESENCE_MATCHMAKESESSIONGETINFORESPONSE: return HandleMatchmakeSessionGetInfoResponse(u);
-      case HYDRA_API_PRESENCE_MATCHMAKESESSIONREMOVEMEMBERSREQUEST: return HandleMatchmakeSessionRemoveMembersRequest(u);
-      case HYDRA_API_PRESENCE_MATCHMAKESESSIONLEAVEREQUEST:    return HandleMatchmakeSessionLeaveRequest(u);
+      case HYDRA_API_PUSH_PRESENCE_PRESENCESESSIONUPDATE:      return withLocalPromotion(HandleMMSessionUpdate(u));
+      case HYDRA_API_PRESENCE_MATCHMAKESESSIONGETINFOREQUEST:  return withLocalPromotion(HandleMatchmakeSessionGetInfoRequest(u));
+      case HYDRA_API_PRESENCE_MATCHMAKESESSIONGETINFORESPONSE: return withLocalPromotion(HandleMatchmakeSessionGetInfoResponse(u));
+      case HYDRA_API_PRESENCE_MATCHMAKESESSIONREMOVEMEMBERSREQUEST: return withLocalPromotion(HandleMatchmakeSessionRemoveMembersRequest(u));
+      case HYDRA_API_PRESENCE_MATCHMAKESESSIONLEAVEREQUEST:    return withLocalPromotion(HandleMatchmakeSessionLeaveRequest(u));
    }
 
    // -- servers
-   return ApplyServerReducers(u);
+   return withLocalPromotion(ApplyServerReducers(u));
 }
 
 bool StartServerController::ApplyServerReducers(SdkPacket& u)
