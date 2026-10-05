@@ -147,6 +147,25 @@ SDK identity naming is inconsistent. Important values include:
 
 Do not assume identity-like values are the same without evidence.
 
+### Facts runtime-seance trust
+
+`RUNTIME_SEANCE_ID` is strong Hydra identity evidence because projector identity
+prefers it over `hydraKernelSessionId` and user-id fallback.
+
+For Facts ingestion, compare the Facts header `KERNEL_SESSION_ID` with the
+packet user-context kernel session id:
+
+- if both are present and equal, the packet's `RUNTIME_SEANCE_ID` may update
+  `UserState::runtimeSeanceId`;
+- if both are present and differ, keep the raw Facts rows as debug/Inspector
+  evidence but do not let that packet update `runtimeSeanceId`;
+- if either kernel id is absent, absence is not contradiction: retain the
+  current acceptance behavior.
+
+A kernel mismatch should emit a small warning log so stale identity evidence is
+visible during trace review. This guard applies to every code path in Facts
+ingestion that could promote `RUNTIME_SEANCE_ID` into reducer identity state.
+
 Local vs remote:
 - The Coordinator observes HTTP traffic from local instances of apps and
   servers.
