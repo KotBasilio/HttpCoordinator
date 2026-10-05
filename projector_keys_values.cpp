@@ -167,6 +167,16 @@ void FillMMSessionKv(GraphNode& n, const SessionState& s, const std::string& sid
       AddKv(n.kv, ("VARIANT_" + variant.first).c_str(), variant.second);
    }
 
+   for (const auto& field : s.data.publicFields)
+      AddKv(n.kv, ("DATA_PUBLIC_" + field.first).c_str(), field.second);
+
+   for (size_t i = 0; i < s.data.rttItems.size(); ++i) {
+      const auto& item = s.data.rttItems[i];
+      const std::string prefix = "RTT_" + std::to_string(i) + "_";
+      AddKv(n.kv, (prefix + "DATACENTER_ID").c_str(), item.datacenterId);
+      AddKv(n.kv, (prefix + "MS").c_str(), item.rttMs);
+   }
+
    const std::vector<std::string> memberIds = SortedKeys(s.members);
 
    int fallbackMemberIndex = 0;

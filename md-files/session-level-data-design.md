@@ -221,7 +221,12 @@ For a valid decoded payload, treat decoded sections as the current snapshot for 
 
 If a layer is absent, malformed, or of an unexpected type, prefer retaining previously known valid state rather than erasing it based on unusable evidence.
 
-If future logs establish that an explicit empty object or array means "clear this section", that behavior can be promoted then.
+An explicit empty object or array is a valid snapshot and clears that section:
+
+- valid `public: {}` clears `publicFields`;
+- valid `rtt.items: []` clears `rttItems`.
+
+Absent, malformed, or unexpected layers retain previously known valid state.
 
 ## Projection and Inspector proposal
 
