@@ -190,7 +190,7 @@ void FillMMSessionKv(GraphNode& n, const SessionState& s, const std::string& sid
       AddKv(n.kv, (prefix + "PROVIDER").c_str(), mi.provider);
       AddKv(n.kv, (prefix + "EXTENDED_DATA").c_str(), mi.extendedData);
       for (const auto& field : mi.dataFields)
-         AddKv(n.kv, (prefix + "DATA_" + field.first).c_str(), field.second);
+         AddKv(n.kv, (prefix + "_" + field.first).c_str(), field.second);
       ++fallbackMemberIndex;
    }
 }
