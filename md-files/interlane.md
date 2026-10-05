@@ -32,12 +32,4 @@ Optional format for new notes:
 
 ## Open Notes
 
-### 2026-05-25 - Lumen - Local user badge evidence
-- Touching: `UserState::isLocal`, User badge projection/rendering.
-- Needs from other lane: Forge should replace the temporary `isLocal = true`
-  default with real local-user evidence when the reducer identity path exposes it.
-- Local means traffic source / observed local app or server instance; entities
-  mentioned by that traffic are remote until proven otherwise.
-- Risk: Runtime trace validation is still needed to confirm local callers keep
-  the badge while passively observed Party/MM members do not receive it.
-- Status: Forge implemented `USER-LCL-001` on 2026-07-27; pending Win11 review.
+No open notes.

@@ -1,6 +1,6 @@
 # Session-Level Data in PresenceSessionUpdate
 
-Status: design proposal  
+Status: implemented and Win11-verified (2026-10-05)  
 Scope: Forge / MMSession reducer + projection + Inspector  
 Example source: `Hydra.Api.Push.Presence.PresenceSessionUpdate`
 
@@ -74,15 +74,15 @@ After decoding the two serialized JSON layers, the useful logical payload is app
 }
 ```
 
-The current reducer already stores session identity/state, variants, session type, data-center id, settings, long-operation fields, and member state. It does not currently parse this nested `gameData.data` payload.
+The reducer stores session identity/state, variants, session type, data-center id, settings, long-operation fields, member state, and the nested session-level `gameData.data` payload described below.
 
 This information should not be placed into `SessionState::MemberInfo`: it describes the MMSession/game as a whole.
 
-## Proposed state model
+## Implemented state model
 
 Add explicit session-level state under `SessionState`.
 
-A small first design could look conceptually like:
+The implemented state model follows this shape:
 
 ```cpp
 struct SessionDataState
@@ -105,7 +105,7 @@ struct SessionState
 };
 ```
 
-Names are illustrative; implementation should follow the surrounding code style.
+The implementation uses these names in `live_state.h`.
 
 ### Why not one generic flat map?
 
@@ -123,7 +123,7 @@ Keeping a small `RttItem` structure preserves that meaning and gives projection/
 
 The goal is not to create a generic arbitrary JSON tree inside `LiveState`. Store the evidence the Coordinator currently understands.
 
-## Proposed reducer behavior
+## Reducer behavior
 
 Parsing belongs in the Presence/MM reducer, following the existing architecture:
 
@@ -139,7 +139,7 @@ SdkPacket
 
 Do not parse serialized payloads in the projector or Inspector.
 
-Recommended decoding steps:
+Implemented decoding steps:
 
 1. Find `gameData.data`.
 2. Read its inner `data` string.
@@ -148,7 +148,7 @@ Recommended decoding steps:
    - read its `data` string, if present, and parse that second serialized JSON object for the `public` section;
    - parse `rtt.items` if it is an array.
 5. Store only fields whose meaning and shape are currently understood.
-6. Missing, empty, malformed, or unexpected layers should be ignored safely and must not prevent the rest of `PresenceSessionUpdate` from being reduced.
+6. Missing, malformed, or unexpected layers are ignored safely and must not prevent the rest of `PresenceSessionUpdate` from being reduced. Valid empty `public: {}` or `rtt.items: []` sections are authoritative empty snapshots and clear their stored section.
 
 The observed structure is therefore:
 
@@ -177,7 +177,7 @@ For the observed `public` object:
 }
 ```
 
-the first implementation should support scalar values:
+the implementation supports scalar values:
 
 - string
 - integer / unsigned integer / floating point
@@ -228,7 +228,7 @@ An explicit empty object or array is a valid snapshot and clears that section:
 
 Absent, malformed, or unexpected layers retain previously known valid state.
 
-## Projection and Inspector proposal
+## Projection and Inspector behavior
 
 Keep `GraphNode::kv` as the current presentation surface.
 
@@ -242,7 +242,7 @@ DATA_PUBLIC_serverAddress  = redstone://...:game
 DATA_PUBLIC_serverState    = 2
 ```
 
-The exact prefix is adjustable, but it should make these values visibly distinct from member-level `MEMBER_n_DATA_*` fields.
+These keys remain distinct from member-level `MEMBER_n_<field>` keys.
 
 For RTT, preserve the structured representation in `SessionState`, then flatten only at projection time if that is the smallest first UI step:
 
@@ -257,9 +257,13 @@ RTT_2_DATACENTER_ID = US-East
 RTT_2_MS            = 171
 ```
 
-A later Inspector refinement may group these as an `RTT[size=N]` collection similar to the existing member grouping.
+Inspector recognizes these projected RTT pairs and groups complete records under
+`GAME DATA -> RTT[size=N]`, displaying each as `datacenter -> N ms`.
+Incomplete RTT pairs remain visible as ordinary flat evidence rows.
 
-That UI refinement should not block correct reducer/state support.
+`DATA_PUBLIC_<field>` rows are grouped under `GAME DATA -> public`.
+The state model remains structured even though `GraphNode::kv` is the
+projection/presentation transport.
 
 ## Relationship to existing fields
 
@@ -288,45 +292,48 @@ Do not use this work to:
 
 The first implementation should stay focused on truthful session-level storage and visibility.
 
-## Suggested implementation slices
-
-This is larger than the recent member-data change, so splitting it is reasonable.
+## Implemented slices
 
 ### Slice A — reducer and state
 
-- add the session-level data structure;
-- decode the observed nested `gameData.data.data` envelope;
-- store scalar `public` fields;
-- store structured RTT items;
-- add comparison/update helpers where useful.
+Implemented:
+- session-level `SessionDataState`;
+- decoding of the observed nested `gameData.data.data` envelope;
+- sorted scalar `publicFields`;
+- structured RTT items;
+- snapshot update semantics including explicit-empty clears.
 
 ### Slice B — projection and Inspector
 
-- project public fields through `GraphNode::kv`;
-- expose RTT values;
-- initially use flat RTT keys if that keeps the change small;
-- optionally add grouped RTT presentation later as a UI refinement.
+Implemented:
+- public fields projected through `GraphNode::kv`;
+- RTT values projected as indexed key pairs;
+- Inspector grouping under `GAME DATA -> public` and
+  `GAME DATA -> RTT[size=N]`;
+- incomplete RTT pairs preserved as flat rows rather than hidden.
 
-The architectural boundary is more important than doing every visual refinement in one commit.
+The reducer -> state -> projector -> Inspector architectural boundary remains intact.
 
 ## Verification example
 
-Given the observed packet, the MMSession Inspector should eventually expose at least:
+Given the observed packet, the MMSession Inspector exposes the same evidence in grouped form:
 
 ```text
 MM_SESSION_ID = 97509358-bc13-11f1-b593-000d3a24b8ba
 MM_STATE = MATCHMAKE_STATE_GAME
 
-DATA_PUBLIC_hostName = White Wolf
-DATA_PUBLIC_level = UID_MAP_AU_02
-DATA_PUBLIC_region = region_au
-DATA_PUBLIC_serverAddress = redstone://5fb0987c-b762-11f1-98c9-7ced8d0d482e:game
-DATA_PUBLIC_serverState = 2
+GAME DATA
+  public
+    hostName = White Wolf
+    level = UID_MAP_AU_02
+    region = region_au
+    serverAddress = redstone://5fb0987c-b762-11f1-98c9-7ced8d0d482e:game
+    serverState = 2
 
-RTT:
-  EU-West = 93 ms
-  SA-East = 203 ms
-  US-East = 171 ms
+  RTT[size=3]
+    EU-West = 93 ms
+    SA-East = 203 ms
+    US-East = 171 ms
 ```
 
 Exact Inspector labels are secondary.

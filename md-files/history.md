@@ -68,6 +68,18 @@ Validated behavior:
   alone is not universal evidence of remote disappearance.
 - A later sign-in for the same user cancels the pending offline expiry.
 
+### Local user attribution
+
+Validated behavior:
+- `UserState::isLocal` defaults to false.
+- `ApplyAllReducers()` extracts the packet's outer caller identity and promotes
+  that directly observed user to local before domain reducer dispatch.
+- Users mentioned only through passive Party/MM membership evidence remain
+  remote unless they are later directly observed as a packet caller.
+- The local-user badge is therefore evidence-backed rather than a placeholder
+  display default.
+- `USER-LCL-001` is complete.
+
 ### User facts in Inspector
 
 Validated behavior:
@@ -95,6 +107,19 @@ Validated behavior:
 - Party column: appears once a renderable Party exists, then stays for the run.
 - MM column: appears once a renderable MM session exists, then stays for the run.
 - SCSession is placed between Server and Hydra.
+
+### Party membership reconciliation
+
+Validated behavior:
+- A confirmed Party member ADD or UPDATE is direct evidence of current Party
+  membership for that user.
+- Before applying the target Party member data, the reducer removes that user
+  from any other Party.
+- Old Party leader state is recomputed, empty old Parties are removed, and
+  `partyOrder` is cleaned through shared `LiveState` helpers.
+- Invite acceptance remains an early cleanup signal when the destination Party
+  id is not yet known; the following Party update establishes the new Party.
+- Party disband remains teardown, not reassignment evidence.
 
 ### Party and MM projection
 
@@ -134,6 +159,24 @@ Observed domain constraints:
 - A user belongs to one MMSession at a time.
 - Party ownership and the user who creates/controls the corresponding MM
   session are aligned by design.
+
+### MMSession member and game data
+
+Validated behavior:
+- Scalar fields inside member-level `memberData.data` are parsed into
+  `SessionState::MemberInfo::dataFields` and shown inside the grouped member
+  section in Inspector.
+- Nested session-level `gameData.data.data` is decoded into
+  `SessionDataState`, with sorted scalar `publicFields` and structured RTT
+  items.
+- Valid empty `public: {}` and `rtt.items: []` sections clear previously
+  stored values; absent or malformed sections retain previously known valid
+  state.
+- Projection keeps `GraphNode::kv` as the presentation surface.
+- Inspector groups session-level values under `GAME DATA`: `public` fields
+  remain named properties and complete RTT pairs render as `datacenter -> N ms`.
+- These values are observational evidence only; they do not create topology or
+  imply Server/SCSession/Hydra relationships.
 
 ### SCSession layer
 

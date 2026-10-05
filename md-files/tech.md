@@ -71,7 +71,13 @@ SCSession is the SessionControl/game-session layer between Servers and Hydra.
 ## Key Files
 
 - `start_server_controller.h`
-  - Declares `SdkPacket`, `CoordinatorHttpServer`, `LiveState`, state structs, and controller methods.
+  - Declares the controller interface and reducer/controller methods.
+
+- `coordinator_http_server.h/.cpp`
+  - Define `SdkPacket` and `CoordinatorHttpServer`, including packet queueing and HTTP capture.
+
+- `live_state.h/.cpp`
+  - Define `LiveState` and reducer-owned state structs for users, Parties, MMSessions, servers, and SCSession state.
 
 - `packets_ingestion.cpp`
   - Ingestion drain/dispatch anchor.
@@ -150,8 +156,10 @@ Local vs remote:
   Packet presence/absence is therefore only strong evidence for locally
   observed users/apps/servers/Hydra instances, not for every entity mentioned
   in the stream.
-- `UserState::isLocal` currently exists as a placeholder display flag. Forge
-  should replace its default with concrete reducer evidence when available.
+- `UserState::isLocal` defaults to false and is promoted from concrete
+  reducer evidence: `ApplyAllReducers()` extracts the packet's outer caller
+  identity and marks that directly observed user local before domain dispatch.
+  Passive Party/MM member mentions do not promote a user to local.
 
 ## SessionControl / SCSession
 
@@ -193,6 +201,9 @@ Party reducer should:
 - track members by user ID;
 - track leader/owner;
 - track join code/settings when available;
+- treat confirmed ADD/UPDATE membership in one Party as direct evidence that
+  the user should be removed from other Parties;
+- remove empty old Parties through shared cleanup so `partyOrder` stays aligned;
 - hide empty parties but keep the Party column sticky once shown.
 
 MM handling is based mainly on `Hydra.Api.Push.Presence.PresenceSessionUpdate`.
@@ -202,6 +213,11 @@ MM reducer should:
 - track members;
 - track owner;
 - track state such as QUEUE/GAME;
+- parse scalar member-level `memberData.data` fields into member state;
+- parse the nested session-level `gameData.data.data` envelope into
+  `SessionDataState`: sorted scalar `publicFields` plus structured RTT items;
+- treat valid empty `public: {}` / `rtt.items: []` as authoritative clears,
+  while absent or malformed sections retain previously known valid state;
 - hide empty sessions but keep MM column sticky once shown.
 
 Observed design invariants worth preserving:
@@ -256,11 +272,11 @@ Party and MM session Y positions are derived from the average Y position of thei
 
 Overlap is resolved by nudging later items down.
 
-Use the shared centroid helpers such as:
+Use the shared layout helpers such as:
 
-- `LiveState::YforSession(...)`
-- `LiveState::YforParty(...)`
-- `LiveState::YforGroupAsCentroid(...)`
+- `LiveState::CalcYForNode(SessionState&)`
+- `LiveState::CalcYForNode(PartyState&)`
+- the private shared centroid helper `YforGroupAsCentroid(...)`
 
 Do not replace this with ad hoc positioning unless asked.
 
@@ -283,6 +299,14 @@ Copy button behavior:
 - other values copy as plain value;
 - binary-like helpers may remain parked for future formatting.
 
+MMSession Inspector presentation:
+- projected `DATA_PUBLIC_<field>` rows are grouped under `GAME DATA -> public`;
+- complete `RTT_<index>_DATACENTER_ID` + `RTT_<index>_MS` pairs are grouped
+  under `GAME DATA -> RTT[size=N]` and displayed as `datacenter -> N ms`;
+- incomplete RTT pairs remain visible as ordinary flat evidence rows;
+- member rows remain grouped under `MEMBERS[size=N]`, including scalar fields
+  decoded from member-level `memberData.data`.
+
 Do not introduce `GraphPropertySection` until `GraphNode::kv` is clearly insufficient.
 
 ## Logging And Review
@@ -295,11 +319,11 @@ Doctor lane owns setup-health checks for the WSL Codex surface. Start with the
 direct WSL repo path and ordinary shell/git/tool commands before trying
 workarounds.
 
-Current environment evidence:
-- `bridges/nvm_install_log.txt` records NVM installation of Node v24.16.0 under
-  `/home/miron/.nvm`.
-- That log shows WSL `node`/`npm` paths taking precedence over Windows Node/npm
-  paths, which is the desired direction for WSL-local Codex operation.
+Current bridge/setup surface:
+- `bridges/bridge.ps1` is the supported Windows/PowerShell bridge entry point.
+- `bridges/linbridge` is the supported WSL/Bash bridge entry point.
+- `bridges/README.md` documents both directions and path configuration.
+- No persistent NVM installation log is part of the current bridge/setup surface.
 
 ## Texture LODs
 
@@ -331,11 +355,13 @@ Current bridge convention:
 
 - Forge/core files mirror flat at repo root.
 - Lumen visual/texture files mirror flat under `Lumen/`.
-- Preferred bridge entry point is `bridges/bridge.ps1`:
+- Windows/PowerShell entry point is `bridges/bridge.ps1`:
   - `.\bridge.ps1 -Direction ToCodex`
   - `.\bridge.ps1 -Direction ToWin`
-- Older one-way bridge scripts remain for compatibility while `bridge.ps1` is tested.
-- Bridge scripts should keep matching Lumen file arrays.
+- WSL/Bash entry point is `bridges/linbridge`:
+  - `./linbridge ToCodex`
+  - `./linbridge ToWin`
+- Bridge scripts should keep matching Forge/Lumen file arrays.
 - Codex commits here are review artifacts and collaboration checkpoints.
 - Archy reviews, compiles, runs, and makes production-repo commits afterward.
 

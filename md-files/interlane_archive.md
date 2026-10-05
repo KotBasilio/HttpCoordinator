@@ -35,3 +35,19 @@ Forge promoted stable lane rules to `AGENTS.md`:
 - current bridge convention for root Forge files and `Lumen/` files.
 
 Conclusion: mailbox stays light; task notes can expire here; durable rules graduate only when they keep helping across tasks.
+
+## 2026-10-05
+
+### Lumen / Forge — Local user badge evidence resolved
+
+The 2026-05-25 local-user handoff is closed.
+
+Accepted behavior:
+- users default to remote;
+- `ApplyAllReducers()` promotes a user to local only when the packet outer
+  caller context directly identifies that user;
+- passive Party/MM membership mentions remain remote until directly observed;
+- the local-user badge reflects this reducer evidence rather than a placeholder
+  default.
+
+`USER-LCL-001` is complete and the stale open mailbox note was removed.

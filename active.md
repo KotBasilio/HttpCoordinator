@@ -1,6 +1,6 @@
 # ImGui Coordinator — Active Task Context
 
-Last updated: 2026-06-29
+Last updated: 2026-10-05
 
 This file is the short-lived cockpit for the current Codex work.
 `AGENTS.md` is the durable repo entry point; this file is allowed to change often.
@@ -58,9 +58,9 @@ Use MV-M voice handles when helpful:
   graph entities unless a task explicitly asks for that.
 - User badges are visual annotations on User icons: online/offline, owner/leader,
   and local-user markers should remain badge overlays rather than graph nodes.
-- `UserState::isLocal` is a placeholder until Forge wires real evidence. Local
-  means traffic source / observed local app or server instance; remote means an
-  app/server/user mentioned by that traffic.
+- `UserState::isLocal` is evidence-backed. Users default to remote and are
+  promoted to local only when the packet outer caller context directly
+  identifies them; passive Party/MM member mentions remain remote.
 - Keep bridge arrays aligned with Lumen visual files.
 
 ## Current for Doctor lane
@@ -79,8 +79,8 @@ WSL repo path -> direct shell/git/tool checks -> checkpoint docs/logs -> origin
 ### Current priorities
 
 - Prefer the direct WSL path before trying workaround chains.
-- Treat environment logs as setup evidence, not product behavior.
+- Treat environment checks as setup evidence, not product behavior.
 - Keep Forge and Lumen ownership untouched unless a setup fix requires a shared
   file note.
-- Current evidence: `bridges/nvm_install_log.txt` records NVM Node v24.16.0
-  installation under `/home/miron/.nvm` and shows WSL `node`/`npm` precedence.
+- Current bridge tooling lives in `bridges/`: `bridge.ps1`, `linbridge`,
+  and their `README.md`. No persistent NVM install log is required.
