@@ -3,6 +3,36 @@
 #include <algorithm> // std::sort
 #include <cstdio> // snprintf
 
+static void DrawClearButton(Sample::Tex::TextureManager& tex)
+{
+   constexpr float iconSize = 48.0f;
+
+   const ImVec2 windowPos = ImGui::GetWindowPos();
+   const ImVec2 contentMin = ImGui::GetWindowContentRegionMin();
+   const ImVec2 contentMax = ImGui::GetWindowContentRegionMax();
+   const ImVec2 buttonPos(
+      windowPos.x + contentMin.x,
+      windowPos.y + contentMax.y - iconSize
+   );
+
+   ImGui::SetCursorScreenPos(buttonPos);
+   ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
+   ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(0, 0, 0, 0));
+   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(255, 255, 255, 25));
+   ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(255, 255, 255, 45));
+
+   (void)ImGui::ImageButton("##units_clear",
+      tex.Access(AssetID::IC_CLEAR_GREY_48PX),
+      ImVec2(iconSize, iconSize));
+
+   ImGui::PopStyleColor(3);
+   ImGui::PopStyleVar();
+
+   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) {
+      ImGui::SetTooltip("Clear");
+   }
+}
+
 UnitsPanel::UnitsPanel(GraphViewState& view_, GraphModel& model_, Sample::Tex::TextureManager& tex_)
    : view(view_)
    , model(model_)
@@ -67,6 +97,8 @@ void UnitsPanel::Draw()
 
    for (const SectionSpec& section : sections)
       DrawSection(section);
+
+   DrawClearButton(tex);
 }
 
 bool UnitsPanel::DrawHeader(const char* label, int count)
