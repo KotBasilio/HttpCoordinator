@@ -213,6 +213,27 @@ void MainWindow::RefreshDockingSetup()
    ImGui::End();
 }
 
+void MainWindow::DrawUnitsPanelAndClearButton()
+{
+   const ImVec2 contentPos = ImGui::GetCursorScreenPos();
+   const ImVec2 contentSize = ImGui::GetContentRegionAvail();
+
+   // Let the later overlay child own hover/clicks where the two children overlap.
+   ImGui::SetNextItemAllowOverlap();
+   if (ImGui::BeginChild("##units_list", contentSize, false)) {
+      gUnitsPanel.Draw();
+   }
+   const bool listHasVerticalScrollbar = ImGui::GetScrollMaxY() > 0.0f;
+   ImGui::EndChild();
+
+   if (DrawUnitsClearButton(gTex, contentPos, contentSize, listHasVerticalScrollbar)) {
+      ImGui::OpenPopup(kClearGraphPopup);
+   }
+   if (DrawClearGraphConfirmationPopup()) {
+      mainModel->pendingClearGraph = true;
+   }
+}
+
 void Sample::UI::Views::MainWindow::RenderAllPanes()
 {
    // Dev switch
@@ -227,23 +248,7 @@ void Sample::UI::Views::MainWindow::RenderAllPanes()
    // Draw four panels normally (they'll dock automatically)
    // Left: Units
    if (ImGui::Begin("Units")) {
-      const ImVec2 contentPos = ImGui::GetCursorScreenPos();
-      const ImVec2 contentSize = ImGui::GetContentRegionAvail();
-
-      // Let the later overlay child own hover/clicks where the two children overlap.
-      ImGui::SetNextItemAllowOverlap();
-      if (ImGui::BeginChild("##units_list", contentSize, false)) {
-         gUnitsPanel.Draw();
-      }
-      const bool listHasVerticalScrollbar = ImGui::GetScrollMaxY() > 0.0f;
-      ImGui::EndChild();
-
-      if (DrawUnitsClearButton(gTex, contentPos, contentSize, listHasVerticalScrollbar)) {
-         ImGui::OpenPopup(kClearGraphPopup);
-      }
-      if (DrawClearGraphConfirmationPopup()) {
-         mainModel->pendingClearGraph = true;
-      }
+      DrawUnitsPanelAndClearButton();
       ImGui::End();
    }
 

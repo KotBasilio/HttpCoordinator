@@ -113,6 +113,13 @@ bool LiveState::RemoveUser(const std::string& uid)
    return erased > 0 || removedOrder;
 }
 
+bool LiveState::RemoveParty(const std::string& pid)
+{
+   const size_t erased = parties.erase(pid);
+   const bool removedOrder = RemoveFromOrder(partyOrder, pid);
+   return erased > 0 || removedOrder;
+}
+
 bool LiveState::RemoveSession(const std::string& sid)
 {
    Tombstone(MMSessionEntityKey(sid));
@@ -290,12 +297,24 @@ bool PartyState::RemoveMember(const std::string& uid)
 
 bool LiveState::RemoveUserFromAllParties(const std::string& uid)
 {
+   return RemoveUserFromOtherParties(uid, {});
+}
+
+bool LiveState::RemoveUserFromOtherParties(const std::string& uid, const std::string& keepPartyId)
+{
    bool removedAny = false;
    for (auto it = parties.begin(); it != parties.end(); ) {
+      const std::string partyId = it->first;
+      if (!keepPartyId.empty() && partyId == keepPartyId) {
+         ++it;
+         continue;
+      }
+
       auto& party = it->second;
       if (party.RemoveMember(uid)) {
          removedAny = true;
          if (party.members.empty()) {
+            RemoveFromOrder(partyOrder, partyId);
             it = parties.erase(it);
             continue;
          }

@@ -574,6 +574,14 @@ bool StartServerController::HandlePartyDelta(SdkPacket& u, PartyState& party, bo
 
          st.TouchUser(uid);
 
+         if (ut == PRESENCE_PARTY_MEMBER_UPDATE_TYPE_ADD ||
+             ut == PRESENCE_PARTY_MEMBER_UPDATE_TYPE_UPDATE) {
+            // A member ADD/UPDATE is direct evidence that this party is now
+            // the user's current party, even when the old party never sent a
+            // teardown event (for example after a game restart).
+            changed |= st.RemoveUserFromOtherParties(uid, party.partyId);
+         }
+
          if (ut == PRESENCE_PARTY_MEMBER_UPDATE_TYPE_ADD) {
             auto& mi = party.members[uid];
             mi.isOwner = BoolAt(*jm, "/isOwner"_json_pointer, false);
@@ -651,7 +659,7 @@ bool StartServerController::HandlePartyDisbandRequest(SdkPacket& u)
    st.TouchUser(uid);
    st.users[uid].online = true;
 
-   bool removedAny = false;
+   std::vector<std::string> partyIdsToRemove;
 
    // Disband is usually issued by the leader.
    // We remove any party where:
@@ -669,14 +677,15 @@ bool StartServerController::HandlePartyDisbandRequest(SdkPacket& u)
       bool fallbackSolo = (itM != party.members.end() && party.members.size() <= 1);
 
       if (isLeader || memberOwner || fallbackSolo) {
-         // erase whole party state; projector will stop rendering it
-         it = st.parties.erase(it);
-         removedAny = true;
-         continue;
+         partyIdsToRemove.push_back(it->first);
       }
 
       ++it;
    }
+
+   bool removedAny = false;
+   for (const std::string& partyId : partyIdsToRemove)
+      removedAny |= st.RemoveParty(partyId);
 
    return removedAny;
 }

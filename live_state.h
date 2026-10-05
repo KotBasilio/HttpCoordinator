@@ -226,6 +226,7 @@ struct LiveState
    bool TouchServer(const std::string& sid);
    bool TouchSCSession(const std::string& scid);
    bool RemoveUser(const std::string& uid);
+   bool RemoveParty(const std::string& pid);
    bool RemoveSession(const std::string& sid);
    bool RemoveServer(const std::string& sid);
    bool RemoveSCSession(const std::string& scid);
@@ -238,6 +239,7 @@ struct LiveState
    void RefreshOwnerFlagForUser(const std::string& uid);
    void UnbindUser(const std::string& uid);
    bool RemoveUserFromAllParties(const std::string& uid);
+   bool RemoveUserFromOtherParties(const std::string& uid, const std::string& keepPartyId);
    bool MoveEntityInOrder(NodeKind kind, std::string_view entityKey, int delta);
 
    float CalcYForNode(SessionState& s) const;
