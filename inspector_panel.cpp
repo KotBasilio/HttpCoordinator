@@ -399,6 +399,16 @@ struct GroupedMemberKv
    std::vector<std::pair<std::string, std::string>> fields;
 };
 
+struct GroupedRttKv
+{
+   int rttIndex = 0;
+   std::string datacenterId;
+   std::string rttMs;
+   bool hasDatacenterId = false;
+   bool hasRttMs = false;
+   std::vector<std::pair<std::string, std::string>> rawRows;
+};
+
 static bool ParseMemberKvKey(std::string_view key, int& memberIndex, std::string& fieldName)
 {
    static constexpr std::string_view prefix = "MEMBER_";
@@ -421,6 +431,40 @@ static bool ParseMemberKvKey(std::string_view key, int& memberIndex, std::string
 
    fieldName = std::string(key.substr(idxEnd + 1));
    return !fieldName.empty();
+}
+
+static bool ParseSessionPublicKvKey(std::string_view key, std::string& fieldName)
+{
+   static constexpr std::string_view prefix = "DATA_PUBLIC_";
+   if (key.substr(0, prefix.size()) != prefix || key.size() <= prefix.size())
+      return false;
+
+   fieldName = std::string(key.substr(prefix.size()));
+   return true;
+}
+
+static bool ParseRttKvKey(std::string_view key, int& rttIndex, std::string& fieldName)
+{
+   static constexpr std::string_view prefix = "RTT_";
+   if (key.substr(0, prefix.size()) != prefix)
+      return false;
+
+   const size_t idxStart = prefix.size();
+   const size_t idxEnd = key.find('_', idxStart);
+   if (idxEnd == std::string_view::npos || idxEnd == idxStart)
+      return false;
+
+   for (size_t i = idxStart; i < idxEnd; ++i) {
+      if (!std::isdigit(static_cast<unsigned char>(key[i])))
+         return false;
+   }
+
+   rttIndex = std::atoi(std::string(key.substr(idxStart, idxEnd - idxStart)).c_str());
+   if (rttIndex < 0 || idxEnd + 1 >= key.size())
+      return false;
+
+   fieldName = std::string(key.substr(idxEnd + 1));
+   return fieldName == "DATACENTER_ID" || fieldName == "MS";
 }
 
 void InspectorPanel::DrawMaybeClickableKvValue(const std::string& value)
@@ -483,11 +527,37 @@ void InspectorPanel::DrawKvCopyButton(int rowIndex, const std::string& key, cons
 void InspectorPanel::DrawKeyValTable(const GraphNode& n)
 {
    std::vector<std::pair<std::string, std::string>> flatRows;
+   std::vector<std::pair<std::string, std::string>> sessionPublicRows;
+   std::vector<GroupedRttKv> sessionRttItems;
    std::vector<GroupedMemberKv> groupedMembers;
 
    if (n.kind == NodeKind::Party || n.kind == NodeKind::MMSession) {
       std::map<int, std::vector<std::pair<std::string, std::string>>> grouped;
+      std::map<int, GroupedRttKv> groupedRtt;
       for (const auto& kv : n.kv) {
+         if (n.kind == NodeKind::MMSession) {
+            std::string fieldName;
+            if (ParseSessionPublicKvKey(kv.first, fieldName)) {
+               sessionPublicRows.push_back({ fieldName, kv.second });
+               continue;
+            }
+
+            int rttIndex = 0;
+            if (ParseRttKvKey(kv.first, rttIndex, fieldName)) {
+               auto& rtt = groupedRtt[rttIndex];
+               rtt.rttIndex = rttIndex;
+               rtt.rawRows.push_back(kv);
+               if (fieldName == "DATACENTER_ID") {
+                  rtt.datacenterId = kv.second;
+                  rtt.hasDatacenterId = true;
+               } else {
+                  rtt.rttMs = kv.second;
+                  rtt.hasRttMs = true;
+               }
+               continue;
+            }
+         }
+
          int memberIndex = 0;
          std::string fieldName;
          if (ParseMemberKvKey(kv.first, memberIndex, fieldName)) {
@@ -499,6 +569,13 @@ void InspectorPanel::DrawKeyValTable(const GraphNode& n)
 
       for (auto& [memberIndex, fields] : grouped) {
          groupedMembers.push_back({ memberIndex, std::move(fields) });
+      }
+
+      for (auto& [rttIndex, rtt] : groupedRtt) {
+         if (rtt.hasDatacenterId && rtt.hasRttMs)
+            sessionRttItems.push_back(std::move(rtt));
+         else
+            flatRows.insert(flatRows.end(), rtt.rawRows.begin(), rtt.rawRows.end());
       }
    } else {
       flatRows = n.kv;
@@ -522,6 +599,82 @@ void InspectorPanel::DrawKeyValTable(const GraphNode& n)
             DrawKvCopyButton(rowIndex, kv.first, kv.second);
             ++rowIndex;
          }
+      };
+
+      auto drawSessionDataRows = [&](int& rowIndex) {
+         if (sessionPublicRows.empty() && sessionRttItems.empty())
+            return;
+
+         ImGui::TableNextRow();
+         ImGui::TableSetColumnIndex(0);
+         const bool sessionDataOpen = ImGui::TreeNodeEx("session_data",
+            ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanFullWidth, "SESSION DATA");
+         ImGui::TableSetColumnIndex(1);
+         ImGui::TextUnformatted("");
+         ImGui::TableSetColumnIndex(2);
+         ImGui::Dummy(ImVec2(0.0f, 0.0f));
+
+         if (!sessionDataOpen)
+            return;
+
+         if (!sessionPublicRows.empty()) {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            const bool publicOpen = ImGui::TreeNodeEx("session_data_public",
+               ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanFullWidth, "public");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::TextUnformatted("");
+            ImGui::TableSetColumnIndex(2);
+            ImGui::Dummy(ImVec2(0.0f, 0.0f));
+
+            if (publicOpen) {
+               for (const auto& field : sessionPublicRows) {
+                  ImGui::TableNextRow();
+                  ImGui::TableSetColumnIndex(0);
+                  ImGui::Indent();
+                  ImGui::TextUnformatted(field.first.c_str());
+                  ImGui::Unindent();
+                  ImGui::TableSetColumnIndex(1);
+                  DrawMaybeClickableKvValue(field.second);
+                  ImGui::TableSetColumnIndex(2);
+                  DrawKvCopyButton(rowIndex, "DATA_PUBLIC_" + field.first, field.second);
+                  ++rowIndex;
+               }
+               ImGui::TreePop();
+            }
+         }
+
+         if (!sessionRttItems.empty()) {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            const std::string rttLabel = "RTT[size=" + std::to_string(sessionRttItems.size()) + "]";
+            const bool rttOpen = ImGui::TreeNodeEx("session_data_rtt",
+               ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanFullWidth, "%s", rttLabel.c_str());
+            ImGui::TableSetColumnIndex(1);
+            ImGui::TextUnformatted("");
+            ImGui::TableSetColumnIndex(2);
+            ImGui::Dummy(ImVec2(0.0f, 0.0f));
+
+            if (rttOpen) {
+               for (const auto& item : sessionRttItems) {
+                  ImGui::TableNextRow();
+                  ImGui::TableSetColumnIndex(0);
+                  ImGui::Indent();
+                  ImGui::TextUnformatted(item.datacenterId.c_str());
+                  ImGui::Unindent();
+                  ImGui::TableSetColumnIndex(1);
+                  const std::string displayRtt = item.rttMs + " ms";
+                  DrawMaybeClickableKvValue(displayRtt);
+                  ImGui::TableSetColumnIndex(2);
+                  const std::string copyKey = "RTT_" + std::to_string(item.rttIndex) + "_MS";
+                  DrawKvCopyButton(rowIndex, copyKey, item.rttMs);
+                  ++rowIndex;
+               }
+               ImGui::TreePop();
+            }
+         }
+
+         ImGui::TreePop();
       };
 
       auto drawGroupedMemberKvRows = [&](const std::vector<GroupedMemberKv>& members, int& rowIndex) {
@@ -579,6 +732,7 @@ void InspectorPanel::DrawKeyValTable(const GraphNode& n)
 
       int rowIndex = 0;
       drawFlatKvRows(flatRows, rowIndex);
+      drawSessionDataRows(rowIndex);
       drawGroupedMemberKvRows(groupedMembers, rowIndex);
 
       ImGui::EndTable();
