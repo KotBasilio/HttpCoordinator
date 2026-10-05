@@ -607,8 +607,8 @@ void InspectorPanel::DrawKeyValTable(const GraphNode& n)
 
          ImGui::TableNextRow();
          ImGui::TableSetColumnIndex(0);
-         const bool sessionDataOpen = ImGui::TreeNodeEx("session_data",
-            ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanFullWidth, "SESSION DATA");
+         const bool sessionDataOpen = ImGui::TreeNodeEx("game_data",
+            ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanFullWidth, "GAME DATA");
          ImGui::TableSetColumnIndex(1);
          ImGui::TextUnformatted("");
          ImGui::TableSetColumnIndex(2);
