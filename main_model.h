@@ -66,6 +66,7 @@ struct MainModel {
    bool hydraOssCheck = false;
    bool lyraCheck = false;
    bool graphUsesIngestion = false;
+   bool pendingClearGraph = false;
 
    std::string userName;
    LogBuffer logs;

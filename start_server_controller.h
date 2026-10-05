@@ -33,6 +33,7 @@ private:
 
    // packets ingestion -- expands TickIngestion()
    void SwitchGraphToIngestion();
+   void ApplyClearGraphCommand();
    bool ExpireOfflineUsers();
    void PromoteUserToLocal(const std::string& uid);
    bool ApplyAllReducers(SdkPacket& u);

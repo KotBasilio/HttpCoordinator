@@ -40,6 +40,8 @@ void StartServerController::TickIngestion()
 {
    if (!mainModel) return;
 
+   ApplyClearGraphCommand();
+
    // for all packets
    SdkPacket u;
    bool changed = false;
@@ -61,6 +63,20 @@ void StartServerController::TickIngestion()
    if (changed) {
       ProjectToGraph();
    }
+}
+
+void StartServerController::ApplyClearGraphCommand()
+{
+   if (!mainModel->pendingClearGraph)
+      return;
+
+   mainModel->pendingClearGraph = false;
+   st = LiveState{};
+   standaloneCorr = StandaloneCorrelationState{};
+   mainModel->view.ClearSelection();
+   mainModel->view.pendingUpDownDelta = 0;
+   ProjectToGraph();
+   mainModel->logs.Info("entire graph cleared");
 }
 
 void StartServerController::SwitchGraphToIngestion()

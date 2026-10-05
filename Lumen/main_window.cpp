@@ -53,15 +53,18 @@ static bool DrawUnitsClearButton(Sample::Tex::TextureManager& tex,
    return clicked;
 }
 
-static void DrawClearGraphConfirmationPopup()
+static bool DrawClearGraphConfirmationPopup()
 {
    if (!ImGui::BeginPopupModal(kClearGraphPopup, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-      return;
+      return false;
+
+   bool confirmed = false;
 
    ImGui::TextUnformatted("You are about to clear the entire graph.");
    ImGui::Separator();
 
    if (ImGui::Button("OK", ImVec2(96.0f, 0.0f))) {
+      confirmed = true;
       ImGui::CloseCurrentPopup();
    }
    ImGui::SameLine();
@@ -71,6 +74,7 @@ static void DrawClearGraphConfirmationPopup()
    ImGui::SetItemDefaultFocus();
 
    ImGui::EndPopup();
+   return confirmed;
 }
 
 MainWindow::MainWindow(Sample::UI::Models::MainModel* model, Sample::UI::Controllers::MainControllerInterface* controller)
@@ -237,7 +241,9 @@ void Sample::UI::Views::MainWindow::RenderAllPanes()
       if (DrawUnitsClearButton(gTex, contentPos, contentSize, listHasVerticalScrollbar)) {
          ImGui::OpenPopup(kClearGraphPopup);
       }
-      DrawClearGraphConfirmationPopup();
+      if (DrawClearGraphConfirmationPopup()) {
+         mainModel->pendingClearGraph = true;
+      }
       ImGui::End();
    }
 
