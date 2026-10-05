@@ -17,7 +17,6 @@ static const MockAssetPreview kHangingTexturePreview[] = {
    { AssetID::ARROWRIGHT },
    { AssetID::ARROWRIGHT_OVERLAYSHADOW },
    { AssetID::IC_CLEAR_GREY_16PX },
-   { AssetID::IC_CLEAR_GREY_48PX },
    { AssetID::DRAGLISTHOVER },
    { AssetID::IC_ADD },
    { AssetID::IC_ARROW_BOTTOM },
