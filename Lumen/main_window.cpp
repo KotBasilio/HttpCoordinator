@@ -5,14 +5,16 @@
 
 namespace Sample::UI::Views {
 
-static void DrawUnitsClearButton(Sample::Tex::TextureManager& tex,
+static constexpr const char* kClearGraphPopup = "Clear graph";
+
+static bool DrawUnitsClearButton(Sample::Tex::TextureManager& tex,
    const ImVec2& contentPos,
    const ImVec2& contentSize,
    bool listHasVerticalScrollbar)
 {
    constexpr float iconSize = 48.0f;
    if (contentSize.x < iconSize || contentSize.y < iconSize)
-      return;
+      return false;
 
    const ImGuiStyle& style = ImGui::GetStyle();
    const float scrollbarInset = listHasVerticalScrollbar ? style.ScrollbarSize : 0.0f;
@@ -35,7 +37,7 @@ static void DrawUnitsClearButton(Sample::Tex::TextureManager& tex,
    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(255, 255, 255, 25));
    ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(255, 255, 255, 45));
 
-   (void)ImGui::ImageButton("##units_clear",
+   const bool clicked = ImGui::ImageButton("##units_clear",
       tex.Access(AssetID::IC_CLEAR_GREY_48PX),
       ImVec2(iconSize, iconSize));
 
@@ -48,6 +50,27 @@ static void DrawUnitsClearButton(Sample::Tex::TextureManager& tex,
 
    ImGui::EndChild();
    ImGui::PopStyleVar();
+   return clicked;
+}
+
+static void DrawClearGraphConfirmationPopup()
+{
+   if (!ImGui::BeginPopupModal(kClearGraphPopup, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+      return;
+
+   ImGui::TextUnformatted("You are about to clear the entire graph.");
+   ImGui::Separator();
+
+   if (ImGui::Button("OK", ImVec2(96.0f, 0.0f))) {
+      ImGui::CloseCurrentPopup();
+   }
+   ImGui::SameLine();
+   if (ImGui::Button("Cancel", ImVec2(96.0f, 0.0f))) {
+      ImGui::CloseCurrentPopup();
+   }
+   ImGui::SetItemDefaultFocus();
+
+   ImGui::EndPopup();
 }
 
 MainWindow::MainWindow(Sample::UI::Models::MainModel* model, Sample::UI::Controllers::MainControllerInterface* controller)
@@ -211,7 +234,10 @@ void Sample::UI::Views::MainWindow::RenderAllPanes()
       const bool listHasVerticalScrollbar = ImGui::GetScrollMaxY() > 0.0f;
       ImGui::EndChild();
 
-      DrawUnitsClearButton(gTex, contentPos, contentSize, listHasVerticalScrollbar);
+      if (DrawUnitsClearButton(gTex, contentPos, contentSize, listHasVerticalScrollbar)) {
+         ImGui::OpenPopup(kClearGraphPopup);
+      }
+      DrawClearGraphConfirmationPopup();
       ImGui::End();
    }
 
