@@ -102,6 +102,29 @@ static bool ApplySessionVariants(SessionState& sess, const Json& variants)
    return true;
 }
 
+static bool ParseMMSessionMemberData(const Json& memberData,
+   std::vector<std::pair<std::string, std::string>>& fields)
+{
+   const std::string data = GetStr(memberData, "data", "");
+   if (data.empty())
+      return false;
+
+   const Json parsed = Json::parse(data, nullptr, false);
+   if (!parsed.is_object())
+      return false;
+
+   fields.clear();
+   for (const auto& [key, value] : parsed.items()) {
+      const std::string stringValue = StringFromJsonValue(value);
+      if (!stringValue.empty() || value.is_boolean() || value.is_number())
+         fields.push_back({ key, stringValue });
+   }
+
+   std::sort(fields.begin(), fields.end(),
+      [](const auto& a, const auto& b) { return a.first < b.first; });
+   return true;
+}
+
 static bool SameMMSessionMemberInfo(const SessionState::MemberInfo& a,
    const SessionState::MemberInfo& b)
 {
@@ -113,7 +136,8 @@ static bool SameMMSessionMemberInfo(const SessionState::MemberInfo& a,
       && a.classRole == b.classRole
       && a.nickname == b.nickname
       && a.provider == b.provider
-      && a.extendedData == b.extendedData;
+      && a.extendedData == b.extendedData
+      && a.dataFields == b.dataFields;
 }
 
 static bool SameMMSessionMembers(const SessionState::MapT& a,
@@ -146,6 +170,7 @@ static SessionState::MemberInfo BuildMMSessionMemberInfo(const Json& memberData)
    info.nickname = ExtractNicknameFromStaticData(memberData);
    info.provider = ExtractStaticDataValue(memberData, "provider");
    info.extendedData = ExtractStaticDataValue(memberData, "extendedData");
+   ParseMMSessionMemberData(memberData, info.dataFields);
    return info;
 }
 
@@ -489,6 +514,10 @@ bool StartServerController::HandleMMSessionMembers(SdkPacket& u, SessionState& s
          SetIfDifferent(info.nickname, ExtractNicknameFromStaticData(md));
          SetIfDifferent(info.provider, ExtractStaticDataValue(md, "provider"));
          SetIfDifferent(info.extendedData, ExtractStaticDataValue(md, "extendedData"));
+
+         std::vector<std::pair<std::string, std::string>> dataFields;
+         if (ParseMMSessionMemberData(md, dataFields))
+            info.dataFields = std::move(dataFields);
       } else {
          OutputDebugString((op + " -- to handle as MMSessionMembers operation\n").c_str());
       }

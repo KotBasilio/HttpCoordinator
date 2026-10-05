@@ -100,6 +100,7 @@ struct SessionState
       std::string nickname;
       std::string provider;
       std::string extendedData;
+      std::vector<std::pair<std::string, std::string>> dataFields;
    };
    typedef std::unordered_map<std::string, MemberInfo> MapT;
    MapT members;
