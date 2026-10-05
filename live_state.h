@@ -73,6 +73,17 @@ struct PartyState {
    bool RemoveMember(const std::string& uid);
 };
 
+struct SessionDataState
+{
+   std::vector<std::pair<std::string, std::string>> publicFields;
+
+   struct RttItem {
+      std::string datacenterId;
+      std::string rttMs;
+   };
+   std::vector<RttItem> rttItems;
+};
+
 struct SessionState
 {
    std::string sessionId;
@@ -88,6 +99,7 @@ struct SessionState
    std::string longOperationCorrelationId;
    std::string longOperationUserId;
    std::vector<std::pair<std::string, std::string>> variants;
+   SessionDataState data;
 
    // members by userId
    struct MemberInfo {

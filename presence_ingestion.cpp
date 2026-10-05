@@ -125,6 +125,104 @@ static bool ParseMMSessionMemberData(const Json& memberData,
    return true;
 }
 
+static bool ParseSessionPublicFields(const Json& envelope,
+   std::vector<std::pair<std::string, std::string>>& fields)
+{
+   const std::string data = GetStr(envelope, "data", "");
+   if (data.empty())
+      return false;
+
+   const Json parsed = Json::parse(data, nullptr, false);
+   if (!parsed.is_object())
+      return false;
+
+   const auto itPublic = parsed.find("public");
+   if (itPublic == parsed.end() || !itPublic->is_object())
+      return false;
+
+   fields.clear();
+   for (const auto& [key, value] : itPublic->items()) {
+      if (!value.is_string() && !value.is_number() && !value.is_boolean())
+         continue;
+
+      fields.push_back({ key, StringFromJsonValue(value) });
+   }
+
+   std::sort(fields.begin(), fields.end(),
+      [](const auto& a, const auto& b) { return a.first < b.first; });
+   return true;
+}
+
+static bool ParseSessionRttItems(const Json& envelope,
+   std::vector<SessionDataState::RttItem>& items)
+{
+   const auto itRtt = envelope.find("rtt");
+   if (itRtt == envelope.end() || !itRtt->is_object())
+      return false;
+
+   const auto itItems = itRtt->find("items");
+   if (itItems == itRtt->end() || !itItems->is_array())
+      return false;
+
+   std::vector<SessionDataState::RttItem> next;
+   for (const auto& item : *itItems) {
+      if (!item.is_object())
+         continue;
+
+      const auto itDatacenterId = item.find("datacenterId");
+      const auto itRttMs = item.find("rttMs");
+      if (itDatacenterId == item.end() || !itDatacenterId->is_string() ||
+          itDatacenterId->get<std::string>().empty() ||
+          itRttMs == item.end() || !itRttMs->is_number()) {
+         continue;
+      }
+
+      next.push_back({ itDatacenterId->get<std::string>(), StringFromJsonValue(*itRttMs) });
+   }
+
+   items = std::move(next);
+   return true;
+}
+
+static bool ApplySessionLevelData(SessionState& sess, const Json& gameData)
+{
+   const auto itData = gameData.find("data");
+   if (itData == gameData.end() || !itData->is_object())
+      return false;
+
+   const std::string envelopeData = GetStr(*itData, "data", "");
+   if (envelopeData.empty())
+      return false;
+
+   const Json envelope = Json::parse(envelopeData, nullptr, false);
+   if (!envelope.is_object())
+      return false;
+
+   bool changed = false;
+
+   std::vector<std::pair<std::string, std::string>> publicFields;
+   if (ParseSessionPublicFields(envelope, publicFields) &&
+       sess.data.publicFields != publicFields) {
+      sess.data.publicFields = std::move(publicFields);
+      changed = true;
+   }
+
+   std::vector<SessionDataState::RttItem> rttItems;
+   if (ParseSessionRttItems(envelope, rttItems)) {
+      const bool same = sess.data.rttItems.size() == rttItems.size() &&
+         std::equal(sess.data.rttItems.begin(), sess.data.rttItems.end(), rttItems.begin(),
+            [](const auto& a, const auto& b) {
+               return a.datacenterId == b.datacenterId && a.rttMs == b.rttMs;
+            });
+      if (!same) {
+         sess.data.rttItems = std::move(rttItems);
+         changed = true;
+      }
+   }
+
+   return changed;
+}
+
 static bool SameMMSessionMemberInfo(const SessionState::MemberInfo& a,
    const SessionState::MemberInfo& b)
 {
@@ -448,6 +546,7 @@ bool StartServerController::HandleMMSessionUpdate(SdkPacket& u)
    }
    if (const Json* gameData = NodeAt(p, "/gameData"_json_pointer); gameData && gameData->is_object()) {
       changed |= ApplySessionVariants(sess, gameData->value("variants", Json::array()));
+      changed |= ApplySessionLevelData(sess, *gameData);
    }
 
    // members deltas
