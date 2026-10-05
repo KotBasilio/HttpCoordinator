@@ -5,20 +5,31 @@
 
 namespace Sample::UI::Views {
 
-static void DrawUnitsClearButton(Sample::Tex::TextureManager& tex)
+static void DrawUnitsClearButton(Sample::Tex::TextureManager& tex,
+   const ImVec2& contentPos,
+   const ImVec2& contentSize,
+   bool listHasVerticalScrollbar)
 {
    constexpr float iconSize = 48.0f;
+   if (contentSize.x < iconSize || contentSize.y < iconSize)
+      return;
 
-   const ImVec2 windowPos = ImGui::GetWindowPos();
-   const ImVec2 windowSize = ImGui::GetWindowSize();
    const ImGuiStyle& style = ImGui::GetStyle();
-   const float scrollbarInset = ImGui::GetScrollMaxY() > 0.0f ? style.ScrollbarSize : 0.0f;
+   const float scrollbarInset = listHasVerticalScrollbar ? style.ScrollbarSize : 0.0f;
    const ImVec2 buttonPos(
-      windowPos.x + windowSize.x - style.WindowPadding.x - scrollbarInset - iconSize,
-      windowPos.y + windowSize.y - style.WindowPadding.y - iconSize
+      contentPos.x + contentSize.x - scrollbarInset - iconSize,
+      contentPos.y + contentSize.y - iconSize
    );
 
    ImGui::SetCursorScreenPos(buttonPos);
+   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+   ImGui::BeginChild("##units_clear_overlay", ImVec2(iconSize, iconSize), false,
+      ImGuiWindowFlags_NoScrollbar |
+      ImGuiWindowFlags_NoScrollWithMouse |
+      ImGuiWindowFlags_NoBackground |
+      ImGuiWindowFlags_NoNavInputs |
+      ImGuiWindowFlags_NoNavFocus);
+
    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
    ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(0, 0, 0, 0));
    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(255, 255, 255, 25));
@@ -34,6 +45,9 @@ static void DrawUnitsClearButton(Sample::Tex::TextureManager& tex)
    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) {
       ImGui::SetTooltip("Clear");
    }
+
+   ImGui::EndChild();
+   ImGui::PopStyleVar();
 }
 
 MainWindow::MainWindow(Sample::UI::Models::MainModel* model, Sample::UI::Controllers::MainControllerInterface* controller)
@@ -186,8 +200,18 @@ void Sample::UI::Views::MainWindow::RenderAllPanes()
    // Draw four panels normally (they'll dock automatically)
    // Left: Units
    if (ImGui::Begin("Units")) {
-      gUnitsPanel.Draw();
-      DrawUnitsClearButton(gTex);
+      const ImVec2 contentPos = ImGui::GetCursorScreenPos();
+      const ImVec2 contentSize = ImGui::GetContentRegionAvail();
+
+      // Let the later overlay child own hover/clicks where the two children overlap.
+      ImGui::SetNextItemAllowOverlap();
+      if (ImGui::BeginChild("##units_list", contentSize, false)) {
+         gUnitsPanel.Draw();
+      }
+      const bool listHasVerticalScrollbar = ImGui::GetScrollMaxY() > 0.0f;
+      ImGui::EndChild();
+
+      DrawUnitsClearButton(gTex, contentPos, contentSize, listHasVerticalScrollbar);
       ImGui::End();
    }
 
