@@ -8,10 +8,9 @@ static void DrawClearButton(Sample::Tex::TextureManager& tex)
    constexpr float iconSize = 48.0f;
 
    const ImVec2 windowPos = ImGui::GetWindowPos();
-   const ImVec2 contentMin = ImGui::GetWindowContentRegionMin();
    const ImVec2 contentMax = ImGui::GetWindowContentRegionMax();
    const ImVec2 buttonPos(
-      windowPos.x + contentMin.x,
+      windowPos.x + contentMax.x - iconSize,
       windowPos.y + contentMax.y - iconSize
    );
 
