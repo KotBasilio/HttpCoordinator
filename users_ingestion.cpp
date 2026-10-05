@@ -34,7 +34,19 @@ bool StartServerController::HandleFactsWriteBinaryPackUser(SdkPacket& u)
    auto& usr = st.users[uid];
    SetIfDifferent(usr.userIdentity, ExtractUserIdentity(p));
    SetIfDifferent(usr.hydraKernelSessionId, ExtractHydraKernelSessionId(p));
-   SetIfDifferent(usr.runtimeSeanceId, ExtractFactsHeaderValue(p, "RUNTIME_SEANCE_ID"));
+   const std::string factsKernelSessionId = ExtractFactsHeaderValue(p, "KERNEL_SESSION_ID");
+   const std::string packetKernelSessionId = ExtractHydraKernelSessionId(p);
+   const bool kernelMismatch = !factsKernelSessionId.empty()
+      && !packetKernelSessionId.empty()
+      && factsKernelSessionId != packetKernelSessionId;
+   if (kernelMismatch && mainModel) {
+      mainModel->logs.Warn("Facts runtime-seance ignored: KERNEL_SESSION_ID mismatch for user "
+         + uid + " (facts=" + factsKernelSessionId
+         + ", context=" + packetKernelSessionId + ")");
+   }
+   if (!kernelMismatch) {
+      SetIfDifferent(usr.runtimeSeanceId, ExtractFactsHeaderValue(p, "RUNTIME_SEANCE_ID"));
+   }
    SetIfDifferent(usr.clientVersion, ExtractFactsHeaderValue(p, "CLIENT_VERSION"));
    SetIfDifferent(usr.titleId, JsonGetString(p, { "userContext", "data", "titleId" }));
    SetIfDifferent(usr.platform, JsonGetString(p, { "userContext", "data", "platform" }));
@@ -65,7 +77,7 @@ bool StartServerController::HandleFactsWriteBinaryPackUser(SdkPacket& u)
          }
       }
 
-      if (k == "RUNTIME_SEANCE_ID") {
+      if (k == "RUNTIME_SEANCE_ID" && !kernelMismatch) {
          SetIfDifferent(usr.runtimeSeanceId, v);
       }
       if (k == "CLIENT_VERSION") {
