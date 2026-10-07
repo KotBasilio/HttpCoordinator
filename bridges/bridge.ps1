@@ -141,6 +141,9 @@ function Assert-NoDuplicateFlatBasenames {
 }
 
 function New-CodebaseZip {
+    Write-Host "Zip is skipped by default."
+    return
+
     param(
         [Parameter(Mandatory = $true)]
         [string[]]$Files,
@@ -271,9 +274,9 @@ function Invoke-ToCodexBridge {
     }
 
     Write-Host ""
-    $answer = Read-Host "Enter a label if you want to commit and zip"
+    $answer = Read-Host "Enter a label if you want to commit"
     if ([string]::IsNullOrWhiteSpace($answer)) {
-        Write-Host "No label entered; commit and zip skipped."
+        Write-Host "No label entered; commit skipped."
         return
     }
 
@@ -343,6 +346,10 @@ function Invoke-ToWinBridge {
     foreach ($file in $LumenFiles) {
         Copy-ToWinFile -RelPath $file -SourceRoot $lumenSourceRoot -WinDir $WinDir -Lumen
     }
+
+    Copy-Item (Join-Path $WinDir "Assets\imgui_bak.txt") `
+              (Join-Path $WinDir "imgui.ini") -Force
+    Write-Host "imgui_bak.txt -> imgui.ini"
 
     Write-Host ""
     Write-Host "Copied $script:copied file(s). Missing $script:missing file(s)."
